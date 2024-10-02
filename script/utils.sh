@@ -186,3 +186,8 @@ function g() {
         echo -n $arg_value
     fi
 }
+
+# internal func
+custom_cmd_banner() {
+    logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+}

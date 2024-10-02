@@ -3,11 +3,6 @@
 source ~/oscp-swiss/.env
 source ~/oscp-swiss/script/utils.sh
 
-# internal func
-custom_cmd_banner() {
-    logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
-}
-
 # extend existing func
 alias grep="grep --color=auto"
 alias diff="diff --color=auto"

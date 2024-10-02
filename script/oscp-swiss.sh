@@ -6,8 +6,6 @@ source $HOME/oscp-swiss/script/alias.sh
 load_private_scripts
 
 
-# list all plugins
-# TODO: extends to /private
 function swiss() {   
     local swiss_path="$HOME/oscp-swiss/script/oscp-swiss.sh"
     local alias_path="$HOME/oscp-swiss/script/alias.sh"
@@ -15,7 +13,7 @@ function swiss() {
     # Use grep with a regex to extract function names
     logger info "[i] Functions:"
     grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | \
-    sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+        sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
 
     logger info "\n[i] Aliases:"
     # Extract and display all alias names
@@ -26,6 +24,25 @@ function swiss() {
     # Extract and display all variable names
     grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$swiss_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
     grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+
+    # /private
+    local script_dir="$HOME/oscp-swiss/private"
+    if [ -d "$script_dir" ]; then
+        for script in "$script_dir"/*.sh; do
+        if [ -f "$script" ]; then
+
+            logger warn "\n[i] Function under $script:"
+            grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script" | \
+                sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+            logger warn "[i] Aliases under $script:"
+            grep -E '^\s*alias\s+' "$script" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+            logger warn "[i] Variables under $script:"
+            grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$script" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+        fi
+        done
+    else
+        echo "Directory $script_dir not found."
+    fi
 }
 
 function swiss_nmap() {
@@ -86,7 +103,7 @@ function swiss_nmap() {
             logger info "[i] Start tcp check. Saved to $saved_file_path/tcp/check-1"
             nmap -p0-65535 -v $ip -oN $saved_file_path/tcp/check-1
 
-            local ports=$(grep -oP '^\d+\/\w+' $saved_file_path/check-1 | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
+            local ports=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check-1 | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
             logger info "[i] Checking service on ports - $ports. Saved to $saved_file_path/tcp/svc"
             nmap -p$ports -sVC $ip -oN $saved_file_path/tcp/svc
 
@@ -96,10 +113,10 @@ function swiss_nmap() {
             logger info "[i] Start general check (second round). Saved to $saved_file_path/tcp/check-2"
             nmap -p0-65535 $ip -oN $saved_file_path/tcp/check-2
             
-            local services_first=$(grep -oP '^\d+\/\w+' nmap/tcp/check-1 | awk '{print $1}' | sort -u)
+            local services_first=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check-1 | awk '{print $1}' | sort -u)
         
             # Extract services from the second round
-            local services_second=$(grep -oP '^\d+\/\w+' nmap/tcp/check-2 | awk '{print $1}' | sort -u)
+            local services_second=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check-2 | awk '{print $1}' | sort -u)
             
             logger warn "[i] Services found in the second round but not in the first round:"
             comm -13 <(echo "$services_first") <(echo "$services_second")
@@ -189,7 +206,7 @@ function swiss_svc() {
             kill -9 $(pgrep ssh)
             sudo systemctl start ssh
             ;;
-        bllodhound)
+        bloodhound)
             # ref: https://support.bloodhoundenterprise.io/hc/en-us/articles/17468450058267-Install-BloodHound-Community-Edition-with-Docker-Compose
             logger info "[i] start BloodHound CE (v2.4.1) ..."
             logger info "[i] start port check on 8080"
@@ -286,16 +303,6 @@ function swiss_ship() {
     else
         log error "Unknown type '$type'. Set to 'linux'."
     fi
-}
-
-function swiss_web() {
-    # directory
-    # lfi
-    # dns
-    # vhost
-    # wpscan
-    # links
-    # keywords
 }
 
 function swiss_windows_nc() {
@@ -575,9 +582,10 @@ function go_workspace() {
 }
 
 function set_target() {
-    s target $1
-    target=$1
-}
+        s target $1
+        target=$1
+    }
+
 
 function get_target() {
     # Use the 'g' function to get the target value from the config file
@@ -593,6 +601,37 @@ function get_target() {
         echo -n "$target" | xclip -selection clipboard
         echo "Target '$target' copied to clipboard."
     fi
+}
+
+# copy a linpeas-like script to speed up the enumeration
+function cp_target_script() {
+    logger info "[i] Usage: cp_target_script"
+    local shell_path="$HOME/oscp-swiss/script/target-enum-script.sh"
+    local new_file_path="/tmp/$(generate_random_filename).sh"
+    _cat $shell_path > $new_file_path
+    echo "" >> $new_file_path
+    echo "host='$(get_default_network_interface_ip)'" >> $new_file_path
+
+    _cat $new_file_path | xclip -selection clipboard
+    rm $new_file_path
+}
+
+# tcpdump from an ip address
+function listen_target() {
+    logger info "[i] tcpdump to listen anything from an ip address\n"
+    logger info "[i] Usage: listen <ip> [-i]"
+
+    ip=$1
+
+    # Check if the interface is provided, otherwise use default 'tun0'
+    if [ "$2" == "-i" ] && [ -n "$3" ]; then
+        interface=$3
+    else
+        interface=$DEFAULT_NETWORK_INTERFACE
+    fi
+
+    # Run tcpdump with the specified interface and IP address
+    sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
 }
 
 # generate workspace for pen test
@@ -623,6 +662,16 @@ function init_workspace() {
     cp_dir
 }
 
+# set a path as workspace (cross-session)
+function set_workspace() {
+    s workspace $PWD
+}
+
+# go to the path defined as workspace (cross-session)
+function go_workspace() {
+    cd $(g workspace)
+}
+
 function merge() {
     local file1="$1"
     local file2="$2"
@@ -645,37 +694,6 @@ function merge() {
     logger info "[i] $output_file created successfully."
 }
 
-# copy a linpeas-like script to speed up the enumeration
-function cp_target_script() {
-    logger info "[i] Usage: cp_target_script"
-    local shell_path="$HOME/oscp-swiss/script/target-enum-script.sh"
-    local new_file_path="/tmp/$(generate_random_filename).sh"
-    cat $shell_path > $new_file_path
-    echo "" >> $new_file_path
-    echo "host='$(get_default_network_interface_ip)'" >> $new_file_path
-
-    cat $new_file_path | xclip -selection clipboard
-    rm $new_file_path
-}
-
-# tcpdump from an ip address
-function listen_victim() {
-    logger info "[i] tcpdump to listen anything from an ip address\n"
-    logger info "[i] Usage: listen <ip> [-i]"
-
-    ip=$1
-
-    # Check if the interface is provided, otherwise use default 'tun0'
-    if [ "$2" == "-i" ] && [ -n "$3" ]; then
-        interface=$3
-    else
-        interface=$DEFAULT_NETWORK_INTERFACE
-    fi
-
-    # Run tcpdump with the specified interface and IP address
-    sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
-}
-
 # get all files from ftp
 function get_ftp_all_files() {
     # Assigning parameters to variables
@@ -691,4 +709,38 @@ function get_ftp_all_files() {
 
     # Run wget command with the provided parameters
     wget -r --no-passive --no-parent ftp://$USERNAME:$PASSWORD@$IP
+}
+
+# copy the current directory name to the clipboard
+function cp_dir() {
+    
+    local current_dir=$(basename "$PWD")
+    local dash_count=$(echo "$input" | tr -cd '-' | wc -c)
+
+    # Check if the number of dashes is greater than 2
+    if [ "$dash_count" -gt 2 ]; then
+            # Copy the current directory name to the clipboard
+            echo -n "$current_dir" | xclip -selection clipboard
+            logger info "[i] Custom Format Invalid. Format: <name>-<IP> or <IP>-<name>."
+            logger info "[i] Directory name '$current_dir' copied to clipboard."
+    else
+        local val1=$(echo "$current_dir" | awk -F- '{print $1}')
+        local val2=$(echo "$current_dir" | awk -F- '{print $2}')
+
+        logger info "[i] identified custom format: $val1-$val2"
+
+        local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+
+        if [[ $val1 =~ $ip_regex ]]; then
+            echo -n "$val1" | xclip -selection clipboard
+            logger info "[i] IP '$val1' copied to clipboard."
+        elif [[ $val2 =~ $ip_regex ]]; then
+            echo -n "$val2" | xclip -selection clipboard
+            logger info "[i] IP '$val2' copied to clipboard."
+        else
+            # Copy the current directory name to the clipboard
+            echo -n "$current_dir" | xclip -selection clipboard
+            echo "Directory name '$current_dir' copied to clipboard."
+        fi
+    fi
 }

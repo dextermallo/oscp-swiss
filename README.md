@@ -2,37 +2,65 @@
 
 Swiss Knife on your Kali Linux for OSCP & Bug Bounty.
 
-## Getting Started
+## 1. About OSCP Swiss
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
-### Prerequisites
+## 2. Getting Started
 
-What things you need to install the software and how to install them
+### 2.1. About Environments
+>[!NOTE]
+> Tested on `Kali 6.8.11-1kali2 (2024-05-30)`, virtualizing using `UTM 4.4.5` on MacBook Pro (M2, Sonoma 14.5)
 
-```
+You will need the following packages:
+
+
+### 2.2. Prerequisites
+
+You will need to install the following pacakges. Additionly, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
+
+```sh
 jq
+pygmentize
+rlwrap
+xclip
+docker
+docker-compose
 ```
 
-### Installation
+### 2.3. Installation
 
-A step by step series of examples that tell you how to get a development env running
+```bash
+# download and put it to the home directory
+git clone https://github.com/dextermallo/oscp-swiss.git ~
+cd ~/oscp-swiss & cp .env.example .env
+echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
+# fetch utilities to the directory
+source ~/oscp-swiss/script/installation.sh
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
+## 3. Usage
 
-## License
+<details>
+<summary><code>swiss</code></summary>
+
+> Description: `swiss` shows all your customized variables, functions, and alieses. 
+
+```bash
+# Usage
+> swiss
+```
+
+![swiss](image/swiss.png)
+
+</details>
+
+## 4. Extensions
+
+## 5. Development & Customization
+
+## 6. License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
