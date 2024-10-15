@@ -266,10 +266,15 @@ function check() {
             echo "Searching for file contents containing '$1':"
             grep -r --include="*" "$1" . 2>/dev/null
             ;;
+        15|env)
+            clear
+            log --bold -f red "=== Env ===\n"
+            log --bold -f yellow "env"
+            env
         *)
             log --bold -f green "Usage: check <option>\n"
             log --bold -f green "Options: [user|su|suid|cred-file|directory|os|ps|cron|net|dir-filename|dir-file]\n"
-            ;;       
+            ;;
     esac
 }
 

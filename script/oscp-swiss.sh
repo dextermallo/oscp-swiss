@@ -52,7 +52,7 @@ function swiss_nmap() {
 
     _help() {
         logger info "Usage: nmap_default --ip <IP> [--mode <mode>]"
-        logger info "Modes: fast (default), tcp, udp, udp-all"
+        logger info "Modes: fast (default), tcp, udp, udp-all, stealth"
     }
 
     while [[ "$#" -gt 0 ]]; do
@@ -130,6 +130,11 @@ function swiss_nmap() {
             mkdir -p $saved_file_path/udp
             logger info "[i] Start udp check (all). Saved to $saved_file_path/udp/udp_all"
             sudo nmap -sU -F -v $ip -oN $saved_file_path/udp/udp_all
+            ;;
+        stealth)
+            mkdir -p $saved_file_path/stealth
+            logger info "[i] Start stealth nmap. Saved to $saved_file_path/stealth/stealth"
+            sudo nmap -sS -p0-65535 -oN $saved_file_path/stealth/stealth
             ;;
         *)
             echo "Error: Invalid mode '$mode'. Valid modes are: fast, tcp, udp, udp-all."
