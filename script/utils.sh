@@ -151,7 +151,7 @@ function get_default_network_interface_ip() {
 }
 
 function s() {
-    local config_file="$HOME/oscp-swiss/.oscp-swiss.settings"
+    local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
     local arg_value="$2"
 
@@ -168,7 +168,7 @@ function s() {
 }
 
 function g() {
-    local config_file="$HOME/oscp-swiss/.oscp-swiss.settings"
+    local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
 
     # Check if the configuration file exists

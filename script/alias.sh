@@ -41,6 +41,7 @@ alias cat="custom_cmd_banner; pygmentize -P style=dracula -g"
 # wordlist #
 ############
 wordlist_path=$WORDLIST_BASE
+custom_wordlist_path=$HOME/oscp-swiss/wordlist
 
 ### directory & files
 wordlist_dirsearch="$WORDLIST_BASE/seclists/Discovery/Web-Content/dirsearch.txt"
@@ -59,7 +60,7 @@ wordlist_subdomain_top="$WORDLIST_BASE/Discovery/DNS/subdomains-top1million-1100
 wordlist_username_big="$WORDLIST_BASE/seclists/Usernames/xato-net-10-million-usernames.txt"
 wordlist_username_small="$WORDLIST_BASE/seclists/Usernames/top-usernames-shortlist.txt"
 wordlist_rockyou="$WORDLIST_BASE/rockyou.txt"
-wordlist_credential_small="$WORDLIST_BASE/custom-default-credential-list.txt"
+wordlist_credential_small="$custom_wordlist_path/custom-default-credential-list.txt"
 
 # api
 wordlist_api_obj="$WORDLIST_BASE/seclists/Discovery/Web-Content/api/objects.txt"
