@@ -10,9 +10,11 @@ log() {
     local bg_color=""
     local no_color=0
     local text=""
+    local underline=""
 
     # Define ANSI color codes using basic variables
     local ansi_bold="\033[1m"
+    local ansi_underline="\033[4m"
     local ansi_reset="\033[0m"
 
     # Define color codes for foreground
@@ -40,6 +42,10 @@ log() {
         case "$1" in
             -bold)
                 bold=$ansi_bold
+                shift
+                ;;
+            --underline)
+                underline=$ansi_underline
                 shift
                 ;;
             -f|--foreground)
@@ -87,7 +93,7 @@ log() {
     if [ "$DISABLE_COLOR" -eq 1 ]; then
         echo -e "$text"
     else
-        echo -e "${bold}${fg_color}${bg_color}${text}${ansi_reset}"
+        echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
     fi
 }
 
@@ -97,7 +103,7 @@ logger() {
             log -f green "$@"
             ;;
         warn)
-            log --bold -f yellow "$@"
+            log --bold --underline -f yellow "$@"
             ;;
         error)
             log --bold -f red "$@"
@@ -150,34 +156,49 @@ function get_default_network_interface_ip() {
     ip -o -f inet addr show | grep $DEFAULT_NETWORK_INTERFACE | awk '{split($4, a, "/"); printf "%s", a[1]}'
 }
 
+# Description:
+#   Abbrivation for "set" to set a key-value item in the configuration file.
+#   Uses with the function g (abbr for "get"). Works across different terminal sessions.
+# 
+# Usage: s <key_name> <value>
+# Example:
+#   s next-attempt-url http://localhost
+#   
+#   and you can use the command g to get it in another terminal session
+#   g next-attempt-url
 function s() {
     local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
     local arg_value="$2"
 
-    # Check if the configuration file exists, if not, create it
     if [[ ! -f $config_file ]]; then
         logger info "[i] Config file not found, creating one..."
         echo "{}" > "$config_file"
     fi
 
-    # Use jq to update or set the value in the config file
     jq --arg name "$arg_name" --arg value "$arg_value" '.[$name] = $value' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
-
     logger info "[i] $arg_name set to: $arg_value"
 }
 
+# Description:
+#   Abbrivation for "get" to get a key-value item in the configuration file.
+#   Uses with the function g (abbr for "set"). Works across different terminal sessions.
+# 
+# Usage: g <key_name>
+# Example:
+#   s next-attempt-url http://localhost
+#   
+#   and you can use the command g to get it in another terminal session
+#   g next-attempt-url
 function g() {
     local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
 
-    # Check if the configuration file exists
     if [[ ! -f $config_file ]]; then
         echo -n "-2"
         return
     fi
 
-    # Use jq to extract the value from the config file
     local arg_value=$(jq -r --arg name "$arg_name" '.[$name] // empty' "$config_file")
 
     if [[ -z $arg_value ]]; then
@@ -190,4 +211,19 @@ function g() {
 # internal func
 custom_cmd_banner() {
     logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+}
+
+load_credential() {
+    local settings_file="$HOME/oscp-swiss/settings.json"
+
+    if [ ! -f "$settings_file" ]; then
+        logger error "$settings_file not found."
+        return 1
+    fi
+
+    while IFS="=" read -r key value; do
+        export "$key"="$value"
+    done < <(jq -r '.env | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
+
+    echo "Environment variables loaded successfully."
 }

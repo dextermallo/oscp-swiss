@@ -29,7 +29,7 @@ alias xfreerdp="custom_cmd_banner; mkdir xfreerdp-data; xfreerdp /drive:$PWD,/xf
 
 # use with WP token for detailed recon
 alias _wpscan="/usr/bin/wpscan"
-alias wpscan="custom_cmd_banner; wpscan --api-token $WP_TOKEN"
+alias wpscan="custom_cmd_banner; wpscan --enumerate ap --enumerate at --enumerate u --plugins-detection aggressive --api-token $WP_TOKEN"
 
 # colorized cat command
 alias _cat="/usr/bin/cat"

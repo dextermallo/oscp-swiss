@@ -95,6 +95,9 @@ function check() {
             cut -d: -f1 /etc/passwd | sort -r | column
             log --bold -f yellow "\n[i] Super users (from /etc/passwd):"
             grep -v -E "^#" /etc/passwd | awk -F: '$3 == 0 { print $1 }' | column
+
+            log --bold -f yellow "\n[i] User(s) available to login with password (from /etc/passwd):"
+            grep -vE "nologin|false" /etc/passwd
             ;;
         2|su)
             clear 2>/dev/null
@@ -200,6 +203,9 @@ function check() {
             log --bold -f red "=== Process ===\n"
             log --bold -f red "[i] some processes may not be visible, should try pspy as well\n"
             ps auxfww
+
+            log --bold -f yellow "[i] root process\n"
+            ps aux | grep root            
             ;;
         9|cron|crontab)
             clear 2>/dev/null
@@ -220,7 +226,7 @@ function check() {
             clear 2>/dev/null
             log --bold -f red "=== Interesting filename under the current directory ===\n"
             ignore_list=("./usr/src/*" "./var/lib/*" "./etc/*" "./usr/share/*" "./snap/*" "./sys/*" "./usr/lib/*" "./usr/bin/*" "./run/*" "./boot/*" "./usr/sbin/*" "./proc/*" "./var/snap/*")
-            search_items=("*.txt" "*.sqlite" "*conf*" "*data*" "*.pdf" "*.apk" "*.cfg" "*.json" "*.ini" "*.log" "*.sh" "*password*" "*cred*" "*.env" "config" "HEAD")
+            search_items=("*.txt" "*.sqlite" "*conf*" "*data*" "*.pdf" "*.apk" "*.cfg" "*.json" "*.ini" "*.log" "*.sh" "*password*" "*cred*" "*.env" "config" "HEAD" "*mbox")
 
             find_command="find . -type f"
 
@@ -269,11 +275,15 @@ function check() {
         15|env)
             clear
             log --bold -f red "=== Env ===\n"
-            log --bold -f yellow "env"
+            log --bold -f yellow "\n env:"
             env
+
+            log --bold -f yellow "\n PATH:"
+            echo $PATH
+            ;;
         *)
             log --bold -f green "Usage: check <option>\n"
-            log --bold -f green "Options: [user|su|suid|cred-file|directory|os|ps|cron|net|dir-filename|dir-file]\n"
+            log --bold -f green "Options: [user|su|suid|cred-file|directory|os|ps|cron|net|dir-filename|dir-file|search-filename|search-file|env]\n"
             ;;
     esac
 }

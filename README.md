@@ -14,7 +14,6 @@ These instructions will get you a copy of the project up and running on your loc
 
 You will need the following packages:
 
-
 ### 2.2. Prerequisites
 
 You will need to install the following pacakges. Additionly, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
@@ -56,11 +55,27 @@ source ~/oscp-swiss/script/installation.sh
 
 </details>
 
-## 4. Extensions
+## 4. Development & Customization
 
-## 5. Development & Customization
+Here are the key structure for swiss:
 
-## 6. License
+```md
+.
+├── data             # (Private) common data/material for testing 
+│   ├── ...
+│   └── test.jpg
+├── private          # (Private) you can put your customized script, ovpn file, etc.
+│   ├── myscript.sh
+│   └── lab.ovpn
+├── script           # (Public) main script for swiss
+├── utils            # (Private) put your binaries, compiled files, utilities (e.g., pspy)
+│   └── ...
+├── wordlist
+├── .env
+└── settings.json
+```
+
+## 5. License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 

@@ -368,7 +368,6 @@ function swiss_windows_rev() {
     esac
 }
 
-
 # default args for ffuf
 function ffuf_default() {
     if [ $# -eq 0 ]; then
@@ -442,23 +441,10 @@ function gobuster_vhost_default() {
     fi
 }
 
-# default args for wpscan
-function wpscan_default() {
-    if [ $# -eq 0 ]
-    then
-        logger info "[i] Usage: wpscan_default URL (options)"
-        logger info "[i] wpscan --enumerate p --plugins-detection aggressive -o $(pwd)/wpscan --url ${@}"
-        logger warn "[i] use --enumerate ap to scan all plugins"
-    else
-        [ ! -d "$(pwd)/wpscan" ] && logger info "[i] Creating $(pwd)/wpscan ..." && mkdir -p wpscan
-        wpscan --enumerate p --plugins-detection aggressive -o $(pwd)/wpscan --api-token $WP_TOKEN --url ${@}
-    fi
-}
-
 # default for hydra
 function hydra_default() {
-    IP=$1
-    PORTS=$2
+    local IP=$1
+    local PORTS=$2
     
     # Check if username.txt exists
     if [ ! -f "username.txt" ]; then
@@ -510,12 +496,12 @@ function cp_dir() {
             logger info "[i] Custom Format Invalid. Format: <name>-<IP> or <IP>-<name>."
             logger info "[i] Directory name '$current_dir' copied to clipboard."
     else
-        val1=$(echo "$current_dir" | awk -F- '{print $1}')
-        val2=$(echo "$current_dir" | awk -F- '{print $2}')
+        local val1=$(echo "$current_dir" | awk -F- '{print $1}')
+        local val2=$(echo "$current_dir" | awk -F- '{print $2}')
 
         logger info "[i] identified custom format: $val1-$val2"
 
-        ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+        local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
 
         if [[ $val1 =~ $ip_regex ]]; then
             echo -n "$val1" | xclip -selection clipboard
@@ -587,10 +573,9 @@ function go_workspace() {
 }
 
 function set_target() {
-        s target $1
-        target=$1
-    }
-
+    s target $1
+    target=$1
+}
 
 function get_target() {
     # Use the 'g' function to get the target value from the config file
@@ -626,7 +611,7 @@ function listen_target() {
     logger info "[i] tcpdump to listen anything from an ip address\n"
     logger info "[i] Usage: listen <ip> [-i]"
 
-    ip=$1
+    local ip=$1
 
     # Check if the interface is provided, otherwise use default 'tun0'
     if [ "$2" == "-i" ] && [ -n "$3" ]; then
@@ -702,9 +687,9 @@ function merge() {
 # get all files from ftp
 function get_ftp_all_files() {
     # Assigning parameters to variables
-    USERNAME=$1
-    PASSWORD=$2
-    IP=$3
+    local USERNAME=$1
+    local PASSWORD=$2
+    local IP=$3
 
     # Check if all parameters are provided
     if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$IP" ]; then
