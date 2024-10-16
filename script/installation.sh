@@ -1,7 +1,6 @@
 #!/bin/bash
 
 source $HOME/oscp-swiss/script/utils.sh
-
 base=$HOME/oscp-swiss/utils
 
 mkdir -p $base

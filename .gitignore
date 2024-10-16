@@ -1,6 +1,4 @@
 .DS_Store
-*.env
-!.env.example
 utils/*
 wordlist/*
 private/*

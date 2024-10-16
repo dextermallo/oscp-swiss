@@ -67,11 +67,10 @@ Here are the key structure for swiss:
 ├── private          # (Private) you can put your customized script, ovpn file, etc.
 │   ├── myscript.sh
 │   └── lab.ovpn
-├── script           # (Public) main script for swiss
+├── script           #  (Public) main script for swiss
 ├── utils            # (Private) put your binaries, compiled files, utilities (e.g., pspy)
 │   └── ...
-├── wordlist
-├── .env
+├── wordlist         # (Private) custom wordlist
 └── settings.json
 ```
 

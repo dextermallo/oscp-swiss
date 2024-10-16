@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source ~/oscp-swiss/.env
 source ~/oscp-swiss/script/utils.sh
+load_settings
 
 # extend existing func
 alias grep="grep --color=auto"

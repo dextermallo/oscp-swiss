@@ -1,8 +1,9 @@
 #!/bin/bash
 
-source $HOME/oscp-swiss/.env
 source $HOME/oscp-swiss/script/utils.sh
 source $HOME/oscp-swiss/script/alias.sh
+
+load_settings
 load_private_scripts
 
 

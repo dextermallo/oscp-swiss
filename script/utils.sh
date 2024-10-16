@@ -1,9 +1,5 @@
 #!/bin/bash
 
-source $HOME/oscp-swiss/.env
-
-DISABLE_COLOR=0
-
 log() {
     local bold=""
     local fg_color=""
@@ -11,13 +7,9 @@ log() {
     local no_color=0
     local text=""
     local underline=""
-
-    # Define ANSI color codes using basic variables
     local ansi_bold="\033[1m"
     local ansi_underline="\033[4m"
     local ansi_reset="\033[0m"
-
-    # Define color codes for foreground
     local fg_black="\033[30m"
     local fg_red="\033[31m"
     local fg_green="\033[32m"
@@ -26,8 +18,6 @@ log() {
     local fg_magenta="\033[35m"
     local fg_cyan="\033[36m"
     local fg_white="\033[37m"
-
-    # Define color codes for background
     local bg_black="\033[40m"
     local bg_red="\033[41m"
     local bg_green="\033[42m"
@@ -37,7 +27,6 @@ log() {
     local bg_cyan="\033[46m"
     local bg_white="\033[47m"
 
-    # Parse arguments
     while [ "$1" ]; do
         case "$1" in
             -bold)
@@ -59,7 +48,7 @@ log() {
                     magenta) fg_color=$fg_magenta ;;
                     cyan) fg_color=$fg_cyan ;;
                     white) fg_color=$fg_white ;;
-                    *) fg_color="" ;;  # Default: no color
+                    *) fg_color="" ;;
                 esac
                 shift
                 ;;
@@ -74,7 +63,7 @@ log() {
                     magenta) bg_color=$bg_magenta ;;
                     cyan) bg_color=$bg_cyan ;;
                     white) bg_color=$bg_white ;;
-                    *) bg_color="" ;;  # Default: no color
+                    *) bg_color="" ;;
                 esac
                 shift
                 ;;
@@ -89,7 +78,6 @@ log() {
         esac
     done
 
-    # Print the text with or without colors based on --no-color flag
     if [ "$DISABLE_COLOR" -eq 1 ]; then
         echo -e "$text"
     else
@@ -213,7 +201,7 @@ custom_cmd_banner() {
     logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
 }
 
-load_credential() {
+load_settings() {
     local settings_file="$HOME/oscp-swiss/settings.json"
 
     if [ ! -f "$settings_file" ]; then
@@ -224,6 +212,4 @@ load_credential() {
     while IFS="=" read -r key value; do
         export "$key"="$value"
     done < <(jq -r '.env | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
-
-    echo "Environment variables loaded successfully."
 }

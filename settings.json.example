@@ -1,0 +1,8 @@
+{
+  "env": {
+    "WP_TOKEN": "",
+    "WORDLIST_BASE": "/usr/share/wordlists",
+    "DEFAULT_NETWORK_INTERFACE": "tun0",
+    "DISABLE_COLOR": 0
+  }
+}
