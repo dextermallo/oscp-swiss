@@ -4,6 +4,8 @@
     "WORDLIST_BASE": "/usr/share/wordlists",
     "DEFAULT_NETWORK_INTERFACE": "tun0",
     "DISABLE_COLOR": 0,
-    "XFREERDP_WIDTH": 932
+    "XFREERDP_WIDTH": 932,
+    "FFUF_RECURSIVE_DEPTH": 1,
+    "FFUF_DEFAULT_WORDLIST": "/usr/share/wordlists/custom-ffuf-default.txt"
   }
 }

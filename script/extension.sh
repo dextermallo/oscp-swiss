@@ -19,7 +19,5 @@ windows_runascs="$swiss_utils/windows/RunasCs.ps1"
 linux_pspy="$swiss_utils/linux/pspy"
 rev_shell="$swiss_utils/rev"
 windows_sharphound='/usr/share/windows-resources/SharpHoundv2.4.1'
-
-# ref: https://github.com/antonioCoco/ConPtyShell
 windows_conpty="$swiss_utils/Invoke-ConPtyShell.ps1"
 ligolo_path="$swiss_utils/tunnel/ligolo-0.6.2"

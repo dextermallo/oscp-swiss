@@ -63,7 +63,6 @@ wordlist_dirsearch="$WORDLIST_BASE/seclists/Discovery/Web-Content/dirsearch.txt"
 wordlist_dirb_commn="$WORDLIST_BASE/dirb/common.txt"
 wordlist_raft_directory_big="$WORDLIST_BASE/seclists/Discovery/Web-Content/raft-large-directories.txt"
 wordlist_raft_file_big="$WORDLIST_BASE/seclists/Discovery/Web-Content/raft-large-files.txt"
-wordlist_ffuf_default="$WORDLIST_BASE/custom-ffuf-default.txt"
 
 ### subdomain
 wordlist_subdomain_amass_small="$WORDLIST_BASE/amass/subdomains-top1mil-20000.txt"
