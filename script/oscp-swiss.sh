@@ -602,7 +602,7 @@ function set_target() {
 # TODO: Finish doc
 function get_target() {
     # Use the 'g' function to get the target value from the config file
-    local target=$(g target)
+    target=$(g target)
 
     # Check if the 'g' function returned '-1', indicating the target is not set
     if [[ "$target" == "-1" ]]; then
