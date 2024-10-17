@@ -125,11 +125,6 @@ load_private_scripts() {
   fi
 }
 
-generate_random_filename() {
-    # Generate a random 6-character alphanumeric string
-    echo "$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 6)"
-}
-
 # Description: Simplified version of the `ip` command to show the IP address of the default network interface.
 function i() {
     ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'

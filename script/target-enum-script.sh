@@ -167,7 +167,7 @@ function check() {
                 fi
             done
             ;;
-        6|directory|dir)
+        6|dir|directory)
             clear 2>/dev/null
             log --bold -f red "=== Interessting Directories ===\n"
             log --bold -f yellow "[i] / \n"
@@ -283,7 +283,22 @@ function check() {
             ;;
         *)
             log --bold -f green "Usage: check <option>\n"
-            log --bold -f green "Options: [user|su|suid|cred-file|directory|os|ps|cron|net|dir-filename|dir-file|search-filename|search-file|env]\n"
+            log --bold -f green "Options: \n"
+            log --bold -f green "  - 1|user|u: check user information\n"
+            log --bold -f green "  - 2|su: check sudo permission\n"
+            log --bold -f green "  - 3|suid: check suid permission\n"
+            log --bold -f green "  - 4|cred-file: check common credential files (i.e., /etc/passwd, /etc/group)\n"
+            log --bold -f green "  - 5|exec|executable: listing executable files\n"
+            log --bold -f green "  - 6|dir|directory: listing interesting directories (e.g., /tmp, /opt)\n"
+            log --bold -f green "  - 7|os: check OS information\n"
+            log --bold -f green "  - 8|ps|proc|process: check running processes\n"
+            log --bold -f green "  - 9|cron|crontab: check cron jobs\n"
+            log --bold -f green "  - 10|net|network: check network information\n"
+            log --bold -f green "  - 11|dir-filename: find interesting filename recursively under the current directory\n"
+            log --bold -f green "  - 12|dir-file: find the interesting file content recursively under the current directory\n"
+            log --bold -f green "  - 13|search-filename <keyword>: search filename with keyword under the current directory\n"
+            log --bold -f green "  - 14|search-file <keyword>: search file content with keyword under the current directory\n"
+            log --bold -f green "  - 15|env: check environment variables\n"
             ;;
     esac
 }

