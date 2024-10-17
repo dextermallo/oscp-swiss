@@ -32,9 +32,8 @@ alias _wpscan="/usr/bin/wpscan"
 alias wpscan="custom_cmd_banner; wpscan --enumerate ap --enumerate at --enumerate u --plugins-detection aggressive --api-token $WP_TOKEN"
 
 # colorized cat command
-alias _cat="/usr/bin/cat"
-
 # ref: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
+alias _cat="/usr/bin/cat"
 alias cat="custom_cmd_banner; pygmentize -P style=dracula -g"
 
 ############
@@ -89,21 +88,14 @@ nmap_scripts_path="/usr/share/nmap/scripts"
 # windows #
 ###########
 windows_path="/usr/share/windows-resources"
-windows_get_spn="$HOME/oscp-swiss/utils/windows/Get-SPN.ps1"
-windows_invoke_kerberoast="$HOME/oscp-swiss/utils/windows/Invoke-Kerberoast.ps1"
-windows_runascs="$HOME/oscp-swiss/utils/windows/RunasCs.ps1"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
-windows_winpeas_x86="$HOME/oscp-swiss/utils/Peas/winPEASx86.exe"
-windows_winpeas_x64="$HOME/oscp-swiss/utils/Peas/winPEASx64.exe"
 
 #########
 # linux #
 #########
 linux_privesc="/usr/bin/unix-privesc-check"
-linux_linpeas="$HOME/oscp-swiss/utils/Peas/linpeas.sh"
-linux_pspy="$HOME/oscp-swiss/utils/pspy"
 
 ########
 # disc #

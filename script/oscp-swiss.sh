@@ -2,28 +2,32 @@
 
 source $HOME/oscp-swiss/script/utils.sh
 source $HOME/oscp-swiss/script/alias.sh
+source $HOME/oscp-swiss/script/extension.sh
 
 load_settings
 load_private_scripts
 
-
 function swiss() {   
     local swiss_path="$HOME/oscp-swiss/script/oscp-swiss.sh"
     local alias_path="$HOME/oscp-swiss/script/alias.sh"
+    local extension_path="$HOME/oscp-swiss/script/extension.sh"
 
     # Use grep with a regex to extract function names
     logger info "[i] Functions:"
     grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | \
         sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
 
+    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | \
+        sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+
     logger info "\n[i] Aliases:"
+
     # Extract and display all alias names
-    grep -E '^\s*alias\s+' "$swiss_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
-    grep -E '^\s*alias\s+' "$alias_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+    grep -E '^\s*alias\s+' "$extension_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
 
     logger info "\n[i] Variables:"
     # Extract and display all variable names
-    grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$swiss_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+    grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$extension_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
     grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
 
     # /private
@@ -47,7 +51,6 @@ function swiss() {
 }
 
 function swiss_nmap() {
-    # Default mode - fast
     local mode="fast"
     local ip=""
 
@@ -733,5 +736,49 @@ function cp_dir() {
             echo -n "$current_dir" | xclip -selection clipboard
             echo "Directory name '$current_dir' copied to clipboard."
         fi
+    fi
+}
+
+function target_ipinfo() {
+  curl https://ipinfo.io/$1/json
+}
+
+function host_public_ip() {
+  curl ipinfo.io/ip
+}
+
+show_utils() {
+    # Check if a directory is provided; if not, use the current directory
+    local dir="${1:-$HOME/oscp-swiss/utils}"
+
+    tree -C "$dir" -L 1 | while read -r line; do
+        # Extract the file name from the tree output by ignoring color codes
+        filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
+        
+        desc_file="${dir}/${filename}.md"
+        
+        if [[ -f "$desc_file" ]]; then
+            desc=$(head -n 1 "$desc_file")
+            echo -e "$line \033[33m$desc\033[0m"
+        else
+            echo "$line"
+        fi
+    done
+}
+
+explain() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: explain <file_or_directory>"
+        return 1
+    fi
+
+    local target="$1"
+    
+    local desc_file="${target}.md"
+    
+    if [[ -f "$desc_file" ]]; then
+        cat "$desc_file"
+    else
+        echo "No description file found for $target."
     fi
 }
