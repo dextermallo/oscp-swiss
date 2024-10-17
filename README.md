@@ -16,7 +16,7 @@ You will need the following packages:
 
 ### 2.2. Prerequisites
 
-You will need to install the following pacakges. Additionly, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
+You will need to install the following packages. Additionally, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
 
 ```sh
 jq
@@ -32,11 +32,13 @@ docker-compose
 ```bash
 # download and put it to the home directory
 git clone https://github.com/dextermallo/oscp-swiss.git ~
-cd ~/oscp-swiss & cp .env.example .env
-echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 
-# fetch utilities to the directory
-source ~/oscp-swiss/script/installation.sh
+# copy the example settings to the settings.json
+# you can customize the settings.json
+cd ~/oscp-swiss & cp example.settings.json settings.json
+
+# add the following line to your .zshrc or .bashrc
+echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 ```
 
 ## 3. Usage
@@ -44,7 +46,7 @@ source ~/oscp-swiss/script/installation.sh
 <details>
 <summary><code>swiss</code></summary>
 
-> Description: `swiss` shows all your customized variables, functions, and alieses. 
+> Description: `swiss` shows all your customized variables, functions, and aliases. 
 
 ```bash
 # Usage
