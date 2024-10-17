@@ -151,23 +151,11 @@ function swiss_svc() {
     local service=""
 
     _help() {
-        logger info "Usage: swiss_svc --service <service name>]"
+        logger info "Usage: swiss_svc <service name>]"
         logger info "service: docker; ftp; http; smb; ssh; bloodhound; wsgi"
     }
 
-    while [[ "$#" -gt 0 ]]; do
-        case "$1" in
-        -s|--service)
-            shift
-            service="$1"
-            ;;
-        *)
-            _help
-            return 1
-            ;;
-        esac
-        shift
-    done
+    service="$1"
 
     if [[ -z "$service" ]]; then
         _help
@@ -315,7 +303,7 @@ function swiss_ship() {
 }
 
 function swiss_windows_nc() {
-    sudo rlwrap nc -lvnp $1
+    rlwrap nc -lvnp $1
 }
 
 function swiss_windows_rev() {
@@ -703,40 +691,6 @@ function get_ftp_all_files() {
 
     # Run wget command with the provided parameters
     wget -r --no-passive --no-parent ftp://$USERNAME:$PASSWORD@$IP
-}
-
-# copy the current directory name to the clipboard
-function cp_dir() {
-    
-    local current_dir=$(basename "$PWD")
-    local dash_count=$(echo "$input" | tr -cd '-' | wc -c)
-
-    # Check if the number of dashes is greater than 2
-    if [ "$dash_count" -gt 2 ]; then
-            # Copy the current directory name to the clipboard
-            echo -n "$current_dir" | xclip -selection clipboard
-            logger info "[i] Custom Format Invalid. Format: <name>-<IP> or <IP>-<name>."
-            logger info "[i] Directory name '$current_dir' copied to clipboard."
-    else
-        local val1=$(echo "$current_dir" | awk -F- '{print $1}')
-        local val2=$(echo "$current_dir" | awk -F- '{print $2}')
-
-        logger info "[i] identified custom format: $val1-$val2"
-
-        local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
-
-        if [[ $val1 =~ $ip_regex ]]; then
-            echo -n "$val1" | xclip -selection clipboard
-            logger info "[i] IP '$val1' copied to clipboard."
-        elif [[ $val2 =~ $ip_regex ]]; then
-            echo -n "$val2" | xclip -selection clipboard
-            logger info "[i] IP '$val2' copied to clipboard."
-        else
-            # Copy the current directory name to the clipboard
-            echo -n "$current_dir" | xclip -selection clipboard
-            echo "Directory name '$current_dir' copied to clipboard."
-        fi
-    fi
 }
 
 function target_ipinfo() {
