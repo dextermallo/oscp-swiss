@@ -79,7 +79,7 @@ log() {
         esac
     done
 
-    if [ "$DISABLE_COLOR" -eq 1 ]; then
+    if [ "$DISABLE_COLOR" = true ]; then
         echo -e "$text"
     else
         echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"

@@ -610,7 +610,6 @@ function get_target() {
     elif [[ "$target" == "-2" ]]; then
         logger error "[!] Config file not found!"
     else
-        # Copy the target to the clipboard
         echo -n "$target" | xclip -selection clipboard
         echo "Target '$target' copied to clipboard."
     fi
@@ -694,6 +693,13 @@ function set_workspace() {
 # Usage: go_workspace
 function go_workspace() {
     cd $(g workspace)
+}
+
+function spawn_session_in_workspace() {
+    if [ "$SPAWN_SESSION_IN_WORKSPACE" = true ]; then
+        go_workspace
+        target=$(g target)
+    fi
 }
 
 # TODO: Finish doc
@@ -784,3 +790,6 @@ function explain() {
         echo "No description file found for $target."
     fi
 }
+
+
+spawn_session_in_workspace
