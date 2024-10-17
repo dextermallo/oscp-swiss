@@ -309,7 +309,7 @@ function ship() {
 
     autoHost() {
         if [[ "$autoHostHttp" = true ]]; then
-            swiss_svc -s http
+            swiss_svc http
         else
             echo warning "[W] Remember to host the web server on your own"
         fi
