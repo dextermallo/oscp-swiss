@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 source $HOME/oscp-swiss/script/utils.sh
 source $HOME/oscp-swiss/script/alias.sh
 source $HOME/oscp-swiss/script/extension.sh
@@ -45,7 +46,7 @@ function swiss() {
 
 # Description: warpped nmap command with default options
 # TODO: update the default options, remove --i needs.
-function swiss_nmap() {
+function nmap_default() {
     local mode="fast"
     local ip=""
 
@@ -257,21 +258,21 @@ function swiss_svc() {
 }
 
 # Description: one-liner to ship files to the target machine. With no copy-paste needs.
-# Usage: swiss_ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>
+# Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>
 # Arguments:
 #   -t|--type: linux|windows (default: linux)
 #   -a|--auto-host-http: auto-host the http server (default: 1)
 # Example:
-#  swiss_ship -t linux -a /path/to/file
+#  ship -t linux -a /path/to/file
 # TODO: Finish doc
-function swiss_ship() {
+function ship() {
     local type="linux"
     local filepath
     local autoHostHttp=1
 
     _helper() {
         logger error "[e] Filepath is required."
-        logger info "[i] Usage: swiss_ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
+        logger info "[i] Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
         return 1
     }
 
@@ -428,40 +429,52 @@ function ffuf_default() {
         local domain_dir="$(pwd)/ffuf/$domain"
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
-        ffuf -w $FFUF_DEFAULT_WORDLIST -recursion -recursion-depth $FFUF_RECURSIVE_DEPTH -u ${@} | tee "$domain_dir/wordlist-ffuf-default"
+        ffuf -w $FFUF_DEFAULT_WORDLIST -recursion -recursion-depth $FFUF_RECURSIVE_DEPTH -u ${@} | tee "$domain_dir/ffuf-default"
     fi
 }
 
 # TODO: Finish doc
 function ffuf_traversal_default() {
-    if [ $# -eq 0 ]
-    then
-        logger info "[i] Usage: ffuf_traversal_default [URL/FUZZ] (options)"
+    _helper() {
+        logger info "[i] Usage: ffuf_traversal_default [URL] (options)"
+    }
+
+    if [ $# -eq 0 ]; then
+        _helper
     else
-        [ ! -d "$(pwd)/ffuf" ] && logger info "[i] Creating directory $(pwd)/ffuf ..." && mkdir -p ffuf
-        logger info "[i] using wordlist: /wordlists/IntruderPayloads/FuzzLists/traversal-short.txt"
-        ffuf -w /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal-short.txt -u ${@} > ./ffuf/traversal-short | tee
+        local url="$1"
+        if [[ "$url" =~ ^https?:// ]]; then
+            local domain=$(echo "$url" | awk -F/ '{print $3}')
+        else
+            local domain=$(echo "$url" | awk -F/ '{print $1}')
+        fi
+        local domain_dir="$(pwd)/ffuf/$domain"
+        logger info "[i] Creating directory $domain_dir ..."
+        mkdir -p "$domain_dir"
 
-        logger info "[i] using wordlist: /wordlists/IntruderPayloads/FuzzLists/traversal.txt"
-        ffuf -w /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal.txt -u ${@} > ./ffuf/traversal | tee
+        if [[ -f "$FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic" ]]; then
+            _cat $FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic
+        fi
 
-        logger info "[i] using wordlist: /custom-traversal.txt"
-        ffuf -w /usr/share/wordlists/custom-traversal.txt -u ${@} > ./ffuf/custom-traversal | tee
+        ffuf -w $FFUF_TRAVERSAL_DEFAULT_WORDLIST -u ${@} | tee "$domain_dir/traversal-default"
     fi
 }
 
 # TODO: Finish doc
-function gobuster_dns_default() {
+# TODO: change save_path
+function gobuster_subdomain_default() {
     if [ $# -eq 0 ]
     then
-        logger info "[i] Usage: gobuster_dns_default [domain_name] (options)"
+        logger info "[i] Usage: gobuster_subdomain_default [domain_name] (options)"
     else
-        [ ! -d "$(pwd)/gobuster" ] && logger info "[i] Creating directory $(pwd)/gobuster ..." && mkdir -p gobuster
-        logger info "[i] using wordlist: /amass/subdomains-top1mil-110000.txt"
-        gobuster dns -w $wordlist_subdomain_amass_big -t 20 -o gobuster/dns_subdomain_big -d ${@}
+        [ ! -d "$(pwd)/subdomain" ] && logger info "[i] Creating directory $(pwd)/subdomain ..." && mkdir -p subdomain
+        logger info "[i] using wordlist: $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST"
 
-        logger info "[i] using wordlist: //dirbuster/directory-list-2.3-medium.txt"
-        gobuster dns -w $wordlist_subdomain_dirb -t 20 -o gobuster/dns_subdomain_dirb -d ${@}
+        if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
+            _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+        fi
+
+        gobuster dns -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST -t 20 -o subdomain/subdomain-default -d ${@}
     fi
 }
 
@@ -718,27 +731,76 @@ function spawn_session_in_workspace() {
     fi
 }
 
-# TODO: Finish doc
-function merge() {
-    local file1="$1"
-    local file2="$2"
-    local output_file="./merged.txt"
 
-    # Check if both files exist
-    if [[ ! -f "$file1" || ! -f "$file2" ]]; then
-        logger error "[i] Both files must exist."
+# TODO: Doc
+merge() {
+    local output="merged.txt"
+    local statistic=true
+    local files=()
+    local total_lines=0
+
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -o|--output)
+                output="$2"
+                shift 2
+                ;;
+            -s|--statistic)
+                statistic="$2"
+                shift 2
+                ;;
+            *)
+                files+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if [[ "${#files[@]}" -lt 2 ]]; then
+        logger error "At least two files to merge."
         return 1
     fi
 
-    # Check if output file already exists
-    if [[ -f "$output_file" ]]; then
-        logger error "[] $output_file already exists."
-        return 1
+    for file in "${files[@]}"; do
+        if [[ ! -f "$file" ]]; then
+            logger error "File not found: $file"
+            return 1
+        fi
+    done
+
+    local temp_output=$(mktemp)
+
+    for file in "${files[@]}"; do
+        total_lines=$((total_lines + $(wc -l < "$file")))
+        sort -u "$file" >> "$temp_output"
+    done
+
+    sort -u "$temp_output" -o "$output"
+    rm "$temp_output"
+
+    local unique_lines
+    unique_lines=$(wc -l < "$output")
+    local duplicates_removed=$((total_lines - unique_lines))
+
+    if [[ "$statistic" == true ]]; then
+        local stat_file="$output.statistic"
+        {
+            echo "Original filenames:"
+            for file in "${files[@]}"; do
+                echo "  - $file"
+            done
+            echo "Line counts per file:"
+            for file in "${files[@]}"; do
+                echo "  - $file: $(wc -l < "$file") lines"
+            done
+            echo "Total line count before merge: $total_lines"
+            echo "Total line count after merge: $unique_lines"
+            echo "Lines saved after merge (duplicates removed): $duplicates_removed"
+        } > "$stat_file"
     fi
 
-    # Combine both files, sort them, remove duplicates, and create merged.txt
-    cat "$file1" "$file2" | sort | uniq > "$output_file"
-    logger info "[i] $output_file created successfully."
+    logger info "[i] Files merged into $output"
+    [[ "$statistic" == true ]] && logger info "[i] Statistics saved to $stat_file"
 }
 
 # Description: retrieve all files from a ftp server

@@ -6,7 +6,9 @@
     "DISABLE_COLOR": false,
     "XFREERDP_WIDTH": 932,
     "FFUF_RECURSIVE_DEPTH": 1,
-    "FFUF_DEFAULT_WORDLIST": "/usr/share/wordlists/custom-ffuf-default.txt",
+    "FFUF_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt",
+    "FFUF_TRAVERSAL_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/file-traversal-default.txt",
+    "GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt",
     "SPAWN_SESSION_IN_WORKSPACE": false,
     "CEWL_MIN_WORD_LENGTH": 4,
     "CEWL_DEPTH": 2
