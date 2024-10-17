@@ -261,14 +261,14 @@ function swiss_svc() {
 # Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>
 # Arguments:
 #   -t|--type: linux|windows (default: linux)
-#   -a|--auto-host-http: auto-host the http server (default: 1)
+#   -a|--auto-host-http: auto-host the http server (default: true)
 # Example:
-#  ship -t linux -a /path/to/file
-# TODO: Finish doc
+#   ship ./rce.sh
+#   ship -t windows ./rce.exe
 function ship() {
     local type="linux"
     local filepath
-    local autoHostHttp=1
+    local autoHostHttp=true
 
     _helper() {
         logger error "[e] Filepath is required."
@@ -308,7 +308,7 @@ function ship() {
 
 
     autoHost() {
-        if [[ "$autoHostHttp" -eq 1 ]]; then
+        if [[ "$autoHostHttp" = true ]]; then
             swiss_svc -s http
         else
             echo warning "[W] Remember to host the web server on your own"
