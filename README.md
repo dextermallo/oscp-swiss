@@ -14,10 +14,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 You will need the following packages:
 
-
 ### 2.2. Prerequisites
 
-You will need to install the following pacakges. Additionly, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
+You will need to install the following packages. Additionally, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
 
 ```sh
 jq
@@ -33,11 +32,13 @@ docker-compose
 ```bash
 # download and put it to the home directory
 git clone https://github.com/dextermallo/oscp-swiss.git ~
-cd ~/oscp-swiss & cp .env.example .env
-echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 
-# fetch utilities to the directory
-source ~/oscp-swiss/script/installation.sh
+# copy the example settings to the settings.json
+# you can customize the settings.json
+cd ~/oscp-swiss & cp example.settings.json settings.json
+
+# add the following line to your .zshrc or .bashrc
+echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 ```
 
 ## 3. Usage
@@ -45,7 +46,7 @@ source ~/oscp-swiss/script/installation.sh
 <details>
 <summary><code>swiss</code></summary>
 
-> Description: `swiss` shows all your customized variables, functions, and alieses. 
+> Description: `swiss` shows all your customized variables, functions, and aliases. 
 
 ```bash
 # Usage
@@ -56,11 +57,26 @@ source ~/oscp-swiss/script/installation.sh
 
 </details>
 
-## 4. Extensions
+## 4. Development & Customization
 
-## 5. Development & Customization
+Here are the key structure for swiss:
 
-## 6. License
+```md
+.
+├── data             # (Private) common data/material for testing 
+│   ├── ...
+│   └── test.jpg
+├── private          # (Private) you can put your customized script, ovpn file, etc.
+│   ├── myscript.sh
+│   └── lab.ovpn
+├── script           #  (Public) main script for swiss
+├── utils            # (Private) put your binaries, compiled files, utilities (e.g., pspy)
+│   └── ...
+├── wordlist         # (Private) custom wordlist
+└── settings.json
+```
+
+## 5. License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
