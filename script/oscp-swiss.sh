@@ -7,26 +7,21 @@ source $HOME/oscp-swiss/script/extension.sh
 load_settings
 load_private_scripts
 
+# Description: List all functions, aliases, and variables
+# Usage: swiss
 function swiss() {   
     local swiss_path="$HOME/oscp-swiss/script/oscp-swiss.sh"
     local alias_path="$HOME/oscp-swiss/script/alias.sh"
     local extension_path="$HOME/oscp-swiss/script/extension.sh"
 
-    # Use grep with a regex to extract function names
     logger info "[i] Functions:"
-    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | \
-        sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
-
-    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | \
-        sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
 
     logger info "\n[i] Aliases:"
-
-    # Extract and display all alias names
     grep -E '^\s*alias\s+' "$extension_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
 
     logger info "\n[i] Variables:"
-    # Extract and display all variable names
     grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$extension_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
     grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
 
@@ -35,10 +30,8 @@ function swiss() {
     if [ -d "$script_dir" ]; then
         for script in "$script_dir"/*.sh; do
         if [ -f "$script" ]; then
-
             logger warn "\n[i] Function under $script:"
-            grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script" | \
-                sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+            grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"| sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
             logger warn "[i] Aliases under $script:"
             grep -E '^\s*alias\s+' "$script" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
             logger warn "[i] Variables under $script:"
@@ -50,6 +43,8 @@ function swiss() {
     fi
 }
 
+# Description: warpped nmap command with default options
+# TODO: update the default options, remove --i needs.
 function swiss_nmap() {
     local mode="fast"
     local ip=""
@@ -147,12 +142,19 @@ function swiss_nmap() {
     esac
 }
 
+# Description: one-liner to start services, including docker, ftp, http, smb, ssh, bloodhound, ligolo (extension), wsgi
+# Usage: swiss_svc <service name>
+# Arguments:
+#   service name: docker; ftp; http; smb; ssh; bloodhound; ligolo (extension); wsgi
+# Example:
+#   swiss_svc http # to spawn a http server in the current directory
+#   swiss_svc ftp  # to spawn a ftp server in the current directory
 function swiss_svc() {
     local service=""
 
     _help() {
         logger info "Usage: swiss_svc <service name>]"
-        logger info "service: docker; ftp; http; smb; ssh; bloodhound; wsgi"
+        logger info "service: docker; ftp; http; smb; ssh; bloodhound; ligolo; wsgi"
     }
 
     service="$1"
@@ -222,6 +224,25 @@ function swiss_svc() {
 
             sudo docker-compose up
             ;;
+        ligolo)
+            extension_fn_banner
+            logger info "[i] start ligolo agent"
+            logger warn "[i] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
+            logger info "[i] under target (find agent executable under \$ligolo_path):"
+            logger info "[i] agent.exe -connect $(get_default_network_interface_ip):443 -ignore-cert"
+            logger warn "[i] Using fingerprint: "
+            logger warn "[i] agent.exe -connect $(get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
+
+            logger info "[i] after connection: "
+            logger info "[i] > session                                    # choose the session"
+            logger info "[i] > ifconfig                                   # check interface"
+            logger info "[i] sudo ip route add 192.168.0.0/24 dev ligolo  # add interface"
+            logger warn "[i] ip route del 122.252.228.38/32               # removal after use"
+            logger info "[i] start                                        # start the agent"
+
+            local ligolo_agent_path="$HOME/oscp-swiss/utils/tunnel/ligolo-0.6.2/proxy"
+            $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
+            ;;
         wsgi)
             logger info "[i] start wsgidav under the directory: $(pwd)"
             logger info "[i] usage: svc_wsgi <port>"
@@ -235,10 +256,24 @@ function swiss_svc() {
     esac
 }
 
+# Description: one-liner to ship files to the target machine. With no copy-paste needs.
+# Usage: swiss_ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>
+# Arguments:
+#   -t|--type: linux|windows (default: linux)
+#   -a|--auto-host-http: auto-host the http server (default: 1)
+# Example:
+#  swiss_ship -t linux -a /path/to/file
+# TODO: Finish doc
 function swiss_ship() {
     local type="linux"
     local filepath
     local autoHostHttp=1
+
+    _helper() {
+        logger error "[e] Filepath is required."
+        logger info "[i] Usage: swiss_ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
+        return 1
+    }
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -258,19 +293,17 @@ function swiss_ship() {
     done
 
     if [[ -z "$filepath" ]]; then
-        log error "[e] Filepath is required."
-        log info "[i] Usage: swiss_ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
-        return 1
+        _helper
     fi
 
     if [[ ! -f "$filepath" ]]; then
-        echo error"[e] File '$filepath' does not exist."
+        logger error "[e] File '$filepath' does not exist."
         return 1
     fi
 
     local filename=$(basename "$filepath")
 
-    cp "$filepath" "./$filename" && log info "[i] File '$filename' copied to current directory."
+    cp "$filepath" "./$filename" && logger info "[i] File '$filename' copied to current directory."
 
 
     autoHost() {
@@ -283,16 +316,16 @@ function swiss_ship() {
 
     if [[ "$type" == "linux" ]]; then
         local cmd="wget $(get_default_network_interface_ip)/$filename"
-        echo info "[i] Linux type selected. wget command ready."
-        echo info "[i] $cmd"
+        logger info "[i] Linux type selected. wget command ready."
+        logger info "[i] $cmd"
         echo -n $cmd | xclip -selection clipboard
 
         autoHost
 
     elif [[ "$type" == "windows" ]]; then
         local cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile \$env:TEMP\\$filename\""
-        echo info "[i] Windows type selected. wget command ready."
-        echo info "[i] $cmd"
+        logger info "[i] Windows type selected. wget command ready."
+        logger info "[i] $cmd"
 
         echo -n $cmd | xclip -selection clipboard
 
@@ -302,10 +335,12 @@ function swiss_ship() {
     fi
 }
 
+# TODO: Finish doc
 function swiss_windows_nc() {
     rlwrap nc -lvnp $1
 }
 
+# TODO: Finish doc
 function swiss_windows_rev() {
     logger info "[i] generating windows rev exe using msfvenom"
 
@@ -360,7 +395,7 @@ function swiss_windows_rev() {
     esac
 }
 
-# default args for ffuf
+# TODO: Finish doc
 function ffuf_default() {
     if [ $# -eq 0 ]; then
         logger info "[i] Usage: ffuf_default [URL/FUZZ] (options)"
@@ -384,7 +419,7 @@ function ffuf_default() {
     fi
 }
 
-# default args for ffuf
+# TODO: Finish doc
 function ffuf_traversal_default() {
     if [ $# -eq 0 ]
     then
@@ -402,7 +437,7 @@ function ffuf_traversal_default() {
     fi
 }
 
-# default args for gobuster dns
+# TODO: Finish doc
 function gobuster_dns_default() {
     if [ $# -eq 0 ]
     then
@@ -417,7 +452,7 @@ function gobuster_dns_default() {
     fi
 }
 
-# default args for gobuster vhost
+# TODO: Finish doc
 function gobuster_vhost_default() {
     if [ $# -eq 0 ]
     then
@@ -433,7 +468,7 @@ function gobuster_vhost_default() {
     fi
 }
 
-# default for hydra
+# TODO: Finish doc
 function hydra_default() {
     local IP=$1
     local PORTS=$2
@@ -476,6 +511,7 @@ function hydra_default() {
 }
 
 # copy the current directory name to the clipboard
+# TODO: Finish doc
 function cp_dir() {
     
     local current_dir=$(basename "$PWD")
@@ -510,6 +546,7 @@ function cp_dir() {
 }
 
 # Function to copy the IPv4 address of a specified network interface to the clipboard
+# TODO: Finish doc
 function cp_ip() {
     logger info "[i] Usage: cp_ip <interface>"
 
@@ -539,6 +576,7 @@ function cp_ip() {
 }
 
 # get all urls from a web page
+# TODO: Finish doc
 function gen_pagelink() {
     logger info "[i] start extracting all urls from $1"
     logger info "[i] original files will be stored at $PWD/links.txt"
@@ -549,26 +587,19 @@ function gen_pagelink() {
 }
 
 # get keydords
+# TODO: Finish doc
 function gen_keywords() {
     logger info "[i] usage: gen_keywords $url"
     cewl -d 2 -m 4 -w cewl-wordlist.txt $1
 }
 
-# set a path as workspace (cross-session)
-function set_workspace() {
-    s workspace $PWD
-}
-
-# go to the path defined as workspace (cross-session)
-function go_workspace() {
-    cd $(g workspace)
-}
-
+# Description: set the target IP address
 function set_target() {
     s target $1
     target=$1
 }
 
+# TODO: Finish doc
 function get_target() {
     # Use the 'g' function to get the target value from the config file
     local target=$(g target)
@@ -586,6 +617,7 @@ function get_target() {
 }
 
 # copy a linpeas-like script to speed up the enumeration
+# TODO: Finish doc
 function cp_target_script() {
     logger info "[i] Usage: cp_target_script"
     local shell_path="$HOME/oscp-swiss/script/target-enum-script.sh"
@@ -599,6 +631,7 @@ function cp_target_script() {
 }
 
 # tcpdump from an ip address
+# TODO: Finish doc
 function listen_target() {
     logger info "[i] tcpdump to listen anything from an ip address\n"
     logger info "[i] Usage: listen <ip> [-i]"
@@ -616,7 +649,14 @@ function listen_target() {
     sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
 }
 
-# generate workspace for pen test
+# Description:
+#   Generate workspace for pen test. Including:
+#       - Create a directory with the format <name>-<ip>
+#       - Create username.txt and password.txt
+#       - Set the current path as workspace, you can use go_workspace to jump to the workspace across sessions
+#       - Set the target IP address, you can use get_target to copy the target IP address to the clipboard
+#       - Copy the ip to the clipboard
+# Usage: init_workspace
 function init_workspace() {
     logger info "[i] Initializing workspace ..."
     logger info "[i] Enter workspace name: \c"
@@ -644,16 +684,19 @@ function init_workspace() {
     cp_dir
 }
 
-# set a path as workspace (cross-session)
+# Description: set the current path as workspace (cross-session)
+# Usage: set_workspace
 function set_workspace() {
     s workspace $PWD
 }
 
-# go to the path defined as workspace (cross-session)
+# Description: go to the path defined as workspace (cross-session)
+# Usage: go_workspace
 function go_workspace() {
     cd $(g workspace)
 }
 
+# TODO: Finish doc
 function merge() {
     local file1="$1"
     local file2="$2"
@@ -677,6 +720,7 @@ function merge() {
 }
 
 # get all files from ftp
+# TODO: Finish doc
 function get_ftp_all_files() {
     # Assigning parameters to variables
     local USERNAME=$1
@@ -693,15 +737,18 @@ function get_ftp_all_files() {
     wget -r --no-passive --no-parent ftp://$USERNAME:$PASSWORD@$IP
 }
 
+# TODO: Finish doc
 function target_ipinfo() {
   curl https://ipinfo.io/$1/json
 }
 
+# TODO: Finish doc
 function host_public_ip() {
   curl ipinfo.io/ip
 }
 
-show_utils() {
+# TODO: Finish doc
+function show_utils() {
     # Check if a directory is provided; if not, use the current directory
     local dir="${1:-$HOME/oscp-swiss/utils}"
 
@@ -720,7 +767,8 @@ show_utils() {
     done
 }
 
-explain() {
+# TODO: Finish doc
+function explain() {
     if [[ -z "$1" ]]; then
         echo "Usage: explain <file_or_directory>"
         return 1

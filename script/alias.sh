@@ -1,15 +1,18 @@
 #!/bin/bash
 
-source ~/oscp-swiss/script/utils.sh
+source $HOME/oscp-swiss/script/utils.sh
 load_settings
 
-# extend existing func
 alias grep="grep --color=auto"
 alias diff="diff --color=auto"
 
+# Description:
+#   Extended cd function with `-` and file support
+#   If no argument is given, it will change to the home directory
+#   If `-` is given, it will change to the previous directory
+#   If a file is given, it will change to the directory of the file
 function cd() {
     if [ $# -eq 0 ]; then
-        # No arguments
         builtin cd
     elif [ "$1" == "-" ]; then
         builtin cd "$OLDPWD" && pwd
@@ -23,18 +26,31 @@ function cd() {
     fi
 }
 
-# for customized size
+# Description:
+#   Replace the default argument of the command xfreerdp
+#   The default argument is to:
+#       1. ignore the certificate
+#       2. set the resolution to your preferred screen resolution
+#       3. mount to the current directory
 alias _xfrredp="/usr/bin/xfreerdp"
-alias xfreerdp="custom_cmd_banner; mkdir xfreerdp-data; xfreerdp /drive:$PWD,/xfreerdp-data /cert-ignore /w:932"
+alias xfreerdp="override_cmd_banner; mkdir xfreerdp-data; xfreerdp /drive:$PWD,/xfreerdp-data /cert-ignore /w:$XFREERDP_WIDTH"
 
-# use with WP token for detailed recon
+# Description:
+#   Replace the default argument of the command wpscan
+#   The default argument is to:
+#       1. enumerate users, plugins, and themes
+#       2. use aggressive plugin detection
+#       3. use the WPSCAN_API_TOKEN environment variable (optional)
 alias _wpscan="/usr/bin/wpscan"
-alias wpscan="custom_cmd_banner; wpscan --enumerate ap --enumerate at --enumerate u --plugins-detection aggressive --api-token $WP_TOKEN"
+alias wpscan="override_cmd_banner; wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $WP_TOKEN"
 
-# colorized cat command
-# ref: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
+# Description:
+#   Replace the default argument of the command cat
+#   The default argument is to:
+#       1. display the content of the file with color under dark-mode Kali.
+# Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
 alias _cat="/usr/bin/cat"
-alias cat="custom_cmd_banner; pygmentize -P style=dracula -g"
+alias cat="override_cmd_banner; pygmentize -P style=dracula -g"
 
 ############
 # wordlist #
@@ -79,11 +95,6 @@ wordlist_sqli="$WORDLIST_BASE/custom-sqli.txt"
 # traversal
 wordlist_traversal="$WORDLIST_BASE/IntruderPayloads/FuzzLists/traversal.txt"
 
-########
-# nmap #
-########
-nmap_scripts_path="/usr/share/nmap/scripts"
-
 ###########
 # windows #
 ###########
@@ -101,6 +112,7 @@ linux_privesc="/usr/bin/unix-privesc-check"
 # disc #
 ########
 hasncat_potfile_path="~/.local/share/hashcat/hashcat.potfile"
+nmap_scripts_path="/usr/share/nmap/scripts"
 swiss_utils="$HOME/oscp-swiss/utils"
 swiss_script="$HOME/oscp-swiss/script/oscp-swiss.sh"
 swiss_alias="$HOME/oscp-swiss/script/alias.sh"

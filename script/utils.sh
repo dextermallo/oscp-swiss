@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 log() {
     local bold=""
     local fg_color=""
@@ -96,13 +97,13 @@ logger() {
         error)
             log --bold -f red "$@"
             ;;
-        green-banner)
+        hint-msg)
             log --bold -f black -b green "$@"
             ;;
-        yellow-banner)
+        highlight-msg)
             log --bold -f black -b yellow "$@"
             ;;
-        red-banner)
+        critical-msg)
             log --bold -f white -b red "$@"
             ;;
         *)
@@ -129,17 +130,18 @@ generate_random_filename() {
     echo "$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 6)"
 }
 
-# list ip address
+# Description: Simplified version of the `ip` command to show the IP address of the default network interface.
 function i() {
     ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'
 }
 
-# get default interface IPv4
+# Description: Get the default network interface's IP address and copy it to the clipboard.
 function gi() {
     logger info "[i] get default network interface's IP address"
     ip -o -f inet addr show | grep $DEFAULT_NETWORK_INTERFACE | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
 }
 
+# Description: Get the default network interface's IP address.
 function get_default_network_interface_ip() {
     ip -o -f inet addr show | grep $DEFAULT_NETWORK_INTERFACE | awk '{split($4, a, "/"); printf "%s", a[1]}'
 }
@@ -147,13 +149,11 @@ function get_default_network_interface_ip() {
 # Description:
 #   Abbrivation for "set" to set a key-value item in the configuration file.
 #   Uses with the function g (abbr for "get"). Works across different terminal sessions.
-# 
 # Usage: s <key_name> <value>
 # Example:
-#   s next-attempt-url http://localhost
-#   
+#   $> s next-attempt-url http://localhost
 #   and you can use the command g to get it in another terminal session
-#   g next-attempt-url
+#   $> g next-attempt-url
 function s() {
     local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
@@ -174,10 +174,10 @@ function s() {
 # 
 # Usage: g <key_name>
 # Example:
-#   s next-attempt-url http://localhost
+#   $> s next-attempt-url http://localhost
 #   
 #   and you can use the command g to get it in another terminal session
-#   g next-attempt-url
+#   $> g next-attempt-url
 function g() {
     local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
@@ -196,11 +196,16 @@ function g() {
     fi
 }
 
-# internal func
-custom_cmd_banner() {
+# Description: Display a banner for commands, which are replaced by aliases.
+override_cmd_banner() {
     logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
 }
 
+extension_fn_banner() {
+    logger critical-msg "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
+}
+
+# Description: Load the settings from the settings.json file. All the key-value pairs under `{ env }` are exported as environment variables.
 load_settings() {
     local settings_file="$HOME/oscp-swiss/settings.json"
 

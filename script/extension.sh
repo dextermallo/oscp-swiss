@@ -4,9 +4,12 @@ source $HOME/oscp-swiss/script/utils.sh
 source $HOME/oscp-swiss/script/alias.sh
 load_settings
 
-#############
-# Extension #
-#############
+# About extension.sh
+# The extension.sh is for the non-native functions that are used in the script.
+# You may need to download the tools and scripts or modify the path to use them.
+# for extension function, you should use the `extension_fn_banner` function to display the banner
+# to inform the user that the function is an extension function.
+
 windows_winpeas_x86="$swiss_utils/Peas/winPEASx86-v20240721.exe"
 windows_winpeas_x64="$swiss_utils/Peas/winPEASx64-v20240721.exe"
 linux_linpeas="$swiss_utils/Peas/linpeas-v20240721.sh"
@@ -20,24 +23,3 @@ windows_sharphound='/usr/share/windows-resources/SharpHoundv2.4.1'
 # ref: https://github.com/antonioCoco/ConPtyShell
 windows_conpty="$swiss_utils/Invoke-ConPtyShell.ps1"
 ligolo_path="$swiss_utils/tunnel/ligolo-0.6.2"
-
-
-function svc_ligolo() {
-    logger info "[i] start ligolo agent"
-    logger warn "[i] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
-    logger info "[i] under victim (find agent executable under \$ligolo_path):"
-    logger info "[i] agent.exe -connect $(get_default_network_interface_ip):443 -ignore-cert"
-    logger warn "[i] Using fingerprint: "
-    logger warn "[i] agent.exe -connect $(get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
-
-    i
-
-    logger info "[i] after connection: "
-    logger info "[i] > session                                    # choose the session"
-    logger info "[i] > ifconfig                                   # check interface"
-    logger info "[i] sudo ip route add 192.168.0.0/24 dev ligolo  # add interface"
-    logger info "[i] ip route del 122.252.228.38/32               # removal"
-
-    local ligolo_agent_path="$HOME/oscp-swiss/utils/tunnel/ligolo-0.6.2/proxy"
-    $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
-}

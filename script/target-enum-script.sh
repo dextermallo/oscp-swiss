@@ -41,7 +41,7 @@ function log() {
                     magenta) fg_color=$fg_magenta ;;
                     cyan) fg_color=$fg_cyan ;;
                     white) fg_color=$fg_white ;;
-                    *) fg_color="" ;;  # Default: no color
+                    *) fg_color="" ;;
                 esac
                 shift
                 ;;
@@ -56,7 +56,7 @@ function log() {
                     magenta) bg_color=$bg_magenta ;;
                     cyan) bg_color=$bg_cyan ;;
                     white) bg_color=$bg_white ;;
-                    *) bg_color="" ;;  # Default: no color
+                    *) bg_color="" ;;
                 esac
                 shift
                 ;;
