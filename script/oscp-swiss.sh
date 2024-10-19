@@ -22,7 +22,7 @@ function swiss() {
         logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         logger info "|                                            |"
-        logger info "|  by @dextermallo v$version                    |"
+        logger info "|  by @dextermallo v$APP_VERSION                    |"
         logger info "'--------------------------------------------'"
     }
 

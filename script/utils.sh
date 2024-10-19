@@ -220,6 +220,6 @@ load_settings() {
         export "$key"="$value"
     done < <(jq -r '.env | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
 
-    local version=$(jq -r '.version' "$settings_file")
-    export version="$version"
+    APP_VERSION=$(jq -r '.APP_VERSION' "$settings_file")
+    export "APP_VERSION"="$APP_VERSION"
 }
