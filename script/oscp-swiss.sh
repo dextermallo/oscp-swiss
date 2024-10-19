@@ -345,14 +345,14 @@ function listen() {
 }
 
 # Description: Generate a reverse shell using msfvenom
-# Usage: swiss_windows_rev <-p PORT> <-a x86|x64|dll> [-i IP]
+# Usage: windows_rev <-p PORT> <-a x86|x64|dll> [-i IP]
 # Arguments:
 #   -p|--port: Port number for the reverse shell
 #   -a|--arch: Architecture for the reverse shell (x86, x64, dll)
 #   -i|--ip: IP address for the reverse shell
 # Example:
-#  swiss_windows_rev -p 4444 -a x86 -i
-function swiss_windows_rev() {
+#  windows_rev -p 4444 -a x86 -i
+function windows_rev() {
     logger info "[i] generating windows rev exe using msfvenom"
 
     local ip=$(get_default_network_interface_ip)
@@ -557,8 +557,8 @@ function hydra_default() {
 }
 
 # Description: get all urls from a web page
-# Usage: get_pagelink <url>
-function get_pagelink() {
+# Usage: get_web_pagelink <url>
+function get_web_pagelink() {
     logger info "[i] start extracting all urls from $1"
     logger info "[i] original files will be stored at $PWD/links.txt"
     logger info "[i] unique links (remove duplicated) will be stored at $PWD/links-uniq.txt"
@@ -568,9 +568,9 @@ function get_pagelink() {
 }
 
 # Description: get keywords from a web page
-# Usage: gen_keywords <url>
-function gen_keywords() {
-    logger info "[i] Usage: gen_keywords <url>"
+# Usage: get_web_keywords <url>
+function get_web_keywords() {
+    logger info "[i] Usage: get_web_keywords <url>"
     cewl -d $CEWL_DEPTH -m $CEWL_MIN_WORD_LENGTH -w cewl-wordlist.txt $1
 }
 
@@ -737,7 +737,7 @@ function spawn_session_in_workspace() {
 #         /usr/share/wordlists/seclists/Discovery/DNS/fierce-hostlist.txt \
 #         /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
 #         -o subdomain+vhost-default.txt
-merge() {
+function merge() {
     local output="merged.txt"
     local statistic=true
     local files=()
