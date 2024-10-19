@@ -11,32 +11,64 @@ load_private_scripts
 # Description: List all functions, aliases, and variables
 # Usage: swiss
 function swiss() {
+
+    _banner() {
+        logger info ".--------------------------------------------."
+        logger info "|                                            |"
+        logger info "|                                            |"
+        logger info "|  __________       _______________________  |"
+        logger info "|  __  ___/_ |     / /___  _/_  ___/_  ___/  |"
+        logger info "|  _____ \\__ | /| / / __  / _____ \\_____ \\   |"
+        logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
+        logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
+        logger info "|                                            |"
+        logger info "|  by @dextermallo v$APP_VERSION                    |"
+        logger info "'--------------------------------------------'"
+    }
+
+    if [ $APP_BANNER = true ]; then
+        _banner
+    fi
+
     local swiss_path="$HOME/oscp-swiss/script/oscp-swiss.sh"
     local alias_path="$HOME/oscp-swiss/script/alias.sh"
     local extension_path="$HOME/oscp-swiss/script/extension.sh"
 
     logger info "[i] Functions:"
-    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
-    grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+    {
+        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
+        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
+    } | sort | column
 
     logger info "\n[i] Aliases:"
     grep -E '^\s*alias\s+' "$extension_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
 
     logger info "\n[i] Variables:"
-    grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$extension_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
-    grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+    {
+        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$extension_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+    } | sort | column
 
-    # /private
+    # load /private scripts
     local script_dir="$HOME/oscp-swiss/private"
     if [ -d "$script_dir" ]; then
         for script in "$script_dir"/*.sh; do
         if [ -f "$script" ]; then
-            logger warn "\n[i] Function under $script:"
-            grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"| sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
-            logger warn "[i] Aliases under $script:"
-            grep -E '^\s*alias\s+' "$script" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
-            logger warn "[i] Variables under $script:"
-            grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$script" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+
+            if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"; then
+                logger info "\n[i] Function under $script:"
+                grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"| sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
+            fi
+            
+            if grep -qE '^\s*alias\s+' "$script"; then
+                logger info "[i] Aliases under $script:"
+                grep -E '^\s*alias\s+' "$script" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+            fi
+            
+            if grep -qE '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$script"; then
+                logger info "[i] Variables under $script:"
+                grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$script" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+            fi
         fi
         done
     else
@@ -44,36 +76,23 @@ function swiss() {
     fi
 }
 
-# Description: warpped nmap command with default options
-# TODO: update the default options, remove --i needs.
+# Description: Wrapped nmap command with default options
+# Usage: nmap_default <IP> [mode]
+# Modes: fast (default), tcp, udp, udp-all, stealth
+# Example: nmap_default 192.168.1.1
 function nmap_default() {
-    local mode="fast"
     local ip=""
-
+    local mode=${2:-"fast"}
+    
     _help() {
-        logger info "Usage: nmap_default --ip <IP> [--mode <mode>]"
+        logger info "Usage: nmap_default <IP> [<mode>]"
         logger info "Modes: fast (default), tcp, udp, udp-all, stealth"
     }
 
-    while [[ "$#" -gt 0 ]]; do
-        case "$1" in
-        -i|--ip)
-            shift
-            ip="$1"
-            ;;
-        -m|--mode)
-            shift
-            mode="$1"
-            ;;
-        *)
-            _help
-            return 1
-            ;;
-        esac
+    if [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        ip="$1"
         shift
-    done
-
-    if [[ -z "$ip" ]]; then
+    else
         _help
         return 1
     fi
@@ -85,7 +104,7 @@ function nmap_default() {
     case "$mode" in
         fast)
             mkdir -p $saved_file_path/fast
-            logger info "[i] Start quick check. Saved to $saved_file_path/quick-tcp"
+            logger info "[i] Start quick check. Saved to $saved_file_path/fast/tcp"
             nmap -v --top-ports 2000 $ip -oN $saved_file_path/fast/tcp
 
             local fast_ports=$(grep -oP '^\d+\/\w+' $saved_file_path/fast/tcp | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
@@ -97,6 +116,8 @@ function nmap_default() {
 
             logger info "[i] Check UDP top 200 ports. Saved to $saved_file_path/fast/udp-top-200"
             sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/fast/udp-top-200
+
+            logger warn "[i] Remember to run tcp and udp mode for full enumeration"
             ;;
         tcp)
             mkdir -p $saved_file_path/tcp
@@ -109,15 +130,7 @@ function nmap_default() {
 
             logger info "[i] Checking vuln script - $ports. Saved to $saved_file_path/tcp/vuln"
             nmap -p$ports --script vuln $ip -oN $saved_file_path/tcp/vuln
-            
-            logger info "[i] Start general check (second round). Saved to $saved_file_path/tcp/check-2"
-            nmap -p0-65535 $ip -oN $saved_file_path/tcp/check-2
-            
-            local services_first=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check-1 | awk '{print $1}' | sort -u)
-        
-            # Extract services from the second round
-            local services_second=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check-2 | awk '{print $1}' | sort -u)
-            
+
             logger warn "[i] Services found in the second round but not in the first round:"
             comm -13 <(echo "$services_first") <(echo "$services_second")
             ;;
@@ -144,17 +157,17 @@ function nmap_default() {
 }
 
 # Description: one-liner to start services, including docker, ftp, http, smb, ssh, bloodhound, ligolo (extension), wsgi
-# Usage: swiss_svc <service name>
+# Usage: svc <service name>
 # Arguments:
 #   service name: docker; ftp; http; smb; ssh; bloodhound; ligolo (extension); wsgi
 # Example:
-#   swiss_svc http # to spawn a http server in the current directory
-#   swiss_svc ftp  # to spawn a ftp server in the current directory
-function swiss_svc() {
+#   svc http # to spawn a http server in the current directory
+#   svc ftp  # to spawn a ftp server in the current directory
+function svc() {
     local service=""
 
     _help() {
-        logger info "Usage: swiss_svc <service name>]"
+        logger info "Usage: svc <service name>]"
         logger info "service: docker; ftp; http; smb; ssh; bloodhound; ligolo; wsgi"
     }
 
@@ -309,7 +322,7 @@ function ship() {
 
     autoHost() {
         if [[ "$autoHostHttp" = true ]]; then
-            swiss_svc http
+            svc http
         else
             echo warning "[W] Remember to host the web server on your own"
         fi
@@ -345,14 +358,14 @@ function listen() {
 }
 
 # Description: Generate a reverse shell using msfvenom
-# Usage: swiss_windows_rev <-p PORT> <-a x86|x64|dll> [-i IP]
+# Usage: windows_rev <-p PORT> <-a x86|x64|dll> [-i IP]
 # Arguments:
 #   -p|--port: Port number for the reverse shell
 #   -a|--arch: Architecture for the reverse shell (x86, x64, dll)
 #   -i|--ip: IP address for the reverse shell
 # Example:
-#  swiss_windows_rev -p 4444 -a x86 -i
-function swiss_windows_rev() {
+#  windows_rev -p 4444 -a x86 -i
+function windows_rev() {
     logger info "[i] generating windows rev exe using msfvenom"
 
     local ip=$(get_default_network_interface_ip)
@@ -404,7 +417,7 @@ function swiss_windows_rev() {
     esac
 }
 
-# Description: default directory fuzzing using fuff, compatible with original arguments
+# Description: directory fuzzing using fuff, compatible with original arguments
 # Usage: ffuf_default [URL/FUZZ] (options)
 # Example: ffuf_default http://example.com/FUZZ -fc 400
 function ffuf_default() {
@@ -433,10 +446,13 @@ function ffuf_default() {
     fi
 }
 
-# TODO: Finish doc
+# Description: file traversal fuzzing using ffuf, compatible with original arguments
+# Usage: ffuf_traversal [URL] (options)
+# Example: ffuf_traversal http://example.com -fc 400
 function ffuf_traversal_default() {
     _helper() {
         logger info "[i] Usage: ffuf_traversal_default [URL] (options)"
+        logger warn "[i] You may need to try <URL>/FUZZ and <URL>FUZZ"
     }
 
     if [ $# -eq 0 ]; then
@@ -460,41 +476,69 @@ function ffuf_traversal_default() {
     fi
 }
 
-# TODO: Finish doc
-# TODO: change save_path
+# Description: subdomain fuzzing using gobuster, compatible with original arguments
+# Usage: gobuster_subdomain_default [domain_name] (options)
+# Example: gobuster_subdomain_default example.com
 function gobuster_subdomain_default() {
-    if [ $# -eq 0 ]
-    then
+    _helper() {
         logger info "[i] Usage: gobuster_subdomain_default [domain_name] (options)"
+    }
+
+    if [ $# -eq 0 ]; then
+        _helper
     else
-        [ ! -d "$(pwd)/subdomain" ] && logger info "[i] Creating directory $(pwd)/subdomain ..." && mkdir -p subdomain
-        logger info "[i] using wordlist: $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST"
+        local url="$1"
+        if [[ "$url" =~ ^https?:// ]]; then
+            local domain=$(echo "$url" | awk -F/ '{print $3}')
+        else
+            local domain=$(echo "$url" | awk -F/ '{print $1}')
+        fi
+        local domain_dir="$(pwd)/ffuf/$domain"
+        logger info "[i] Creating directory $domain_dir ..."
+        mkdir -p "$domain_dir"
 
         if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
             _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
         fi
 
-        gobuster dns -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST -t 20 -o subdomain/subdomain-default -d ${@}
+        gobuster dns -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST -t 20 -o $domain_dir/subdomain-default -d ${@}
     fi
 }
 
-# TODO: Finish doc
+# Description: vhost fuzzing using gobuster, compatible with original arguments
+# Usage: gobuster_vhost_default [ip] [domain] (options)
+# Arguments:
+#   - ip: IP address
+#   - domain: Domain name (e.g., example.com)
+# Example: gobuster_vhost_default
 function gobuster_vhost_default() {
-    if [ $# -eq 0 ]
-    then
+    _helper() {
         logger info "[i] Usage: gobuster_vhost_default [ip] [domain] (options)"
+    }
+
+    if [ $# -eq 0 ]; then
+        _helper
     else
-        [ ! -d "$(pwd)/gobuster" ] && logger info "[i] Creating directory $(pwd)/gobuster ..." && mkdir -p gobuster
-        logger info "[i] using wordlist: /amass/subdomains-top1mil-110000.txt"
 
         local ip="$1"
         local domain="$2"
+        local domain_dir="$(pwd)/ffuf/$domain"
+        logger info "[i] Creating directory $domain_dir ..."
+        mkdir -p "$domain_dir"
 
-        gobuster vhost -k -u $ip --domain $domain --append-domain -r -w /usr/share/wordlists/amass/subdomains-top1mil-110000.txt -o gobuster/vhost_default -t 64
+        if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
+            _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+        fi
+
+        gobuster vhost -k -u $ip --domain $domain --append-domain -r \
+                 -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST \
+                 -o $domain_dir/vhost-default -t 64
     fi
 }
 
 # Description: hydra default
+# Usage: hydra_default <IP> <PORTS>
+# Example: hydra_default
 function hydra_default() {
     local IP=$1
     local PORTS=$2
@@ -525,44 +569,9 @@ function hydra_default() {
     done
 }
 
-# copy the current directory name to the clipboard
-# TODO: Finish doc
-function cp_dir() {
-    
-    local current_dir=$(basename "$PWD")
-    local dash_count=$(echo "$input" | tr -cd '-' | wc -c)
-
-    # Check if the number of dashes is greater than 2
-    if [ "$dash_count" -gt 2 ]; then
-            # Copy the current directory name to the clipboard
-            echo -n "$current_dir" | xclip -selection clipboard
-            logger info "[i] Custom Format Invalid. Format: <name>-<IP> or <IP>-<name>."
-            logger info "[i] Directory name '$current_dir' copied to clipboard."
-    else
-        local val1=$(echo "$current_dir" | awk -F- '{print $1}')
-        local val2=$(echo "$current_dir" | awk -F- '{print $2}')
-
-        logger info "[i] identified custom format: $val1-$val2"
-
-        local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
-
-        if [[ $val1 =~ $ip_regex ]]; then
-            echo -n "$val1" | xclip -selection clipboard
-            logger info "[i] IP '$val1' copied to clipboard."
-        elif [[ $val2 =~ $ip_regex ]]; then
-            echo -n "$val2" | xclip -selection clipboard
-            logger info "[i] IP '$val2' copied to clipboard."
-        else
-            # Copy the current directory name to the clipboard
-            echo -n "$current_dir" | xclip -selection clipboard
-            echo "Directory name '$current_dir' copied to clipboard."
-        fi
-    fi
-}
-
 # Description: get all urls from a web page
-# Usage: get_pagelink <url>
-function get_pagelink() {
+# Usage: get_web_pagelink <url>
+function get_web_pagelink() {
     logger info "[i] start extracting all urls from $1"
     logger info "[i] original files will be stored at $PWD/links.txt"
     logger info "[i] unique links (remove duplicated) will be stored at $PWD/links-uniq.txt"
@@ -572,9 +581,9 @@ function get_pagelink() {
 }
 
 # Description: get keywords from a web page
-# Usage: gen_keywords <url>
-function gen_keywords() {
-    logger info "[i] Usage: gen_keywords <url>"
+# Usage: get_web_keywords <url>
+function get_web_keywords() {
+    logger info "[i] Usage: get_web_keywords <url>"
     cewl -d $CEWL_DEPTH -m $CEWL_MIN_WORD_LENGTH -w cewl-wordlist.txt $1
 }
 
@@ -703,8 +712,7 @@ function init_workspace() {
 
     set_workspace
     set_target "$ip_address"
-
-    cp_dir
+    get_target
 }
 
 # Description: set the current path as workspace (cross-session)
@@ -731,9 +739,18 @@ function spawn_session_in_workspace() {
     fi
 }
 
-
-# TODO: Doc
-merge() {
+# Description: merge files into one file. Especially used for merging wordlists.
+# Usage: merge <file1> <file2> ... [-o <output>] [-s <statistic>]
+# Arguments:
+#  -o|--output: Output file name (default: merged.txt)
+#  -s|--statistic: greate a statistic of your merges (default: true)
+# Example:
+#   # To combine wordlists for subdomain enumeration:
+#   merge /usr/share/wordlists/amass/subdomains-top1mil-110000.txt \
+#         /usr/share/wordlists/seclists/Discovery/DNS/fierce-hostlist.txt \
+#         /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
+#         -o subdomain+vhost-default.txt
+function merge() {
     local output="merged.txt"
     local statistic=true
     local files=()
@@ -840,7 +857,23 @@ function host_public_ip() {
   curl ipinfo.io/ip
 }
 
-# TODO: Finish doc
+# Description:
+#   Show all utils in the utils directory with customized description.
+#   When a file has a corresponding markdown file with the same name under the same 
+#   directory, the description will be shown. (Only the first line of the markdown file)
+# Usage: show_utils [directory] (default: $HOME/oscp-swiss/utils)
+# Example:
+# you have a frequent-used reverse-shell under $HOME/oscp-swiss/utils/reverse-shell.php
+# and you have a description file $HOME/oscp-swiss/utils/reverse-shell.php.md
+# with content:
+# ```md
+# (make sure to change the IP and port before using it.)
+# ```
+# When you run show_utils, the description will be shown like:
+#   /home/dex/oscp-swiss/utils
+#   ├── reverse-shell.php (make sure to change the IP and port before using it.)
+#   ├── ...
+#   └── other-utils
 function show_utils() {
     # Check if a directory is provided; if not, use the current directory
     local dir="${1:-$HOME/oscp-swiss/utils}"
@@ -860,7 +893,9 @@ function show_utils() {
     done
 }
 
-# TODO: Finish doc
+# Description:
+#   Combo of show_utils. This will show a file's description if it has a corresponding markdown file.
+# Usage: explain <file_or_directory>
 function explain() {
     if [[ -z "$1" ]]; then
         echo "Usage: explain <file_or_directory>"

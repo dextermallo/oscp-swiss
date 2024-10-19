@@ -192,15 +192,22 @@ function g() {
 }
 
 # Description: Display a banner for commands, which are replaced by aliases.
+# Usage: override_cmd_banner
 override_cmd_banner() {
     logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
 }
 
+# Description: Display a banner for extension functions.
+# Usage: extension_fn_banner
 extension_fn_banner() {
     logger critical-msg "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
 }
 
-# Description: Load the settings from the settings.json file. All the key-value pairs under `{ env }` are exported as environment variables.
+# Description:
+#   Load the settings from the settings.json file.
+#   All the key-value pairs under `{ env }` are exported as environment variables.
+#   The settings.json file should be located at $HOME/oscp-swiss/settings.json
+# Usage: load_settings
 load_settings() {
     local settings_file="$HOME/oscp-swiss/settings.json"
 
@@ -212,4 +219,7 @@ load_settings() {
     while IFS="=" read -r key value; do
         export "$key"="$value"
     done < <(jq -r '.env | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
+
+    APP_VERSION=$(jq -r '.APP_VERSION' "$settings_file")
+    export "APP_VERSION"="$APP_VERSION"
 }
