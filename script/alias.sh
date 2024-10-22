@@ -33,7 +33,7 @@ function cd() {
 #       2. set the resolution to your preferred screen resolution
 #       3. mount to the current directory
 alias _xfrredp="/usr/bin/xfreerdp"
-alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; xfreerdp /drive:$PWD,/xfreerdp-data /cert-ignore /w:$XFREERDP_WIDTH"
+alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$XFREERDP_WIDTH"
 
 # Description:
 #   Replace the default argument of the command wpscan
