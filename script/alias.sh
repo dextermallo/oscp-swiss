@@ -33,7 +33,7 @@ function cd() {
 #       2. set the resolution to your preferred screen resolution
 #       3. mount to the current directory
 alias _xfrredp="/usr/bin/xfreerdp"
-alias xfreerdp="override_cmd_banner; mkdir xfreerdp-data; xfreerdp /drive:$PWD,/xfreerdp-data /cert-ignore /w:$XFREERDP_WIDTH"
+alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; xfreerdp /drive:$PWD,/xfreerdp-data /cert-ignore /w:$XFREERDP_WIDTH"
 
 # Description:
 #   Replace the default argument of the command wpscan
@@ -49,8 +49,12 @@ alias wpscan="override_cmd_banner; wpscan --enumerate ap,at,u --plugins-detectio
 #   The default argument is to:
 #       1. display the content of the file with color under dark-mode Kali.
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
+
 alias _cat="/usr/bin/cat"
-alias cat="override_cmd_banner; pygmentize -P style=dracula -g"
+
+if [ $COLORFUL_CAT_COMMAND = true ]; then
+    alias cat="override_cmd_banner; pygmentize -P style=dracula -g"
+fi
 
 ############
 # wordlist #
@@ -101,6 +105,7 @@ windows_path="/usr/share/windows-resources"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
+windows_nc64='/home/dex/oscp-swiss/utils/windows/nc64.exe'
 
 #########
 # linux #
