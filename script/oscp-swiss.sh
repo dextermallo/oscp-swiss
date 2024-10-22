@@ -966,4 +966,84 @@ EOF
         esac    
 }
 
+# Usage: rev_shell
+# TODO: Doc
+# TODO: built-in encode
+# TODO: env default port
+function rev_shell() {
+    logger info "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
+    read -r IP
+    IP=${IP:-$(get_default_network_interface_ip)}
+
+    logger info "[i] Port (Default: 9000): \c"
+    read -r PORT
+    PORT=${PORT:-9000}
+
+    local -a allowed_shell_types=("sh" "/bin/sh" "bash" "/bin/bash" "cmd" "powershell" "pwsh" "ash" "bsh" "csh" "ksh" "zsh" "pdksh" "tcsh" "mksh" "dash")
+
+    function is_valid_shell_type() {
+        local shell="$1"
+        for valid_shell in "${allowed_shell_types[@]}"; do
+            if [[ "$shell" == "$valid_shell" ]]; then
+                return 0
+            fi
+        done
+        return 1
+    }
+
+    while true; do
+        logger info "[i] Enter Shell (Default: /bin/bash): \c"
+        read -r SHELL_TYPE
+        SHELL_TYPE=${SHELL_TYPE:-"/bin/bash"}
+
+        if is_valid_shell_type "$SHELL_TYPE"; then
+            break
+        else
+            logger error "[e] Invalid SHELL_TYPE. Allowed values are: ${allowed_shell_types[*]}"
+        fi
+    done
+
+    # stripping color
+    logger info ""
+
+    local PS3="Please select the Mode (number): "
+    local -a bash_options=( "Bash -i" "Bash 196" "Bash read line" "Bash 5" "Bash udp" "nc mkfifo" "nc -e" "nc.exe -e" "BusyBox nc -e" "nc -c" "ncat -e" "ncat.exe -e" "ncat udp" "curl" "rustcat" "C" "C Windows" "C# TCP Client" "C# Bash -i" "Haskell #1" "OpenSSL" "Perl" "Perl no sh" "Perl PentestMonkey" "PHP PentestMonkey" "PHP Ivan Sincek" "PHP cmd" "PHP cmd 2" "PHP cmd small" "PHP exec" "PHP shell_exec" "PHP system" "PHP passthru" "PHP \`" "PHP popen" "PHP proc_open" "Windows ConPty" "PowerShell #1" "PowerShell #2" "PowerShell #3" "PowerShell #4 (TLS)" "PowerShell #3 (Base64)" "Python #1" "Python #2" "Python3 #1" "Python3 #2" "Python3 Windows" "Python3 shortest" "Ruby #1" "Ruby no sh" "socat #1" "socat #2 (TTY)" "sqlite3 nc mkfifo" "node.js" "node.js #2" "Java #1" "Java #2" "Java #3" "Java Web" "Java Two Way" "Javascript" "Groovy" "telnet" "zsh" "Lua #1" "Lua #2" "Golang" "Vlang" "Awk" "Dart" "Crystal (system)" "Crystal (code)")
+
+    local MODE
+    select MODE in "${bash_options[@]}"; do
+      if [[ -n "$MODE" ]]; then
+        logger info "\n[i] Mode $MODE selected."
+        local ENCODED_MODE=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$MODE'''))")
+        break
+      else
+        logger error "[e] Invalid selection, please try again."
+      fi
+    done
+
+    local ENCODED_SHELL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$SHELL_TYPE'''))")
+
+    local URL="https://www.revshells.com/${ENCODED_MODE}?ip=${IP}&port=${PORT}&shell=${ENCODED_SHELL}"
+
+    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL}")
+
+    if [[ "$HTTP_STATUS" -eq 200 ]]; then
+        curl -s "${URL}" | xclip -selection clipboard
+        logger info "[i] payload copied."
+    else
+        logger error "[e] Status $HTTP_STATUS"
+    fi
+}
+
+# TODO: Doc
+function url_encode() {
+    local string="${1}"
+    printf '%s' "${string}" | jq -sRr @uri
+}
+
+# TODO: DOc
+function url_decode() {
+    local string="${1//+/ }"
+    printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
+}
+
 spawn_session_in_workspace
