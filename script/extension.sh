@@ -21,3 +21,5 @@ rev_shell="$swiss_utils/rev"
 windows_sharphound='/usr/share/windows-resources/SharpHoundv2.4.1'
 windows_conpty="$swiss_utils/Invoke-ConPtyShell.ps1"
 ligolo_path="$swiss_utils/tunnel/ligolo-0.6.2"
+windows_printspoofer32='$HOME/oscp-swiss/utils/windows/PrintSpoofer32.exe'
+windows_printspoofer64='$HOME/oscp-swiss/utils/windows/PrintSpoofer64.exe'

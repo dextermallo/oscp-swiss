@@ -13,7 +13,6 @@ wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32s -P 
 wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 -P $base/pspy
 wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64s -P $base/pspy
 
-
 # Linpeas/Winpeas
 # REF: https://github.com/peass-ng/PEASS-ng/releases/tag/20240721-1e44f951
 mkdir $base/Peas
@@ -84,3 +83,10 @@ merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-error-based.txt \
         '/usr/share/wordlists/PayloadsAllTheThings/SQL Injection/Intruder/payloads-sql-blind-MySQL-ORDER_BY' \
         '/usr/share/wordlists/PayloadsAllTheThings/SQL Injection/Intruder/payloads-sql-blind-MySQL-WHERE' \
         -o sqli-custom.txt
+
+ln -s /usr/share/windows-binaries $HOME/oscp-swiss/utils/windows
+ln -s /usr/share/windows-resources $HOME/oscp-swiss/utils/windows
+ln -s /usr/share/wordlists $HOME/oscp-swiss/wordlist
+
+# nnn installation
+# https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn

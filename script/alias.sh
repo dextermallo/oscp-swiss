@@ -33,7 +33,7 @@ function cd() {
 #       2. set the resolution to your preferred screen resolution
 #       3. mount to the current directory
 alias _xfrredp="/usr/bin/xfreerdp"
-alias xfreerdp="override_cmd_banner; mkdir xfreerdp-data; xfreerdp /drive:$PWD,/xfreerdp-data /cert-ignore /w:$XFREERDP_WIDTH"
+alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_default_width"
 
 # Description:
 #   Replace the default argument of the command wpscan
@@ -42,57 +42,67 @@ alias xfreerdp="override_cmd_banner; mkdir xfreerdp-data; xfreerdp /drive:$PWD,/
 #       2. use aggressive plugin detection
 #       3. use the WPSCAN_API_TOKEN environment variable (optional)
 alias _wpscan="/usr/bin/wpscan"
-alias wpscan="override_cmd_banner; wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $WP_TOKEN"
+alias wpscan="override_cmd_banner; wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
 
 # Description:
 #   Replace the default argument of the command cat
 #   The default argument is to:
 #       1. display the content of the file with color under dark-mode Kali.
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
+
 alias _cat="/usr/bin/cat"
-alias cat="override_cmd_banner; pygmentize -P style=dracula -g"
+
+if [ $_swiss_cat_use_pygmentize = true ]; then
+    alias cat="override_cmd_banner; pygmentize -P style=dracula -g"
+fi
+
+alias _ls="ls"
+
+if [ $_swiss_ls_use_nnn = true ]; then
+    alias ls=" nnn -dEH"
+fi
 
 ############
 # wordlist #
 ############
-wordlist_path=$WORDLIST_BASE
+wordlist_path=$_swiss_wordlist_base
 custom_wordlist_path=$HOME/oscp-swiss/wordlist
 
 ### directory & files
-wordlist_dirsearch="$WORDLIST_BASE/seclists/Discovery/Web-Content/dirsearch.txt"
-wordlist_dirb_commn="$WORDLIST_BASE/dirb/common.txt"
-wordlist_raft_directory_big="$WORDLIST_BASE/seclists/Discovery/Web-Content/raft-large-directories.txt"
-wordlist_raft_file_big="$WORDLIST_BASE/seclists/Discovery/Web-Content/raft-large-files.txt"
+wordlist_dirsearch="$wordlist_path/seclists/Discovery/Web-Content/dirsearch.txt"
+wordlist_dirb_commn="$wordlist_path/dirb/common.txt"
+wordlist_raft_directory_big="$wordlist_path/seclists/Discovery/Web-Content/raft-large-directories.txt"
+wordlist_raft_file_big="$wordlist_path/seclists/Discovery/Web-Content/raft-large-files.txt"
 
 ### subdomain
-wordlist_subdomain_amass_small="$WORDLIST_BASE/amass/subdomains-top1mil-20000.txt"
-wordlist_subdomain_amass_big="$WORDLIST_BASE/amass/subdomains-top1mil-110000.txt"
-wordlist_subdomain_dirb="$WORDLIST_BASE/dirbuster/directory-list-2.3-medium.txt"
-wordlist_subdomain_top="$WORDLIST_BASE/Discovery/DNS/subdomains-top1million-110000.txt"
+wordlist_subdomain_amass_small="$wordlist_path/amass/subdomains-top1mil-20000.txt"
+wordlist_subdomain_amass_big="$wordlist_path/amass/subdomains-top1mil-110000.txt"
+wordlist_subdomain_dirb="$wordlist_path/dirbuster/directory-list-2.3-medium.txt"
+wordlist_subdomain_top="$wordlist_path/Discovery/DNS/subdomains-top1million-110000.txt"
 
 ### username & password
-wordlist_username_big="$WORDLIST_BASE/seclists/Usernames/xato-net-10-million-usernames.txt"
-wordlist_username_small="$WORDLIST_BASE/seclists/Usernames/top-usernames-shortlist.txt"
-wordlist_rockyou="$WORDLIST_BASE/rockyou.txt"
+wordlist_username_big="$wordlist_path/seclists/Usernames/xato-net-10-million-usernames.txt"
+wordlist_username_small="$wordlist_path/seclists/Usernames/top-usernames-shortlist.txt"
+wordlist_rockyou="$wordlist_path/rockyou.txt"
 wordlist_credential_small="$custom_wordlist_path/custom-default-credential-list.txt"
 
 # api
-wordlist_api_obj="$WORDLIST_BASE/seclists/Discovery/Web-Content/api/objects.txt"
-wordlist_api_res="$WORDLIST_BASE/seclists/Discovery/Web-Content/api/api-endpoints-res.txt"
+wordlist_api_obj="$wordlist_path/seclists/Discovery/Web-Content/api/objects.txt"
+wordlist_api_res="$wordlist_path/seclists/Discovery/Web-Content/api/api-endpoints-res.txt"
 
 ### specific
-wordlist_snmp_community_string="$WORDLIST_BASE/seclists/Discovery/SNMP/common-snmp-community-strings-onesixtyone.txt"
-wordlist_lfi="$WORDLIST_BASE/IntruderPayloads/FuzzLists/lfi.txt"
+wordlist_snmp_community_string="$wordlist_path/seclists/Discovery/SNMP/common-snmp-community-strings-onesixtyone.txt"
+wordlist_lfi="$wordlist_path/IntruderPayloads/FuzzLists/lfi.txt"
 
 ## hashcat
 wordlist_hashcat_rules="/usr/share/hashcat/rules"
 wordlist_hashcat_rule_best64="/usr/share/hashcat/rules/best64.rule"
 
 # sqli
-wordlist_sqli="$WORDLIST_BASE/custom-sqli.txt"
+wordlist_sqli="$wordlist_path/custom-sqli.txt"
 
 # traversal
-wordlist_traversal="$WORDLIST_BASE/IntruderPayloads/FuzzLists/traversal.txt"
+wordlist_traversal="$wordlist_path/IntruderPayloads/FuzzLists/traversal.txt"
 
 ###########
 # windows #
@@ -101,6 +111,7 @@ windows_path="/usr/share/windows-resources"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
+windows_nc64='/home/dex/oscp-swiss/utils/windows/nc64.exe'
 
 #########
 # linux #

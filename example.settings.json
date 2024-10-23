@@ -1,18 +1,47 @@
 {
-  "env": {
-    "WP_TOKEN": "",
-    "WORDLIST_BASE": "/usr/share/wordlists",
-    "DEFAULT_NETWORK_INTERFACE": "tun0",
-    "DISABLE_COLOR": false,
-    "XFREERDP_WIDTH": 932,
-    "FFUF_RECURSIVE_DEPTH": 1,
-    "FFUF_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt",
-    "FFUF_TRAVERSAL_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/file-traversal-default.txt",
-    "GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt",
-    "SPAWN_SESSION_IN_WORKSPACE": false,
-    "CEWL_MIN_WORD_LENGTH": 4,
-    "APP_BANNER": true,
-    "CEWL_DEPTH": 2
+  "global_settings": {
+    "app_version": "1.1.0",
+    "app_banner": true,
+    "default_network_interface": "tun0",
+    "disable_color": false,
+    "wordlist_base": "/home/kali/oscp-swiss/wordlist"
   },
-  "APP_VERSION": "1.0.0"
+  "functions": {
+    "wpscan": {
+      "token": ""
+    },
+    "xfreerdp": {
+      "default_width": 932
+    },
+    "ffuf_default": {
+      "recursive_depth": 1,
+      "wordlist": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt",
+      "use_dirsearch": true
+    },
+    "ffuf_traversal_default": {
+      "wordlist": "/home/kali/oscp-swiss/wordlist/file-traversal-default.txt"
+    },
+    "cat": {
+      "use_pygmentize": false
+    },
+    "ls": {
+      "use_nnn": false
+    },
+    "get_web_keywords": {
+      "min_word_length": 4,
+      "depth": 2
+    },
+    "gobuster_subdomain_default": {
+      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
+    },
+    "gobuster_vhost_default": {
+      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
+    },
+    "spawn_session_in_workspace": {
+      "start_at_new_session": false
+    }
+  },
+  "swiss_variable": {
+
+  }
 }
