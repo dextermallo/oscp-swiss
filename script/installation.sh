@@ -87,3 +87,6 @@ merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-error-based.txt \
 ln -s /usr/share/windows-binaries $HOME/oscp-swiss/utils/windows
 ln -s /usr/share/windows-resources $HOME/oscp-swiss/utils/windows
 ln -s /usr/share/wordlists $HOME/oscp-swiss/wordlist
+
+# nnn installation
+# https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn

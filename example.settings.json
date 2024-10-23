@@ -7,6 +7,7 @@
     "XFREERDP_WIDTH": 932,
     "FFUF_RECURSIVE_DEPTH": 1,
     "FFUF_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt",
+    "FFUF_DEFAULT_DIRSEARCH": false,
     "FFUF_TRAVERSAL_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/file-traversal-default.txt",
     "GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt",
     "SPAWN_SESSION_IN_WORKSPACE": false,

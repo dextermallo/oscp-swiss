@@ -223,3 +223,13 @@ load_settings() {
     APP_VERSION=$(jq -r '.APP_VERSION' "$settings_file")
     export "APP_VERSION"="$APP_VERSION"
 }
+
+# TODO: doc
+check_cmd_exist() {
+    if command -v "$1" &> /dev/null
+    then
+        return 0
+    else
+        return 1
+  fi
+}

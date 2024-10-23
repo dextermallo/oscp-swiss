@@ -441,6 +441,24 @@ function ffuf_default() {
         local domain_dir="$(pwd)/ffuf/$domain"
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
+
+        if [[ -f "$FFUF_DEFAULT_WORDLIST.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
+            _cat $FFUF_DEFAULT_WORDLIST.statistic
+            logger warn "[w] ================================"
+        fi
+
+        local stripped_url="${url/FUZZ/}"
+
+        if [ $FFUF_DEFAULT_DIRSEARCH = true ]; then
+            if check_cmd_exist dirsearch; then
+                logger info "[i] (Extension) dirsearch quick scan"
+                dirsearch -u $stripped_url
+            else
+                logger error "[e] dirsearch is not installed"
+            fi
+        fi
+
         ffuf -w $FFUF_DEFAULT_WORDLIST -recursion -recursion-depth $FFUF_RECURSIVE_DEPTH -u ${@} | tee "$domain_dir/ffuf-default"
     fi
 }
@@ -468,7 +486,9 @@ function ffuf_traversal_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
             _cat $FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic
+            logger warn "[w] ================================"
         fi
 
         ffuf -w $FFUF_TRAVERSAL_DEFAULT_WORDLIST -u ${@} | tee "$domain_dir/traversal-default"
@@ -497,7 +517,9 @@ function gobuster_subdomain_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
             _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+            logger warn "[w] ================================"
         fi
 
         gobuster dns -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST -t 20 -o $domain_dir/subdomain-default -d ${@}
@@ -526,7 +548,9 @@ function gobuster_vhost_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
+            logger warn "[w] ====== Wordlist Statistic ======"
             _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+            logger warn "[w] ================================"
         fi
 
         gobuster vhost -k -u $ip --domain $domain --append-domain -r \
@@ -874,8 +898,21 @@ function host_public_ip() {
 #   ├── ...
 #   └── other-utils
 function list_utils() {
-    # Check if a directory is provided; if not, use the current directory
-    local dir="${1:-$HOME/oscp-swiss/utils}"
+    local default_dir="$HOME/oscp-swiss/utils"
+    local dir="$1"
+
+    if [[ -z "$dir" ]]; then
+        dir="$default_dir"
+    elif [[ "$dir" == /* ]]; then
+        dir="$dir"
+    else
+        dir="$default_dir/$dir"
+    fi
+
+    if [[ ! -d "$dir" ]]; then
+        logger error "[e] path does not exist"
+        return 1
+    fi
 
     tree -C "$dir" -L 1 | while read -r line; do
         # Extract the file name from the tree output by ignoring color codes
@@ -887,7 +924,9 @@ function list_utils() {
             desc=$(head -n 1 "$desc_file")
             echo -e "$line \033[33m$desc\033[0m"
         else
-            echo "$line"
+            if [[ "$filename" != *.md ]]; then
+                echo "$line"
+            fi
         fi
     done
 }
@@ -896,36 +935,51 @@ function list_utils() {
 #   Combo of list_utils. This will show a file's description if it has a corresponding markdown file.
 # Usage: explain <file_or_directory>
 function explain() {
-    if [[ -z "$1" ]]; then
+    local file="$1"
+
+    if [[ "file" != /* ]]; then
+        file="$HOME/oscp-swiss/utils/$file"
+    fi
+
+    if [[ -z "$file" ]]; then
         logger info "Usage: explain <file_or_directory>"
         return 1
     fi
-
-    local target="$1"
     
-    local desc_file="${target}.md"
+    local desc_file="${file}.md"
     
     if [[ -f "$desc_file" ]]; then
         cat "$desc_file"
     else
-        logger warn "No description file found for $target."
+        logger warn "No description file found for $file."
     fi
 }
 
 # TODO: Doc
-function make_alias() {
+function make_variable() {
     local file_path="$1"
     local name="$2"
-    
+
     if [ ! -f "$file_path" ]; then
         logger warn "The file path $file_path does not exist."
         return 1
     fi
 
+    if [[ "$file_path" != /* ]]; then
+        file_path="$(realpath "$file_path")"
+    fi
 
-    echo "alias $name='$file_path'" >> "$HOME/oscp-swiss/script/alias.sh"
+    file_path="${file_path/#$HOME/\$HOME}"
 
-    logger info "[i] Alias $name for $file_path has been added."
+    local alias_file="$HOME/oscp-swiss/script/alias.sh"
+    touch "$alias_file"
+
+    if [ -n "$(tail -c 1 "$alias_file")" ]; then
+        echo >> "$alias_file"
+    fi
+
+    echo "$name='$file_path'" >> "$alias_file"
+    logger info "[i] Variable $name for $file_path has been added."
 }
 
 # TODO: Doc
@@ -973,11 +1027,11 @@ EOF
 function rev_shell() {
     logger info "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
     read -r IP
-    IP=${IP:-$(get_default_network_interface_ip)}
+    local IP=${IP:-$(get_default_network_interface_ip)}
 
     logger info "[i] Port (Default: 9000): \c"
     read -r PORT
-    PORT=${PORT:-9000}
+    local PORT=${PORT:-9000}
 
     local -a allowed_shell_types=("sh" "/bin/sh" "bash" "/bin/bash" "cmd" "powershell" "pwsh" "ash" "bsh" "csh" "ksh" "zsh" "pdksh" "tcsh" "mksh" "dash")
 
@@ -1021,10 +1075,8 @@ function rev_shell() {
     done
 
     local ENCODED_SHELL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$SHELL_TYPE'''))")
-
     local URL="https://www.revshells.com/${ENCODED_MODE}?ip=${IP}&port=${PORT}&shell=${ENCODED_SHELL}"
-
-    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL}")
+    local HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL}")
 
     if [[ "$HTTP_STATUS" -eq 200 ]]; then
         curl -s "${URL}" | xclip -selection clipboard
@@ -1044,6 +1096,10 @@ function url_encode() {
 function url_decode() {
     local string="${1//+/ }"
     printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
+}
+
+function msfsearch() {
+    msfconsole -q -x "search $@; exit"
 }
 
 spawn_session_in_workspace

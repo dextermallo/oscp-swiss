@@ -102,7 +102,7 @@ function check() {
         2|su)
             clear 2>/dev/null
             log --bold -f red "=== Easy Su===\n"
-            log --bold -f yellow "[i] manual test for 'sudo -l' and 'su - root'"
+            log --bold -f yellow "[i] manual test for 'sudo -l', 'su - root', and/or 'sudo su'"
 
             # Disabled
             # printf "\n[i] check if brute-focrable\n"
@@ -226,7 +226,7 @@ function check() {
             clear 2>/dev/null
             log --bold -f red "=== Interesting filename under the current directory ===\n"
             ignore_list=("./usr/src/*" "./var/lib/*" "./etc/*" "./usr/share/*" "./snap/*" "./sys/*" "./usr/lib/*" "./usr/bin/*" "./run/*" "./boot/*" "./usr/sbin/*" "./proc/*" "./var/snap/*")
-            search_items=("*.txt" "*.sqlite" "*conf*" "*data*" "*.pdf" "*.apk" "*.cfg" "*.json" "*.ini" "*.log" "*.sh" "*password*" "*cred*" "*.env" "config" "HEAD" "*mbox")
+            search_items=("*.txt" "*.sqlite" "*conf*" "*data*" "*.pdf" "*.apk" "*.cfg" "*.json" "*.ini" "*.log" "*.sh" "*password*" "*cred*" "*.env" "config" "HEAD" "*mbox" "*.sdf")
 
             find_command="find . -type f"
 
