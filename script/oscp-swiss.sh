@@ -22,11 +22,11 @@ function swiss() {
         logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         logger info "|                                            |"
-        logger info "|  by @dextermallo v$APP_VERSION                    |"
+        logger info "|  by @dextermallo v$_swiss_app_version                    |"
         logger info "'--------------------------------------------'"
     }
 
-    if [ $APP_BANNER = true ]; then
+    if [ $_swiss_app_banner = true ]; then
         _banner
     fi
 
@@ -191,7 +191,7 @@ function svc() {
             logger info "[i] usage:"
             logger info "[i] (1) run ftp"
             logger info "[i] (2) run open <ip> 21"
-            logger info "[i] (2-2) Default Interface ($DEFAULT_NETWORK_INTERFACE) IP: $(get_default_network_interface_ip)"
+            logger info "[i] (2-2) Default Interface ($_swiss_default_network_interface) IP: $(get_default_network_interface_ip)"
             logger info "[i] (3) use username anonymous"
             logger info "[i] (4) binary # use binary mode"
             logger info "[i] (5) put <file-you-want-to-download>"
@@ -423,8 +423,8 @@ function ffuf_default() {
 
     _helper() {
         logger info "[i] Usage: ffuf_default [URL/FUZZ] (options)"
-        logger warn "[i] Recursive with depth = $FFUF_RECURSIVE_DEPTH"
-        logger warn "[i] Default wordlist: $FFUF_DEFAULT_WORDLIST"
+        logger warn "[i] Recursive with depth = $_swiss_ffuf_default_recursive_depth"
+        logger warn "[i] Default wordlist: $_swiss_ffuf_default_wordlist"
     }
 
     if [ $# -eq 0 ]; then
@@ -442,15 +442,15 @@ function ffuf_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$FFUF_DEFAULT_WORDLIST.statistic" ]]; then
+        if [[ -f "$_swiss_ffuf_default_wordlist.statistic" ]]; then
             logger warn "[w] ====== Wordlist Statistic ======"
-            _cat $FFUF_DEFAULT_WORDLIST.statistic
+            _cat $_swiss_ffuf_default_wordlist.statistic
             logger warn "[w] ================================"
         fi
 
         local stripped_url="${url/FUZZ/}"
 
-        if [ $FFUF_DEFAULT_DIRSEARCH = true ]; then
+        if [ $_swiss_ffuf_default_use_dirsearch = true ]; then
             if check_cmd_exist dirsearch; then
                 logger info "[i] (Extension) dirsearch quick scan"
                 dirsearch -u $stripped_url
@@ -459,7 +459,7 @@ function ffuf_default() {
             fi
         fi
 
-        ffuf -w $FFUF_DEFAULT_WORDLIST -recursion -recursion-depth $FFUF_RECURSIVE_DEPTH -u ${@} | tee "$domain_dir/ffuf-default"
+        ffuf -w $_swiss_ffuf_default_wordlist -recursion -recursion-depth $_swiss_ffuf_default_recursive_depth -u ${@} | tee "$domain_dir/ffuf-default"
     fi
 }
 
@@ -485,13 +485,13 @@ function ffuf_traversal_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic" ]]; then
+        if [[ -f "$_swiss_ffuf_traversal_default_wordlist.statistic" ]]; then
             logger warn "[w] ====== Wordlist Statistic ======"
-            _cat $FFUF_TRAVERSAL_DEFAULT_WORDLIST.statistic
+            _cat $_swiss_ffuf_traversal_default_wordlist.statistic
             logger warn "[w] ================================"
         fi
 
-        ffuf -w $FFUF_TRAVERSAL_DEFAULT_WORDLIST -u ${@} | tee "$domain_dir/traversal-default"
+        ffuf -w $_swiss_ffuf_traversal_default_wordlist -u ${@} | tee "$domain_dir/traversal-default"
     fi
 }
 
@@ -516,13 +516,13 @@ function gobuster_subdomain_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
+        if [[ -f "$_swiss_gobuster_subdomain_default_wordlist.statistic" ]]; then
             logger warn "[w] ====== Wordlist Statistic ======"
-            _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+            _cat $_swiss_gobuster_subdomain_default_wordlist.statistic
             logger warn "[w] ================================"
         fi
 
-        gobuster dns -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST -t 20 -o $domain_dir/subdomain-default -d ${@}
+        gobuster dns -w $_swiss_gobuster_subdomain_default_wordlist -t 20 -o $domain_dir/subdomain-default -d ${@}
     fi
 }
 
@@ -547,14 +547,14 @@ function gobuster_vhost_default() {
         logger info "[i] Creating directory $domain_dir ..."
         mkdir -p "$domain_dir"
 
-        if [[ -f "$GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic" ]]; then
+        if [[ -f "$_swiss_gobuster_vhost_default_wordlist.statistic" ]]; then
             logger warn "[w] ====== Wordlist Statistic ======"
-            _cat $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST.statistic
+            _cat $_swiss_gobuster_vhost_default_wordlist.statistic
             logger warn "[w] ================================"
         fi
 
         gobuster vhost -k -u $ip --domain $domain --append-domain -r \
-                 -w $GOBUSTER_SUBDOMAIN_VHOST_DEFAULT_WORDLIST \
+                 -w $_swiss_gobuster_vhost_default_wordlist \
                  -o $domain_dir/vhost-default -t 64
     fi
 }
@@ -607,7 +607,7 @@ function get_web_pagelink() {
 # Usage: get_web_keywords <url>
 function get_web_keywords() {
     logger info "[i] Usage: get_web_keywords <url>"
-    cewl -d $CEWL_DEPTH -m $CEWL_MIN_WORD_LENGTH -w cewl-wordlist.txt $1
+    cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
 }
 
 # Description: set the target IP address and set variable target
@@ -752,11 +752,11 @@ function go_workspace() {
 
 # Description:
 #   Spawn the new session in the workspace, and set target into the variables.
-#   The  function is configured by the environment variable SPAWN_SESSION_IN_WORKSPACE
+#   The  function is configured by the environment variable _swiss_spawn_session_in_workspace_start_at_new_session
 #   See settings.json for more details.
 # Usage: spawn_session_in_workspace
 function spawn_session_in_workspace() {
-    if [ "$SPAWN_SESSION_IN_WORKSPACE" = true ]; then
+    if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
         go_workspace
         target=$(g target)
     fi

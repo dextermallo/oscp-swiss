@@ -79,7 +79,7 @@ log() {
         esac
     done
 
-    if [ "$DISABLE_COLOR" = true ]; then
+    if [ "$_swiss_disable_color" = true ]; then
         echo -e "$text"
     else
         echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
@@ -133,12 +133,12 @@ function i() {
 # Description: Get the default network interface's IP address and copy it to the clipboard.
 function gi() {
     logger info "[i] get default network interface's IP address"
-    ip -o -f inet addr show | grep $DEFAULT_NETWORK_INTERFACE | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
+    ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
 }
 
 # Description: Get the default network interface's IP address.
 function get_default_network_interface_ip() {
-    ip -o -f inet addr show | grep $DEFAULT_NETWORK_INTERFACE | awk '{split($4, a, "/"); printf "%s", a[1]}'
+    ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}'
 }
 
 # Description:
@@ -156,10 +156,10 @@ function s() {
 
     if [[ ! -f $config_file ]]; then
         logger info "[i] Config file not found, creating one..."
-        echo "{}" > "$config_file"
+        echo '{"swiss_variable": {}}' > "$config_file"
     fi
 
-    jq --arg name "$arg_name" --arg value "$arg_value" '.[$name] = $value' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
+    jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     logger info "[i] $arg_name set to: $arg_value"
 }
 
@@ -182,12 +182,13 @@ function g() {
         return
     fi
 
-    local arg_value=$(jq -r --arg name "$arg_name" '.[$name] // empty' "$config_file")
+    local arg_value=$(jq -r --arg name "$arg_name" '.swiss_variable[$name] // empty' "$config_file")
 
     if [[ -z $arg_value ]]; then
         echo -n "-1"
     else
-        echo -n $arg_value
+        # Add underscore in front when outputting the variable
+        echo -n "_$arg_value"
     fi
 }
 
@@ -208,7 +209,7 @@ extension_fn_banner() {
 #   All the key-value pairs under `{ env }` are exported as environment variables.
 #   The settings.json file should be located at $HOME/oscp-swiss/settings.json
 # Usage: load_settings
-load_settings() {
+function load_settings() {
     local settings_file="$HOME/oscp-swiss/settings.json"
 
     if [ ! -f "$settings_file" ]; then
@@ -217,11 +218,12 @@ load_settings() {
     fi
 
     while IFS="=" read -r key value; do
-        export "$key"="$value"
-    done < <(jq -r '.env | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
+        export "_swiss_$key"="$value"
+    done < <(jq -r '.global_settings | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
 
-    APP_VERSION=$(jq -r '.APP_VERSION' "$settings_file")
-    export "APP_VERSION"="$APP_VERSION"
+    while IFS="=" read -r key value; do
+        export "_swiss_$key"="$value"
+    done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$settings_file")
 }
 
 # TODO: doc
