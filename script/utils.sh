@@ -86,7 +86,7 @@ log() {
     fi
 }
 
-logger() {
+swiss_logger() {
     case "$1" in
         info)
             log -f green "$@"
@@ -132,7 +132,7 @@ function i() {
 
 # Description: Get the default network interface's IP address and copy it to the clipboard.
 function gi() {
-    logger info "[i] get default network interface's IP address"
+    swiss_logger info "[i] get default network interface's IP address"
     ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
 }
 
@@ -155,12 +155,12 @@ function s() {
     local arg_value="$2"
 
     if [[ ! -f $config_file ]]; then
-        logger info "[i] Config file not found, creating one..."
+        swiss_logger info "[i] Config file not found, creating one..."
         echo '{"swiss_variable": {}}' > "$config_file"
     fi
 
     jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
-    logger info "[i] $arg_name set to: $arg_value"
+    swiss_logger info "[i] $arg_name set to: $arg_value"
 }
 
 # Description:
@@ -188,20 +188,20 @@ function g() {
         echo -n "-1"
     else
         # Add underscore in front when outputting the variable
-        echo -n "_$arg_value"
+        echo -n "$arg_value"
     fi
 }
 
 # Description: Display a banner for commands, which are replaced by aliases.
 # Usage: override_cmd_banner
 override_cmd_banner() {
-    logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+    swiss_logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
 }
 
 # Description: Display a banner for extension functions.
 # Usage: extension_fn_banner
 extension_fn_banner() {
-    logger critical-msg "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
+    swiss_logger critical-msg "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
 }
 
 # Description:
@@ -213,7 +213,7 @@ function load_settings() {
     local settings_file="$HOME/oscp-swiss/settings.json"
 
     if [ ! -f "$settings_file" ]; then
-        logger error "$settings_file not found."
+        swiss_logger error "$settings_file not found."
         return 1
     fi
 
