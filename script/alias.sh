@@ -111,7 +111,7 @@ windows_path="/usr/share/windows-resources"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
-windows_nc64='/home/dex/oscp-swiss/utils/windows/nc64.exe'
+windows_nc64="$HOME/oscp-swiss/utils/windows/nc64.exe"
 
 #########
 # linux #

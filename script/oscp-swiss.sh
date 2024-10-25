@@ -893,7 +893,7 @@ function host_public_ip() {
 # (make sure to change the IP and port before using it.)
 # ```
 # When you run list_utils, the description will be shown like:
-#   /home/dex/oscp-swiss/utils
+#   /home/kali/oscp-swiss/utils
 #   ├── reverse-shell.php (make sure to change the IP and port before using it.)
 #   ├── ...
 #   └── other-utils
