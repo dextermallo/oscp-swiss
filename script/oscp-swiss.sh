@@ -490,6 +490,7 @@ function ship() {
 # Usage: listen <port>
 # Category: [func:rce, target:windows, target:linux]
 function listen() {
+    i
     rlwrap nc -lvnp $1
 }
 
@@ -997,30 +998,81 @@ function merge() {
     [[ "$statistic" == true ]] && swiss_logger info "[i] Statistics saved to $stat_file"
 }
 
-# Description: retrieve all files from a ftp server
-# Usage: get_ftp_all_files <ipaddress> [username] [password]
+# TODO: Doc
+# Description:
+# Usage:
 # Arguments:
-#   - ipaddress: IP address of the FTP server
-#   - username: FTP username (default: anonymous)
-#   - password: FTP password (default: anonymous)
-# Example: get_ftp_all_files 192.168.1.1
-# Category: [ func:recon, target:ftp ]
-function get_ftp_all_files() {
-    local IP=$1
-    local USERNAME=${2:-"anonymous"}
-    local PASSWORD=${3:-"anonymous"}
-
-    _helper() {
-        echo "Usage: get_ftp_all_files <ipaddress> [username] [password]"
-        return 1
+# Example:
+# Category: 
+function dump() { 
+    _help() {
+        swiss_logger info "Usage: dump <service name> <ip> [service options]"
+        swiss_logger info "* ftp"
+        swiss_logger info "\t[optional] -u, --username (default: anonymous)"
+        swiss_logger info "\t[optional] -p, --password (default: anonymous)"
+        swiss_logger info "* smb"
+        swiss_logger info "\t[required] -s, --share"
     }
 
-    if [ -z "$IP" ]; then
-        _helper
+    local service="$1"
+    local ip="$2"
+    shift 2;
+    if [[ -z "$service" ]] || [[ -z "$ip" ]]; then
+        _help
         return 1
     fi
 
-    wget -r --no-passive --no-parent ftp://$USERNAME:$PASSWORD@$IP
+    case "$service" in
+        ftp)
+            swiss_logger info "[i] dump from FTP"
+            local username="anonymous"
+            local password="anonymous"
+            while [[ $# -gt 0 ]]; do
+                case $1 in
+                    -u|--username)
+                        username="$2"
+                        shift 2
+                        ;;
+                    -p|--password)
+                        password="$2"
+                        shift 2
+                        ;;
+                    *)
+                        shift 1
+                        ;;
+                esac
+            done
+            wget -r --no-passive --no-parent ftp://$username:$password@$ip
+            ;;
+        smb)
+            swiss_logger info "[i] dump from SMB"
+            local username=""
+            local password=""
+            local share=""
+            while [[ $# -gt 0 ]]; do
+                case $1 in
+                    -s|--share)
+                        share="$2"
+                        shift 2
+                        ;;
+                    *)
+                        shift 1
+                        ;;
+                esac
+            done
+
+            if [[ -z "$share" ]]; then
+                _help
+                return 1
+            fi
+
+            smbclient //$ip/$share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
+            ;;
+        *)
+            swiss_logger error "Error: Invalid service '$service'. Valid service: ftp, smb"
+            return 1
+            ;;
+    esac
 }
 
 # Description: lookup an IP address's public information
