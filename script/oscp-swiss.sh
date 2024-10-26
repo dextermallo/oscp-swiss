@@ -1194,43 +1194,48 @@ function make_variable() {
     swiss_logger info "[i] Variable $name for $file_path has been added."
 }
 
+# Usage: rev_shell
 # TODO: Doc
-# Category: [ func:shortcut, func:memorize ]
-function cheatsheet() {
+# TODO: built-in encode
+# TODO: env default port
+# Category: [ func:memorize ]
+cheatsheet() {
+    local cheatsheet_dir="$HOME/oscp-swiss/doc/cheatsheet"
+    local files=()
+    local original_files=()
 
-    _helper() {
-        swiss_logger info "[i] Usage cheatsheet <cheatsheet name>"
-        swiss_logger info "[i] Current cheatsheet: <tty>"
-    }
+    for file in "$cheatsheet_dir"/*.md; do
+    
+        if [[ -f "$file" ]]; then
+            original_files+=("$file")
 
-    local cheatsheet=""
-    case "$1" in
-            tty)
-                output="$2"
-                cat <<'EOF'
-python -c 'import pty; pty.spawn("/bin/bash")'
-python3 -c 'import pty; pty.spawn("/bin/bash")'
+            # Format filename for display: remove leading number, replace dashes with spaces, capitalize
+            formatted_name=$(basename "$file" .md | sed 's/^[0-9]*-//' | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')
+            files+=("$formatted_name")
+        fi
+    done
 
-(inside the nc session) CTRL+Z;
+    # Check if there are any files to display
+    if [[ ${#files[@]} -eq 0 ]]; then
+        swiss_logger warn "[w] No cheatsheet files found in $cheatsheet_dir."
+        return 1
+    fi
 
-# stty -a to get rows and cols
-stty raw -echo; fg;
+    swiss_logger warn info "[i] Available Cheatsheets:"
+    for ((i=1; i<=${#files[@]}; i++)); do
+        echo "$((i)). ${files[$i]}"
+    done
 
-clear;export SHELL=/bin/bash;export TERM=xterm-256color;stty rows 60 columns 160;reset
+    echo -n "Select a cheatsheet by number: "
+    read choice
 
-# color-ref: https://ivanitlearning.wordpress.com/2020/03/25/adding-colour-to-linux-tty-shells/
-# only works in bash. if facing Garbled, try go into bash 
-export LS_OPTIONS='--color=auto'; eval "`dircolors`"; alias ls='ls $LS_OPTIONS'; export PS1='\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[01;34m\] \w\$\[\033[00m\] '
-
-# If facing garbled, use:
-PS1="# "
-EOF
-                ;;
-            *)
-                _helper
-                return 1
-                ;;
-        esac    
+    if [[ $choice -gt 0 && $choice -le ${#files[@]} ]]; then
+        local index=$((choice))
+        swiss_logger info "Displaying contents: ${original_files[$index]}:"
+        cat "${original_files[$index]}"
+    else
+        swiss_logger warn "[w] Invalid selection."
+    fi
 }
 
 # Usage: rev_shell
@@ -1318,6 +1323,73 @@ function url_decode() {
 # Category: [ func:rce, func:pe ]
 function msfsearch() {
     msfconsole -q -x "search $@; exit"
+}
+
+# TODO: Doc
+# Description:
+# Usage:
+#   - swiss_find -f|--filename [directory (default .)]
+#   - swiss_find -c|--content [directory (default .)]
+#   - swiss_find -sf|--search-filename <keyword> [path (default .)]
+#   - swiss_find -sc|--search-content <keyword> [path (default .)]
+# Arguments:
+# Example:
+# Category: 
+function swiss_find() {
+    case $1 in
+        -f|--filename)
+            local find_path="${2:-$PWD}"
+            local ignore_list=("./usr/src/*" "./var/lib/*" "./etc/*" "./usr/share/*" "./snap/*" "./sys/*" "./usr/lib/*" "./usr/bin/*" "./run/*" "./boot/*" "./usr/sbin/*" "./proc/*" "./var/snap/*")
+            local search_items=("*.txt" "*.sqlite" "*conf*" "*data*" "*.pdf" "*.apk" "*.cfg" "*.json" "*.ini" "*.log" "*.sh" "*password*" "*cred*" "*.env" "config" "HEAD" "*mbox" "*.sdf")
+
+            find_command="find $find_path -type f"
+
+            for ignore in "${ignore_list[@]}"; do
+            find_command+=" \( -path \"$ignore\" -prune \) -o"
+            done
+
+            find_command+=" \("
+            for item in "${search_items[@]}"; do
+            find_command+=" -name \"$item\" -o"
+            done
+
+            find_command="${find_command% -o} \) -type f -print 2>/dev/null"
+            
+            eval "$find_command"
+
+            swiss_logger info "[i] Hidden files (.*)\n"
+            \find $find_path -type f -name ".*" 2>/dev/null
+            ;;
+        -c|--content)
+            local find_path="${2:-$PWD}"
+            swiss_logger info "[i] Finding keywords in files"
+            grep -Erl "(user|username|login|pass|passwd|password|pw|credentials|flag|local|proof|db_username|db_passwd|db_password|db_user|db_host|database|api_key|api_token|access_token|private_key|jwt|auth_token|bearer|ssh_pass|ssh_key|identity_file|id_rsa|id_dsa|authorized_keys|env|environment|secret|admin|root)" $find_path 2>/dev/null
+            ;;
+        -sf|--search-filename)
+            if [ -z "$2" ]; then
+                swiss_logger error "[e] Missing keyword"
+                return 1
+            fi
+
+            local find_path="${3:-$PWD}"
+            swiss_logger info "[i] Searching for filename containing '$2':"
+            find $find_path -type f -name "*$1*" 2>/dev/null
+            ;;
+        -sc|--search-content)
+            if [ -z "$2" ]; then
+                logger error "[e] Missing keyword"
+                return 1
+            fi
+
+            local find_path="${3:-$PWD}"
+            swiss_logger info "[i] Searching for file contents containing '$2':"
+            grep -r --include="*" "$2" $find_path 2>/dev/null
+            ;;
+        *)
+            swiss_logger error "[i] unsupported function"
+            return 1
+            ;;
+    esac
 }
 
 spawn_session_in_workspace

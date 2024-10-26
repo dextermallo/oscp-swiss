@@ -281,6 +281,10 @@ function check() {
             log --bold -f yellow "\n PATH:"
             echo $PATH
             ;;
+        16|cve)
+            clear
+            log --bold -f red "=== Common CVE ===\n"
+            log --bold -f yellow "\ncheck sudo RCE (CVE-2021-3156)"
         *)
             log --bold -f green "Usage: check <option>\n"
             log --bold -f green "Options: \n"
