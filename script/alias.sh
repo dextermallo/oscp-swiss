@@ -59,7 +59,7 @@ fi
 alias _ls="ls"
 
 if [ $_swiss_ls_use_nnn = true ]; then
-    alias ls=" nnn -dEH"
+    alias ls="n -dEH"
 fi
 
 ############
@@ -111,7 +111,7 @@ windows_path="/usr/share/windows-resources"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
-windows_nc64='/home/dex/oscp-swiss/utils/windows/nc64.exe'
+windows_nc64="$HOME/oscp-swiss/utils/windows/nc64.exe"
 
 #########
 # linux #
@@ -126,3 +126,7 @@ nmap_scripts_path="/usr/share/nmap/scripts"
 swiss_utils="$HOME/oscp-swiss/utils"
 swiss_script="$HOME/oscp-swiss/script/oscp-swiss.sh"
 swiss_alias="$HOME/oscp-swiss/script/alias.sh"
+windows_invoke_powershell_tcp='$HOME/oscp-swiss/utils/windows/nishang/Shells/Invoke-PowerShellTcp.ps1'
+windows_GodPotato_NET2='$HOME/oscp-swiss/utils/windows/GodPotato/GodPotato-NET2.exe'
+windows_GodPotato_NET35='$HOME/oscp-swiss/utils/windows/GodPotato/GodPotato-NET35.exe'
+windows_GodPotato_NET4='$HOME/oscp-swiss/utils/windows/GodPotato/GodPotato-NET4.exe'
