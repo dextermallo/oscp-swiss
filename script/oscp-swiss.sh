@@ -1392,4 +1392,29 @@ function swiss_find() {
     esac
 }
 
+# TODO: Doc
+# Description:
+# Usage:
+# Arguments:
+# Example:
+# Category: 
+function list_all_ssh_credential_path() {
+    local input="$1"
+    local algos=("id_rsa" "id_dsa" "id_ecdsa" "id_ed25519")
+
+    # file mode
+    if [[ -f "$input" ]]; then
+        while IFS= read -r user; do
+            for algo in "${algos[@]}"; do
+                echo "/home/$user/.ssh/$algo"
+            done
+        done < "$input"
+    else
+        # single username
+        for algo in "${algos[@]}"; do
+            echo "/home/$input/.ssh/$algo"
+        done
+    fi
+}
+
 spawn_session_in_workspace
