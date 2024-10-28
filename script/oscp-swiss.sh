@@ -210,7 +210,7 @@ function find_category() {
 # Category: [ func:recon, target:linux, target:windows ]
 function nmap_default() {
     local ip=""
-    local mode=${2:-"fast"}
+    local mode=${2:-"tcp"}
     
     _help() {
         swiss_logger info "Usage: nmap_default <IP> [<mode>]"
@@ -1190,7 +1190,7 @@ function make_variable() {
         echo >> "$alias_file"
     fi
 
-    echo "$name='$file_path'" >> "$alias_file"
+    echo "$name=\"$file_path\"" >> "$alias_file"
     swiss_logger info "[i] Variable $name for $file_path has been added."
 }
 
