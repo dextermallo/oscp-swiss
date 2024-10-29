@@ -82,6 +82,7 @@ wordlist_subdomain_top="$wordlist_path/Discovery/DNS/subdomains-top1million-1100
 
 ### username & password
 wordlist_username_big="$wordlist_path/seclists/Usernames/xato-net-10-million-usernames.txt"
+wordlist_username_medium="$wordlist_path/dirb/others/names.txt"
 wordlist_username_small="$wordlist_path/seclists/Usernames/top-usernames-shortlist.txt"
 wordlist_rockyou="$wordlist_path/rockyou.txt"
 wordlist_credential_small="$custom_wordlist_path/custom-default-credential-list.txt"
