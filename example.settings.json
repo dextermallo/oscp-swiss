@@ -1,10 +1,11 @@
 {
   "global_settings": {
-    "app_version": "1.2.0",
+    "app_version": "1.3.0",
     "app_banner": true,
     "default_network_interface": "tun0",
     "disable_color": false,
-    "wordlist_base": "/home/kali/oscp-swiss/wordlist"
+    "wordlist_base": "/home/kali/oscp-swiss/wordlist",
+    "disable_sys_custom_command_banner": false
   },
   "functions": {
     "wpscan": {
