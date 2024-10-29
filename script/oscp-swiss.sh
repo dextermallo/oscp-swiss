@@ -210,7 +210,7 @@ function find_category() {
 # Category: [ func:recon, target:linux, target:windows ]
 function nmap_default() {
     local ip=""
-    local mode=${2:-"fast"}
+    local mode=${2:-"tcp"}
     
     _help() {
         swiss_logger info "Usage: nmap_default <IP> [<mode>]"
@@ -900,7 +900,11 @@ function set_workspace() {
 # Usage: go_workspace
 # Category: [ func: shortcut ]
 function go_workspace() {
-    cd $(g workspace)
+    if [[ -d $(g workspace) ]]; then
+        cd $(g workspace)
+    else
+        swiss_logger error "[e] workspace does not exist"
+    fi
 }
 
 # Description:
@@ -911,8 +915,10 @@ function go_workspace() {
 # Category: [ func:shortcut ]
 function spawn_session_in_workspace() {
     if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
-        go_workspace
-        target=$(g target)
+        if [[ -d $(g workspace) ]]; then
+            cd $(g workspace)
+            target=$(g target)
+        fi
     fi
 }
 
@@ -1089,83 +1095,6 @@ function host_public_ip() {
     curl ipinfo.io/ip
 }
 
-# Description:
-#   Show all utils in the utils directory with customized description.
-#   When a file has a corresponding markdown file with the same name under the same 
-#   directory, the description will be shown. (Only the first line of the markdown file)
-# Usage: list_utils [directory] (default: $HOME/oscp-swiss/utils)
-# Example:
-# you have a frequent-used reverse-shell under $HOME/oscp-swiss/utils/reverse-shell.php
-# and you have a description file $HOME/oscp-swiss/utils/reverse-shell.php.md
-# with content:
-# ```md
-# (make sure to change the IP and port before using it.)
-# ```
-# When you run list_utils, the description will be shown like:
-#   /home/kali/oscp-swiss/utils
-#   ├── reverse-shell.php (make sure to change the IP and port before using it.)
-#   ├── ...
-#   └── other-utils
-# Category: [ func:shortcut, func:memorize ]
-function list_utils() {
-    local default_dir="$HOME/oscp-swiss/utils"
-    local dir="$1"
-
-    if [[ -z "$dir" ]]; then
-        dir="$default_dir"
-    elif [[ "$dir" == /* ]]; then
-        dir="$dir"
-    else
-        dir="$default_dir/$dir"
-    fi
-
-    if [[ ! -d "$dir" ]]; then
-        swiss_logger error "[e] path does not exist"
-        return 1
-    fi
-
-    tree -C "$dir" -L 1 | while read -r line; do
-        # Extract the file name from the tree output by ignoring color codes
-        filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
-        
-        desc_file="${dir}/${filename}.md"
-        
-        if [[ -f "$desc_file" ]]; then
-            desc=$(head -n 1 "$desc_file")
-            echo -e "$line \033[33m$desc\033[0m"
-        else
-            if [[ "$filename" != *.md ]]; then
-                echo "$line"
-            fi
-        fi
-    done
-}
-
-# Description:
-#   Combo of list_utils. This will show a file's description if it has a corresponding markdown file.
-# Usage: explain <file_or_directory>
-# Category: [ func:shortcut, func:memorize ]
-function explain() {
-    local file="$1"
-
-    if [[ "file" != /* ]]; then
-        file="$HOME/oscp-swiss/utils/$file"
-    fi
-
-    if [[ -z "$file" ]]; then
-        swiss_logger info "Usage: explain <file_or_directory>"
-        return 1
-    fi
-    
-    local desc_file="${file}.md"
-    
-    if [[ -f "$desc_file" ]]; then
-        cat "$desc_file"
-    else
-        swiss_logger warn "No description file found for $file."
-    fi
-}
-
 # TODO: Doc
 # Category: [ func:shortcut ]
 function make_variable() {
@@ -1190,7 +1119,7 @@ function make_variable() {
         echo >> "$alias_file"
     fi
 
-    echo "$name='$file_path'" >> "$alias_file"
+    echo "$name=\"$file_path\"" >> "$alias_file"
     swiss_logger info "[i] Variable $name for $file_path has been added."
 }
 
@@ -1415,6 +1344,119 @@ function list_all_ssh_credential_path() {
             echo "/home/$input/.ssh/$algo"
         done
     fi
+}
+
+# Description: 
+#   Command `explainv2`` is a cheatsheet function for your binaries, scripts, and all files you keep.
+#   You can take notes and read it effortlessly to find what you need rapidly.
+#   All the notes are stored under `/doc/utils-note.md`.
+#   For example, you can add a note by running the command: `explainv2 /home/kali/oscp-swiss/utils/windows/GodPotato`
+#   If it is not a valid file/directory, it will print out the error
+#   If it is a valid file/directory:
+#       - If there's no note under `/doc/utils-note.md`, it will ask whether you want to create a note
+#       - If there's note, the note will be printed by cat
+#   Note formats (.md):
+#   ```md
+#   # $filename
+#   ## Description: $description
+#   ## Path: $path
+#   ## Aims:
+#   <-- Declare the aims here -->
+#   ## Usage:
+#   <-- Declare the usage here -->
+#   ````
+# Usage: explainv2 <$path>
+# Variable:
+#   - path: path is a filepath or a path to a directory. If it is a file path, it will shows the file's note (if exist). If it is a directory, it will list all files under the directory (with the description).
+# Example: explainv2 utils/windows
+# Category:
+function explain() {
+    local notes_path="$HOME/oscp-swiss/doc/utils-note.md"
+    local utils_base_path="$HOME/oscp-swiss/utils"
+    local add_mode=0
+
+    if [[ "$1" == "-a" || "$1" == "--add" ]]; then
+        add_mode=1
+        shift
+    fi
+
+    local input="$1"
+    local absolute_path=""
+    local relative_path=""
+    if [[ "$input" == "$utils_base_path"* ]]; then
+        relative_path="${input/#$utils_base_path//utils}"
+        absolute_path=$input
+    else
+        relative_path=$input
+        absolute_path="$utils_base_path/$relative_path"
+    fi
+
+    if [[ ! -e "$absolute_path" ]]; then
+        echo "Error: Path '$absolute_path' does not exist."
+        return 1
+    fi
+
+    if [[ "$absolute_path" != "$utils_base_path"* ]]; then
+        echo "Error: Only files under $utils_base_path are allowed."
+    fi
+
+    if [[ -d "$absolute_path" ]]; then
+        if [[ "$add_mode" -eq 1 ]]; then
+            echo "Adding note for directory $relative_path."
+            add_note "$relative_path"
+        else
+            echo "Directory detected. Listing files with descriptions:"
+            tree -C "$absolute_path" -L 1 | while read -r line; do
+                filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
+                if grep -q "^# $filename$" "$notes_path"; then
+                    description=$(grep -A 1 "^# $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
+                    echo -e "$line \033[33m$description\033[0m"
+                else
+                    echo "$line"
+                fi
+            done
+        fi
+        return 0
+    elif [[ -f "$absolute_path" ]]; then
+        filename=$(basename "$absolute_path")
+
+        if grep -q "^# $filename$" "$notes_path"; then
+            echo "Note found for $filename:"
+            grep -A 4 "^# $filename$" "$notes_path" | \cat
+        else
+            echo "No note found for $filename. Would you like to create one? (y/n)"
+            read -r create_note
+            if [[ "$create_note" == "y" ]]; then
+                add_note "$relative_path"
+            else
+                echo "No note created."
+            fi
+        fi
+    else
+        echo "Error: '$absolute_path' is neither a valid file nor a directory."
+    fi
+}
+
+function add_note() {
+    local input_path="$1"
+    local filename=$(basename "$input_path")
+    local temp_note="$mktemp.md"
+
+    {
+        echo "# $filename"
+        echo "## Description: "
+        echo "## Path: $input_path"
+        echo "## Aims:"
+        echo "<-- Declare the aims here -->"
+        echo "## Usage:"
+        echo "<-- Declare the usage here -->"
+        echo ""
+    } > "$temp_note"
+
+    vim "$temp_note"
+    \cat "$temp_note" >> "$notes_path"
+    rm "$temp_note"
+    echo "Note saved to $notes_path."
 }
 
 spawn_session_in_workspace

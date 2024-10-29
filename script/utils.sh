@@ -195,7 +195,9 @@ function g() {
 # Description: Display a banner for commands, which are replaced by aliases.
 # Usage: override_cmd_banner
 override_cmd_banner() {
-    swiss_logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+    if [ "$disable_sys_custom_command_banner" = false ]; then
+        swiss_logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+    fi
 }
 
 # Description: Display a banner for extension functions.
