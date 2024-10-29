@@ -1,13 +1,14 @@
 #!/bin/bash
 
 
-log() {
+_log() {
     local bold=""
     local fg_color=""
     local bg_color=""
     local no_color=0
     local text=""
     local underline=""
+    local newline=1
     local ansi_bold="\033[1m"
     local ansi_underline="\033[4m"
     local ansi_reset="\033[0m"
@@ -30,11 +31,11 @@ log() {
 
     while [ "$1" ]; do
         case "$1" in
-            -bold)
+            --bold)
                 bold=$ansi_bold
                 shift
                 ;;
-            --underline)
+            -u|--underline)
                 underline=$ansi_underline
                 shift
                 ;;
@@ -72,6 +73,10 @@ log() {
                 no_color=1
                 shift
                 ;;
+            -n|--no-newline)
+                newline=0
+                shift
+                ;;
             *)
                 text="$1"
                 shift
@@ -80,31 +85,45 @@ log() {
     done
 
     if [ "$_swiss_disable_color" = true ]; then
-        echo -e "$text"
+
+        if [ "$newline" -eq 1 ]; then
+            echo -e "$text"
+        else
+            echo -e -n "$text"
+        fi
+        
     else
-        echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
+
+        if [ "$newline" -eq 1 ]; then
+            echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
+        else
+            echo -e -n "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
+        fi
     fi
 }
 
-swiss_logger() {
+function swiss_logger() {
     case "$1" in
+        debug)
+            _log -f white "$@"
+            ;;
         info)
-            log -f green "$@"
+            _log -f green "$@"
             ;;
         warn)
-            log --bold --underline -f yellow "$@"
+            _log -f yellow "$@"
             ;;
         error)
-            log --bold -f red "$@"
+            _log --bold -f red "$@"
             ;;
-        hint-msg)
-            log --bold -f black -b green "$@"
+        hint)
+            _log -f cyan "$@"
             ;;
-        highlight-msg)
-            log --bold -f black -b yellow "$@"
+        alternative)
+            _log -f magenta "$@"
             ;;
-        critical-msg)
-            log --bold -f white -b red "$@"
+        highlight)
+            _log --bold -f white -b red "$@"
             ;;
         *)
             echo -n "$@"
@@ -121,7 +140,7 @@ load_private_scripts() {
       fi
     done
   else
-    echo "Directory $script_dir not found."
+    swiss_logger error "[e] Directory $script_dir not found."
   fi
 }
 
@@ -196,14 +215,14 @@ function g() {
 # Usage: override_cmd_banner
 override_cmd_banner() {
     if [ "$disable_sys_custom_command_banner" = false ]; then
-        swiss_logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+        swiss_logger highlight "[ custom command, for default, add the sign _ in front of the command ]\n";
     fi
 }
 
 # Description: Display a banner for extension functions.
 # Usage: extension_fn_banner
 extension_fn_banner() {
-    swiss_logger critical-msg "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
+    swiss_logger highlight "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
 }
 
 # Description:
@@ -215,7 +234,7 @@ function load_settings() {
     local settings_file="$HOME/oscp-swiss/settings.json"
 
     if [ ! -f "$settings_file" ]; then
-        swiss_logger error "$settings_file not found."
+        swiss_logger error "[e] $settings_file not found."
         return 1
     fi
 

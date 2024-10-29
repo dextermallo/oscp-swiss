@@ -21,7 +21,7 @@ function cd() {
     elif [ -e "$1" ]; then
         builtin cd "$(dirname "$1")"
     else
-        echo "cd: no such file or directory: $1"
+        swiss_logger error "[e] cd: no such file or directory: $1"
         return 1
     fi
 }
@@ -33,7 +33,10 @@ function cd() {
 #       2. set the resolution to your preferred screen resolution
 #       3. mount to the current directory
 alias _xfrredp="/usr/bin/xfreerdp"
-alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_default_width"
+# TODO: optimize logic
+# TODO: add flags for mount for security
+alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; \\xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_default_width"
+alias xfreerdp_max="override_cmd_banner; mkdir -p xfreerdp-data; \\xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:1862 /h:1040 -wallpaper"
 
 # Description:
 #   Replace the default argument of the command wpscan
