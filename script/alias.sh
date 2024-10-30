@@ -1,4 +1,7 @@
 #!/bin/bash
+# About alias.sh
+# TODO: Doc
+
 
 source $HOME/oscp-swiss/script/utils.sh
 load_settings
@@ -69,7 +72,6 @@ fi
 # wordlist #
 ############
 wordlist_path=$_swiss_wordlist_base
-custom_wordlist_path=$HOME/oscp-swiss/wordlist
 
 ### directory & files
 wordlist_dirsearch="$wordlist_path/seclists/Discovery/Web-Content/dirsearch.txt"
@@ -88,7 +90,6 @@ wordlist_username_big="$wordlist_path/seclists/Usernames/xato-net-10-million-use
 wordlist_username_medium="$wordlist_path/dirb/others/names.txt"
 wordlist_username_small="$wordlist_path/seclists/Usernames/top-usernames-shortlist.txt"
 wordlist_rockyou="$wordlist_path/rockyou.txt"
-wordlist_credential_small="$custom_wordlist_path/custom-default-credential-list.txt"
 
 # api
 wordlist_api_obj="$wordlist_path/seclists/Discovery/Web-Content/api/objects.txt"
@@ -102,9 +103,6 @@ wordlist_lfi="$wordlist_path/IntruderPayloads/FuzzLists/lfi.txt"
 wordlist_hashcat_rules="/usr/share/hashcat/rules"
 wordlist_hashcat_rule_best64="/usr/share/hashcat/rules/best64.rule"
 
-# sqli
-wordlist_sqli="$wordlist_path/custom-sqli.txt"
-
 # traversal
 wordlist_traversal="$wordlist_path/IntruderPayloads/FuzzLists/traversal.txt"
 
@@ -115,7 +113,6 @@ windows_path="/usr/share/windows-resources"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
-windows_nc64="$HOME/oscp-swiss/utils/windows/nc64.exe"
 
 #########
 # linux #
@@ -127,10 +124,3 @@ linux_privesc="/usr/bin/unix-privesc-check"
 ########
 hasncat_potfile_path="~/.local/share/hashcat/hashcat.potfile"
 nmap_scripts_path="/usr/share/nmap/scripts"
-swiss_utils="$HOME/oscp-swiss/utils"
-swiss_script="$HOME/oscp-swiss/script/oscp-swiss.sh"
-swiss_alias="$HOME/oscp-swiss/script/alias.sh"
-windows_invoke_powershell_tcp="$HOME/oscp-swiss/utils/windows/nishang/Shells/Invoke-PowerShellTcp.ps1"
-windows_GodPotato_NET2="$HOME/oscp-swiss/utils/windows/GodPotato/GodPotato-NET2.exe"
-windows_GodPotato_NET35="$HOME/oscp-swiss/utils/windows/GodPotato/GodPotato-NET35.exe"
-windows_GodPotato_NET4="$HOME/oscp-swiss/utils/windows/GodPotato/GodPotato-NET4.exe"

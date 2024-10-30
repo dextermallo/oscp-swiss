@@ -34,29 +34,30 @@ function swiss() {
         _banner
     fi
 
-    local swiss_path="$HOME/oscp-swiss/script/oscp-swiss.sh"
-    local alias_path="$HOME/oscp-swiss/script/alias.sh"
-    local extension_path="$HOME/oscp-swiss/script/extension.sh"
 
     swiss_logger info "[i] Functions:"
     {
-        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
-        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$extension_path" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
+        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_script" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
+        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_extension" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
     } | sort | column
 
     swiss_logger info "[i] Aliases:"
-    grep -E '^\s*alias\s+' "$extension_path" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+    {
+        grep -E '^\s*alias\s+' "$swiss_extension" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+        grep -E '^\s*alias\s+' "$swiss_alias" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+    } | sort | column
+    
 
     swiss_logger info "[i] Variables:"
     {
-        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$extension_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
-        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$alias_path" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$swiss_extension" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$swiss_alias" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
+        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$swiss_script" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
     } | sort | column
 
     # load /private scripts
-    local script_dir="$HOME/oscp-swiss/private"
-    if [ -d "$script_dir" ]; then
-        for script in "$script_dir"/*.sh; do
+    if [ -d "$swiss_private" ]; then
+        for script in "$swiss_private"/*.sh; do
         if [ -f "$script" ]; then
 
             if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"; then
@@ -76,7 +77,7 @@ function swiss() {
         fi
         done
     else
-        swiss_logger error "[e] Directory $script_dir not found."
+        swiss_logger error "[e] Directory $swiss_private not found."
     fi
 }
 
@@ -96,7 +97,7 @@ function find_category() {
             return 1  
         }        
 
-        for script in "$HOME/oscp-swiss/script/"*.sh; do
+        for script in "$swiss_root/script/"*.sh; do
             while IFS= read -r line; do
         
                 if [[ $line == *"Category:"* ]]; then
@@ -132,15 +133,15 @@ function find_category() {
         # Nested parentheses
         while echo "$condition" | grep -q "("; do
             local inner_expr=$(echo "$condition" | sed -E 's/.*\(([^()]*)\).*/\1/')
-            local inner_result
+            local inner_result=""
 
             if [[ "$inner_expr" == *"&"* ]]; then
-                inner_result=$(evaluate_condition "$inner_expr")
+                $inner_result=$(evaluate_condition "$inner_expr")
             elif [[ "$inner_expr" == *"|"* ]]; then
-                inner_result=$(evaluate_condition "$inner_expr")
+                $inner_result=$(evaluate_condition "$inner_expr")
             fi
 
-            condition="${condition//"(${inner_expr})"/"$inner_result"}"
+            $condition="${condition//"(${inner_expr})"/"$inner_result"}"
         done
 
         # Handle and/or
@@ -184,8 +185,8 @@ function find_category() {
         $match && return 0 || return 1
     }
 
-    for condition in "$@"; do
-        for script in "$HOME/oscp-swiss/script/"*.sh; do
+    for $condition in "$@"; do
+        for script in "$swiss_root/script/"*.sh; do
         while IFS= read -r line; do
             if [[ $line == *"Category:"* ]]; then
                 script_categories=$(echo $line | sed -n 's/.*Category: \[\(.*\)\].*/\1/p' | tr ',' ' ')
@@ -388,8 +389,8 @@ function svc() {
             swiss_logger info "[i] sudo ip route add 192.168.0.0/24 dev ligolo  # add interface"
             swiss_logger warn "[w] ip route del 122.252.228.38/32               # removal after use"
             swiss_logger info "[i] start                                        # start the agent"
-
-            local ligolo_agent_path="$HOME/oscp-swiss/utils/tunnel/ligolo-0.6.2/proxy"
+            # TODO: add to configuration
+            local ligolo_agent_path="$swiss_utils/tunnel/ligolo-0.6.2/proxy"
             $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
             ;;
         wsgi)
@@ -431,7 +432,7 @@ function ship() {
                 shift 2
                 ;;
             -a|--auto-host-http)
-                autoHostHttp="$2"
+                $autoHostHttp="$2"
                 shift 2
                 ;;
             *)
@@ -808,7 +809,7 @@ function get_target() {
 # Category: [ func:pe, func:shortcut, func:memorize ]
 function cp_target_script() {
     swiss_logger info "Usage: cp_target_script"
-    local shell_path="$HOME/oscp-swiss/script/target-enum-script.sh"
+    local shell_path="$swiss_root/script/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
     _cat $shell_path > $new_file_path
     echo "" >> $new_file_path
@@ -1112,14 +1113,11 @@ function make_variable() {
 
     file_path="${file_path/#$HOME/\$HOME}"
 
-    local alias_file="$HOME/oscp-swiss/script/alias.sh"
-    touch "$alias_file"
-
-    if [ -n "$(tail -c 1 "$alias_file")" ]; then
-        echo >> "$alias_file"
+    if [ -n "$(tail -c 1 "$swiss_alias")" ]; then
+        echo >> "$swiss_alias"
     fi
 
-    echo "$name=\"$file_path\"" >> "$alias_file"
+    echo "$name=\"$file_path\"" >> "$swiss_alias"
     swiss_logger info "[i] Variable $name for $file_path has been added."
 }
 
@@ -1373,7 +1371,7 @@ function list_all_ssh_credential_path() {
 # Category:
 function explain() {
     local notes_path="$HOME/oscp-swiss/doc/utils-note.md"
-    local utils_base_path="$HOME/oscp-swiss/utils"
+    local utils_base_path=$swiss_utils
     local add_mode=0
 
     if [[ "$1" == "-a" || "$1" == "--add" ]]; then
@@ -1410,7 +1408,7 @@ function explain() {
             tree -C "$absolute_path" -L 1 | while read -r line; do
                 filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
                 if grep -q "^# $filename$" "$notes_path"; then
-                    description=$(grep -A 1 "^# $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
+                    local description=$(grep -A 1 "^# $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
                     echo -e "$line \033[33m$description\033[0m"
                 else
                     echo "$line"

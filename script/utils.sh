@@ -1,4 +1,18 @@
 #!/bin/bash
+# About utils.sh
+# TODO: Doc
+
+
+swiss_root="$HOME/oscp-swiss"
+swiss_script="$swiss_root/script/oscp-swiss.sh"
+swiss_alias="$swiss_root/script/alias.sh"
+swiss_extension="$swiss_root/script/extension.sh"
+
+swiss_utils="$swiss_root/utils"
+swiss_private="$swiss_root/private"
+swiss_wordlist="$swiss_root/wordlist"
+
+swiss_settings="$swiss_root/settings.json"
 
 
 _log() {
@@ -132,19 +146,19 @@ function swiss_logger() {
 }
 
 load_private_scripts() {
-  local script_dir="$HOME/oscp-swiss/private"
-  if [ -d "$script_dir" ]; then
-    for script in "$script_dir"/*.sh; do
-      if [ -f "$script" ]; then
-        source "$script"
-      fi
-    done
-  else
-    swiss_logger error "[e] Directory $script_dir not found."
-  fi
+    if [ -d "$swiss_private" ]; then
+        for script in "$swiss_private"/*.sh; do
+            if [ -f "$script" ]; then
+                source "$script"
+            fi
+        done
+    else
+        swiss_logger error "[e] Directory $swiss_private not found."
+    fi
 }
 
 # Description: Simplified version of the `ip` command to show the IP address of the default network interface.
+# TODO: move to oscp-swiss.sh
 function i() {
     ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'
 }
@@ -169,16 +183,15 @@ function get_default_network_interface_ip() {
 #   and you can use the command g to get it in another terminal session
 #   $> g next-attempt-url
 function s() {
-    local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
     local arg_value="$2"
 
-    if [[ ! -f $config_file ]]; then
+    if [[ ! -f $swiss_settings ]]; then
         swiss_logger info "[i] Config file not found, creating one..."
-        echo '{"swiss_variable": {}}' > "$config_file"
+        echo '{"swiss_variable": {}}' > "$swiss_settings"
     fi
 
-    jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
+    jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$swiss_settings" > "${swiss_settings}.tmp" && mv "${swiss_settings}.tmp" "$swiss_settings"
     swiss_logger info "[i] $arg_name set to: $arg_value"
 }
 
@@ -193,15 +206,14 @@ function s() {
 #   and you can use the command g to get it in another terminal session
 #   $> g next-attempt-url
 function g() {
-    local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
 
-    if [[ ! -f $config_file ]]; then
+    if [[ ! -f $swiss_settings ]]; then
         echo -n "-2"
         return
     fi
 
-    local arg_value=$(jq -r --arg name "$arg_name" '.swiss_variable[$name] // empty' "$config_file")
+    local arg_value=$(jq -r --arg name "$arg_name" '.swiss_variable[$name] // empty' "$swiss_settings")
 
     if [[ -z $arg_value ]]; then
         echo -n "-1"
@@ -231,20 +243,16 @@ extension_fn_banner() {
 #   The settings.json file should be located at $HOME/oscp-swiss/settings.json
 # Usage: load_settings
 function load_settings() {
-    local settings_file="$HOME/oscp-swiss/settings.json"
-
-    if [ ! -f "$settings_file" ]; then
-        swiss_logger error "[e] $settings_file not found."
+    if [ ! -f "$swiss_settings" ]; then
+        swiss_logger error "[e] $swiss_settings not found."
         return 1
     fi
-
     while IFS="=" read -r key value; do
         export "_swiss_$key"="$value"
-    done < <(jq -r '.global_settings | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
-
+    done < <(jq -r '.global_settings | to_entries | .[] | "\(.key)=\(.value)"' "$swiss_settings")
     while IFS="=" read -r key value; do
         export "_swiss_$key"="$value"
-    done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$settings_file")
+    done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$swiss_settings")
 }
 
 # TODO: doc
