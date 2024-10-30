@@ -1,13 +1,28 @@
 #!/bin/bash
+# About utils.sh
+# TODO: Doc
 
 
-log() {
+swiss_root="$HOME/oscp-swiss"
+swiss_script="$swiss_root/script/oscp-swiss.sh"
+swiss_alias="$swiss_root/script/alias.sh"
+swiss_extension="$swiss_root/script/extension.sh"
+
+swiss_utils="$swiss_root/utils"
+swiss_private="$swiss_root/private"
+swiss_wordlist="$swiss_root/wordlist"
+
+swiss_settings="$swiss_root/settings.json"
+
+
+_log() {
     local bold=""
     local fg_color=""
     local bg_color=""
     local no_color=0
     local text=""
     local underline=""
+    local newline=1
     local ansi_bold="\033[1m"
     local ansi_underline="\033[4m"
     local ansi_reset="\033[0m"
@@ -30,11 +45,11 @@ log() {
 
     while [ "$1" ]; do
         case "$1" in
-            -bold)
+            --bold)
                 bold=$ansi_bold
                 shift
                 ;;
-            --underline)
+            -u|--underline)
                 underline=$ansi_underline
                 shift
                 ;;
@@ -72,6 +87,10 @@ log() {
                 no_color=1
                 shift
                 ;;
+            -n|--no-newline)
+                newline=0
+                shift
+                ;;
             *)
                 text="$1"
                 shift
@@ -80,31 +99,45 @@ log() {
     done
 
     if [ "$_swiss_disable_color" = true ]; then
-        echo -e "$text"
+
+        if [ "$newline" -eq 1 ]; then
+            echo -e "$text"
+        else
+            echo -e -n "$text"
+        fi
+        
     else
-        echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
+
+        if [ "$newline" -eq 1 ]; then
+            echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
+        else
+            echo -e -n "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
+        fi
     fi
 }
 
-swiss_logger() {
+function swiss_logger() {
     case "$1" in
+        debug)
+            _log -f white "$@"
+            ;;
         info)
-            log -f green "$@"
+            _log -f green "$@"
             ;;
         warn)
-            log --bold --underline -f yellow "$@"
+            _log -f yellow "$@"
             ;;
         error)
-            log --bold -f red "$@"
+            _log --bold -f red "$@"
             ;;
-        hint-msg)
-            log --bold -f black -b green "$@"
+        hint)
+            _log -f cyan "$@"
             ;;
-        highlight-msg)
-            log --bold -f black -b yellow "$@"
+        alternative)
+            _log -f magenta "$@"
             ;;
-        critical-msg)
-            log --bold -f white -b red "$@"
+        highlight)
+            _log --bold -f white -b red "$@"
             ;;
         *)
             echo -n "$@"
@@ -113,19 +146,19 @@ swiss_logger() {
 }
 
 load_private_scripts() {
-  local script_dir="$HOME/oscp-swiss/private"
-  if [ -d "$script_dir" ]; then
-    for script in "$script_dir"/*.sh; do
-      if [ -f "$script" ]; then
-        source "$script"
-      fi
-    done
-  else
-    echo "Directory $script_dir not found."
-  fi
+    if [ -d "$swiss_private" ]; then
+        for script in "$swiss_private"/*.sh; do
+            if [ -f "$script" ]; then
+                source "$script"
+            fi
+        done
+    else
+        swiss_logger error "[e] Directory $swiss_private not found."
+    fi
 }
 
 # Description: Simplified version of the `ip` command to show the IP address of the default network interface.
+# TODO: move to oscp-swiss.sh
 function i() {
     ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'
 }
@@ -150,16 +183,15 @@ function get_default_network_interface_ip() {
 #   and you can use the command g to get it in another terminal session
 #   $> g next-attempt-url
 function s() {
-    local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
     local arg_value="$2"
 
-    if [[ ! -f $config_file ]]; then
+    if [[ ! -f $swiss_settings ]]; then
         swiss_logger info "[i] Config file not found, creating one..."
-        echo '{"swiss_variable": {}}' > "$config_file"
+        echo '{"swiss_variable": {}}' > "$swiss_settings"
     fi
 
-    jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
+    jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$swiss_settings" > "${swiss_settings}.tmp" && mv "${swiss_settings}.tmp" "$swiss_settings"
     swiss_logger info "[i] $arg_name set to: $arg_value"
 }
 
@@ -174,15 +206,14 @@ function s() {
 #   and you can use the command g to get it in another terminal session
 #   $> g next-attempt-url
 function g() {
-    local config_file="$HOME/oscp-swiss/settings.json"
     local arg_name="$1"
 
-    if [[ ! -f $config_file ]]; then
+    if [[ ! -f $swiss_settings ]]; then
         echo -n "-2"
         return
     fi
 
-    local arg_value=$(jq -r --arg name "$arg_name" '.swiss_variable[$name] // empty' "$config_file")
+    local arg_value=$(jq -r --arg name "$arg_name" '.swiss_variable[$name] // empty' "$swiss_settings")
 
     if [[ -z $arg_value ]]; then
         echo -n "-1"
@@ -196,14 +227,14 @@ function g() {
 # Usage: override_cmd_banner
 override_cmd_banner() {
     if [ "$disable_sys_custom_command_banner" = false ]; then
-        swiss_logger warn "[ custom command, for default, add the sign _ in front of the command ]\n";
+        swiss_logger highlight "[ custom command, for default, add the sign _ in front of the command ]\n";
     fi
 }
 
 # Description: Display a banner for extension functions.
 # Usage: extension_fn_banner
 extension_fn_banner() {
-    swiss_logger critical-msg "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
+    swiss_logger highlight "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
 }
 
 # Description:
@@ -212,20 +243,16 @@ extension_fn_banner() {
 #   The settings.json file should be located at $HOME/oscp-swiss/settings.json
 # Usage: load_settings
 function load_settings() {
-    local settings_file="$HOME/oscp-swiss/settings.json"
-
-    if [ ! -f "$settings_file" ]; then
-        swiss_logger error "$settings_file not found."
+    if [ ! -f "$swiss_settings" ]; then
+        swiss_logger error "[e] $swiss_settings not found."
         return 1
     fi
-
     while IFS="=" read -r key value; do
         export "_swiss_$key"="$value"
-    done < <(jq -r '.global_settings | to_entries | .[] | "\(.key)=\(.value)"' "$settings_file")
-
+    done < <(jq -r '.global_settings | to_entries | .[] | "\(.key)=\(.value)"' "$swiss_settings")
     while IFS="=" read -r key value; do
         export "_swiss_$key"="$value"
-    done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$settings_file")
+    done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$swiss_settings")
 }
 
 # TODO: doc
