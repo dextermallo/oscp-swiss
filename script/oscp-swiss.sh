@@ -1461,7 +1461,7 @@ function memory() {
             echo "## Path: $relative_path"
             echo "## Shortcut: $shortcut_name"
             echo "## Usage:"
-            echo "<-- Declare the usage here -->\n"
+            echo "<-- Declare the usage here -->"
             echo ""
         } > "$temp_note"
 
@@ -1575,7 +1575,7 @@ function shortcut() {
         file_path="$(realpath "$file_path")"
     fi
 
-    if [ ! -f "$file_path" ]; then
+    if [ ! -f "$file_path" ] && [ ! -d "$file_path" ]; then
         swiss_logger error "[e] The file path $file_path does not exist."
         return 1
     fi
