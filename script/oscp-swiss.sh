@@ -1118,31 +1118,6 @@ function host_public_ip() {
     curl ipinfo.io/ip
 }
 
-# TODO: Doc
-# Category: [ func:shortcut ]
-function make_variable() {
-    local file_path="$1"
-    local name="$2"
-
-    if [ ! -f "$file_path" ]; then
-        swiss_logger error "[e] The file path $file_path does not exist."
-        return 1
-    fi
-
-    if [[ "$file_path" != /* ]]; then
-        file_path="$(realpath "$file_path")"
-    fi
-
-    file_path="${file_path/#$HOME/\$HOME}"
-
-    if [ -n "$(tail -c 1 "$swiss_alias")" ]; then
-        echo >> "$swiss_alias"
-    fi
-
-    echo "$name=\"$file_path\"" >> "$swiss_alias"
-    swiss_logger info "[i] Variable $name for $file_path has been added."
-}
-
 # Usage: rev_shell
 # TODO: Doc
 # TODO: built-in encode
@@ -1368,10 +1343,10 @@ function list_all_ssh_credential_path() {
 }
 
 # Description: 
-#   Command `explainv2`` is a cheatsheet function for your binaries, scripts, and all files you keep.
+#   Command `memory` is a cheatsheet function for your binaries, scripts, and all files you keep.
 #   You can take notes and read it effortlessly to find what you need rapidly.
 #   All the notes are stored under `/doc/utils-note.md`.
-#   For example, you can add a note by running the command: `explainv2 /home/kali/oscp-swiss/utils/windows/GodPotato`
+#   For example, you can add a note by running the command: `memory /home/kali/oscp-swiss/utils/windows/GodPotato`
 #   If it is not a valid file/directory, it will print out the error
 #   If it is a valid file/directory:
 #       - If there's no note under `/doc/utils-note.md`, it will ask whether you want to create a note
@@ -1381,36 +1356,84 @@ function list_all_ssh_credential_path() {
 #   # $filename
 #   ## Description: $description
 #   ## Path: $path
-#   ## Aims:
-#   <-- Declare the aims here -->
 #   ## Usage:
 #   <-- Declare the usage here -->
 #   ````
-# Usage: explainv2 <$path>
+# Usage: memory <$path>
 # Variable:
 #   - path: path is a filepath or a path to a directory. If it is a file path, it will shows the file's note (if exist). If it is a directory, it will list all files under the directory (with the description).
-# Example: explainv2 utils/windows
+# Example: memory utils/windows
 # Category:
-function explain() {
+function memory() {
+    _helper() {
+        swiss_logger info "memorize [mode] [options] <$PATH>"
+        swiss_logger info "[Mode]"
+        swiss_logger info "-m, --mode: <add, view, default>"
+        swiss_logger info "  in add mode, you can add notes"
+        swiss_logger info "  in view mode, path (for both file and directory) will display their notes"
+        swiss_logger info "  in default mode, path will have different display:"
+        swiss_logger info "      - file: display the notes"
+        swiss_logger info "      - directory: display a tree structure showing with the description"
+        swiss_logger info "[Options]"
+        swiss_logger info "  -s, --shortcut <shortcut_name>: can add a shortcut for files"
+        swiss_logger info "  -st, --shortcut-type <shortcut_type>: type of shortcuts. Current support: alias, extension (default: extension)"
+        swiss_logger highlight "[H] Filename MUST BE IDENTICAL. The function uses filename to search."
+        swiss_logger highlight "[H] For adding notes, the description should be short. Otherwise it will impact the diplay when you view in tree mode."
+    }
     local notes_path="$HOME/oscp-swiss/doc/utils-note.md"
     local utils_base_path=$swiss_utils
-    local add_mode=0
+    local mode="default"
+    local shortcut_name=""
+    local shortcut_type="extension"
+    local input_path
 
-    if [[ "$1" == "-a" || "$1" == "--add" ]]; then
-        add_mode=1
-        shift
-    fi
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -m|--mode)
+                mode="$2"
+                if [[ ! "$mode" =~ ^(default|view|add)$ ]]; then
+                    swiss_logger error "[e] mode support: default, view, add"
+                    return 1
+                fi
+                shift 2
+                ;;
+            -s|--shortcut)
+                shortcut_name="$2"
+                shift 2
+                ;;
+            -st|--shortcut-type)
+                shortcut_type="$2"
+                if [[ ! "$shortcut_type" =~ ^(extension|alias)$ ]]; then
+                    swiss_logger error "[e] shortcut_type support: extension, alias"
+                    return 1
+                fi
+                shift 2
+                ;;
+            -h|--help)
+                _helper
+                return 0
+                ;;
+            *)
+                input_path="$1"
+                shift 1
+                ;;
+        esac
+    done
 
-    local input="$1"
+    swiss_logger debug "[d] Mode: $mode"
+
     local absolute_path=""
     local relative_path=""
-    if [[ "$input" == "$utils_base_path"* ]]; then
-        relative_path="${input/#$utils_base_path//utils}"
-        absolute_path=$input
+
+    if [[ "$input_path" == "$utils_base_path"* ]]; then
+        relative_path="${input_path/#$utils_base_path//utils}"
+        absolute_path=$input_path
     else
-        relative_path=$input
+        relative_path=$input_path
         absolute_path="$utils_base_path/$relative_path"
     fi
+
+    local filename=$(basename "$absolute_path")
 
     if [[ ! -e "$absolute_path" ]]; then
         swiss_logger error "[e] Path '$absolute_path' does not exist."
@@ -1421,63 +1444,157 @@ function explain() {
         swiss_logger "[e] Only files under $utils_base_path are allowed."
     fi
 
-    if [[ -d "$absolute_path" ]]; then
-        if [[ "$add_mode" -eq 1 ]]; then
-            swiss_logger debug "[d] Adding note for directory $relative_path."
-            add_note "$relative_path"
-        else
-            swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
-            tree -C "$absolute_path" -L 1 | while read -r line; do
-                filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
-                if grep -q "^# $filename$" "$notes_path"; then
-                    local description=$(grep -A 1 "^# $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
-                    echo -e "$line \033[33m$description\033[0m"
-                else
-                    echo "$line"
-                fi
-            done
+    _add_note() {
+        if grep -q "^# $filename$" "$notes_path"; then
+            swiss_logger warn "[w] Notes exists already."
+            return 0
         fi
-        return 0
-    elif [[ -f "$absolute_path" ]]; then
-        filename=$(basename "$absolute_path")
 
+        if [[ ! -z "$shortcut_name" ]]; then
+            shortcut -f $absolute_path -n $shortcut_name -t $shortcut_type
+        fi
+
+        local temp_note="$mktemp.md"
+        {
+            echo "# $filename"
+            echo "## Description: "
+            echo "## Path: $relative_path"
+            echo "## Shortcut: $shortcut_name"
+            echo "## Usage:"
+            echo "<-- Declare the usage here -->\n"
+            echo ""
+        } > "$temp_note"
+
+        vim "$temp_note"
+        \cat "$temp_note" >> "$notes_path"
+        rm "$temp_note"
+        swiss_logger info "[u] Note saved to $notes_path."
+    }
+
+    _view_note() {
         if grep -q "^# $filename$" "$notes_path"; then
             swiss_logger debug "[d] Note found for $filename:"
-            grep -A 4 "^# $filename$" "$notes_path" | \cat
-        else
-            swiss_logger info "[i] No note found for $filename. Would you like to create one? (y/n)"
-            read -r create_note
-            if [[ "$create_note" == "y" ]]; then
-                add_note "$relative_path"
+            output=$(sed -n "/^# $filename$/,/^# /p" "$notes_path" | sed '$d')
+            if [ $_swiss_cat_use_pygmentize = true ]; then
+                swiss_logger debug "[d] Use pygementize"
+                local temp_md="$mktemp.md"
+                echo $output >> $temp_md
+                cat $temp_md
+                rm $temp_md
             else
-                swiss_logger debug "[d] No note created."
+                echo $output
             fi
+        else
+            swiss_logger warn "[w] No notes found."
         fi
+    }
+
+    if [[ -d "$absolute_path" ]]; then
+        case $mode in
+            add)
+                _add_note
+                ;;
+            view)
+                _view_note
+                ;;
+            default)
+                swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
+                tree -C "$absolute_path" -L 1 | while read -r line; do
+                    filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
+                    if grep -q "^# $filename$" "$notes_path"; then
+                        local description=$(grep -A 1 "^# $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
+                        echo -e "$line \033[33m$description\033[0m"
+                    else
+                        echo "$line"
+                    fi
+                done
+                ;;
+            *)
+                swiss_logger error "[e] Mode type incorrect."
+                return 1
+                ;;
+        esac
+    elif [[ -f "$absolute_path" ]]; then
+        case $mode in
+            add)
+                _add_note
+                ;;
+            view)
+                _view_note
+                ;;
+            default)
+                _view_note
+                ;;
+            *)
+                swiss_logger error "[e] Mode type incorrect."
+                return 1
+                ;;
+        esac
     else
         swiss_logger error "[e] '$absolute_path' is neither a valid file nor a directory."
     fi
 }
 
-function add_note() {
-    local input_path="$1"
-    local filename=$(basename "$input_path")
-    local temp_note="$mktemp.md"
+# TODO: Doc
+# Category: [ func:shortcut ]
+function shortcut() {
+    local file_path
+    local name
+    local type="extension"
 
-    {
-        echo "# $filename"
-        echo "## Description: "
-        echo "## Path: $input_path"
-        echo "## Aims:"
-        echo "<-- Declare the aims here -->"
-        echo "## Usage:"
-        echo "<-- Declare the usage here -->"
-        echo ""
-    } > "$temp_note"
+    _helper() {
+        swiss_logger info "Usage: shortcut <-f, --file FILE> <-n, --name VARIABLE_NAME> [-t, --type VARIABLE_TYPE]"
+        swiss_logger info "Type supported: extension, alias (Default: extension)"
+    }
 
-    vim "$temp_note"
-    \cat "$temp_note" >> "$notes_path"
-    rm "$temp_note"
-    swiss_logger info "[u] Note saved to $notes_path."
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -f|--file)
+                file_path="$2"
+                shift 2
+                ;;
+            -n|--name)
+                name="$2"
+                shift 2
+                ;;
+            -t|--type)
+                type="$2"
+                if [[ ! "$type" =~ ^(extension|alias)$ ]]; then
+                    swiss_logger error "[e] type support: alias, extension"
+                    return
+                fi
+                shift 2
+                ;;
+            *)
+                shift 1
+                ;;
+        esac
+    done
+
+    if [[ "$file_path" != /* ]]; then
+        file_path="$(realpath "$file_path")"
+    fi
+
+    if [ ! -f "$file_path" ]; then
+        swiss_logger error "[e] The file path $file_path does not exist."
+        return 1
+    fi
+
+    file_path="${file_path/#$HOME/\$HOME}"
+
+    if [ -z "$name" ]; then
+        swiss_logger error "[e] Required a name for the shortcut"
+    fi
+
+    local dest
+    [[ "$type" == "extension" ]] && dest=$swiss_extension || dest=$swiss_alias
+
+    if [ -n "$(tail -c 1 "$dest")" ]; then
+        echo >> "$dest"
+    fi
+
+    echo "$name=\"$file_path\"" >> "$dest"
+    swiss_logger info "[i] Variable $name for $file_path has been added to $type."
 }
 
 spawn_session_in_workspace
