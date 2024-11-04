@@ -1,6 +1,5 @@
 {
   "global_settings": {
-    "app_version": "1.4.0",
     "app_banner": true,
     "default_network_interface": "tun0",
     "disable_color": false,
