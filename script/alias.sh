@@ -35,11 +35,83 @@ function cd() {
 #       1. ignore the certificate
 #       2. set the resolution to your preferred screen resolution
 #       3. mount to the current directory
-alias _xfrredp="/usr/bin/xfreerdp"
-# TODO: optimize logic
-# TODO: add flags for mount for security
-alias xfreerdp="override_cmd_banner; mkdir -p xfreerdp-data; \\xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_default_width"
-alias xfreerdp_max="override_cmd_banner; mkdir -p xfreerdp-data; \\xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:1862 /h:1040 -wallpaper"
+alias _xfreerdp="/usr/bin/xfreerdp"
+
+function xfreerdp_default() {
+    override_cmd_banner
+    local create_mount=$_swiss_xfreerdp_create_mount_by_default
+    local mode=$_swiss_xfreerdp_default_mode
+    local new_args=()
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -m|--mode)
+                mode="$2"
+                shift 2
+                ;;
+            *)
+                new_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
+        swiss_logger info "[i] Mount? (y/n) \c"
+        read -r user_input
+
+        if [ "$user_input" = "y" ]; then
+            create_mount=true
+        elif [ "$user_input" = "n" ]; then
+            create_mount=false
+        else
+            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'."
+            return 1
+        fi
+    fi
+
+    swiss_logger debug "[d] create_mount: $create_mount"
+    swiss_logger debug "[d] mode: $mode"
+
+    if [ $create_mount = true ]; then
+        mkdir -p xfreerdp-data
+
+        case "$mode" in
+            dynamic)
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /dynamic-resolution ${new_args[@]}
+            ;;
+            full)
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+            ;;
+            half)
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+            ;;
+            *)
+                swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
+            ;;
+        esac
+    else
+        case "$mode" in
+            dynamic)
+                \xfreerdp /cert-ignore /dynamic-resolution ${new_args[@]}
+            ;;
+            full)
+                \xfreerdp /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+            ;;
+            half)
+                \xfreerdp /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+            ;;
+            *)
+                swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
+            ;;
+        esac
+    fi
+
+}
+
+if [ $_swiss_xfreerdp_use_custom_xfreerdp = true ]; then
+    alias xfreerdp=xfreerdp_default
+fi
 
 # Description:
 #   Replace the default argument of the command wpscan

@@ -11,7 +11,13 @@
       "token": ""
     },
     "xfreerdp": {
-      "default_width": 932
+      "use_custom_xfreerdp": false,
+      "prompt_create_mount": true,
+      "create_mount_by_default": false,
+      "half_width": 932,
+      "full_width": 1862,
+      "full_height": 1040,
+      "default_mode": "dynamic"
     },
     "ffuf_default": {
       "recursive_depth": 1,
