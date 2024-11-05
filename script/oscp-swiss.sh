@@ -900,9 +900,9 @@ function listen_target() {
 # Category: [ func:shortcut, func:plan ]
 function init_workspace() {
     swiss_logger info "[i] Initializing workspace ..."
-    swiss_logger info "[i] Enter workspace name: \c"
+    swiss_logger prompt "[i] Enter workspace name: \c"
     read -r workspace_name
-    swiss_logger info "[i] Enter IP address: \c"
+    swiss_logger prompt "[i] Enter IP address: \c"
     read -r ip_address
 
     local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
@@ -1163,7 +1163,7 @@ cheatsheet() {
     done
 
     # TODO: fix newline issue
-    swiss_logger info "[i] Select a cheatsheet by number: \c"
+    swiss_logger prompt "[i] Select a cheatsheet by number: \c"
     read choice
 
     if [[ $choice -gt 0 && $choice -le ${#files[@]} ]]; then
@@ -1183,11 +1183,11 @@ cheatsheet() {
 # TODO: fix revshell issue on 42 (Powershell base64)
 # Category: [ func:shortcut, func:rce, func:memorize ]
 function rev_shell() {
-    swiss_logger info "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
+    swiss_logger prompt "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
     read -r IP
     local IP=${IP:-$(get_default_network_interface_ip)}
 
-    swiss_logger info "[i] Port (Default: 9000): \c"
+    swiss_logger prompt "[i] Port (Default: 9000): \c"
     read -r PORT
     local PORT=${PORT:-9000}
 
@@ -1204,7 +1204,7 @@ function rev_shell() {
     }
 
     while true; do
-        swiss_logger info "[i] Enter Shell (Default: /bin/bash): \c"
+        swiss_logger prompt "[i] Enter Shell (Default: /bin/bash): \c"
         read -r SHELL_TYPE
         SHELL_TYPE=${SHELL_TYPE:-"/bin/bash"}
 

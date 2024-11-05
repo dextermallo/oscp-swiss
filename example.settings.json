@@ -1,5 +1,6 @@
 {
   "global_settings": {
+    "logger_level": "info",
     "app_banner": true,
     "default_network_interface": "tun0",
     "disable_color": false,

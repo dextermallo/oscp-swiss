@@ -57,7 +57,7 @@ function xfreerdp_default() {
     done
 
     if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
-        swiss_logger info "[i] Mount? (y/n) \c"
+        swiss_logger prompt "[i] Mount? (y/n) \c"
         read -r user_input
 
         if [ "$user_input" = "y" ]; then

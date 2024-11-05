@@ -116,19 +116,33 @@ _log() {
     fi
 }
 
+check_logger_level() {
+    case "$_swiss_logger_level" in
+        debug) return 0 ;;
+        info) [[ "$1" != "debug" ]] ;;
+        warn) [[ "$1" == "warn" || "$1" == "error" ]] ;;
+        error) [[ "$1" == "error" ]] ;;
+        *) return 1 ;;
+    esac
+}
+
 function swiss_logger() {
     case "$1" in
         debug)
-            _log -f white "$@"
+            check_logger_level "debug" && _log -f white "$@"
             ;;
         info)
-            _log -f green "$@"
+            check_logger_level "info" && _log -f green "$@"
             ;;
         warn)
-            _log -f yellow "$@"
+            check_logger_level "warn" && _log -f yellow "$@"
             ;;
         error)
-            _log --bold -f red "$@"
+            check_logger_level "error" && _log --bold -f red "$@"
+            ;;
+        prompt)
+            # prompt must be display in any given level
+            check_logger_level "error" && _log -f green "$@"
             ;;
         hint)
             _log -f cyan "$@"
