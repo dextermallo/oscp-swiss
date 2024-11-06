@@ -1260,6 +1260,14 @@ function url_decode() {
     printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
 }
 
+function atob() {
+    echo -n "$1" | base64 --decode
+}
+
+function btoa() {
+    echo -n "$1" | base64
+}
+
 # TODO: Doc
 # Category: [ func:rce, func:pe ]
 function msfsearch() {

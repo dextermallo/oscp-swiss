@@ -118,3 +118,12 @@ svc bloodhound-ce
 # Keroasting
 .\Rubeus.exe kerberoast /outfile:hashes.kerberoast
 ```
+# Utils: BloodHoundCollector-4.3.1
+## Description: BloodHound 4.3.1 collector
+## Path: windows/BloodHoundCollector-4.3.1
+## Shortcut: windows_bloodhound_4_3_1
+## Usage:
+```powershell
+.\SharpHound.exe -c All
+```
+
