@@ -25,7 +25,7 @@ function swiss() {
         swiss_logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         swiss_logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         swiss_logger info "|                                            |"
-        swiss_logger info "|  by @dextermallo v1.4.1                    |"
+        swiss_logger info "|  by @dextermallo v1.4.2                    |"
         swiss_logger info "'--------------------------------------------'"
     }
 
@@ -393,9 +393,11 @@ function svc() {
             $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
             ;;
         wsgi)
+            extension_fn_banner
             swiss_logger info "[i] start wsgidav under the directory: $(pwd)"
+            swiss_logger info "[i] port used: 80"
             i
-            $HOME/.local/bin/wsgidav --host=0.0.0.0 --port=${@} --auth=anonymous --root .
+            $_swiss_svc_wsgi --host=0.0.0.0 --port=$_swiss_svc_wsgi_default_port --auth=anonymous --root .
             ;;
         python-venv)
             extension_fn_banner
@@ -403,7 +405,7 @@ function svc() {
             source .venv/bin/activate
             ;;
         *)
-            swiss_logger error "[e] Invalid service '$service'. Valid service: docker; ftp; http; smb; ssh; bloodhound; wsgi"
+            swiss_logger error "[e] Invalid service '$service'. Valid service: docker; ftp; http; smb; ssh; bloodhound; wsgi; python-venv"
             return 1
             ;;
     esac
@@ -791,29 +793,6 @@ function get_web_keywords() {
     cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
 }
 
-# Description: set the target IP address and set variable target
-# Usage: set_target <ip>
-# Category: [ func:memorize, func:shortcut ]
-function set_target() {
-    s target $1
-    target=$1
-}
-
-# Description: get the target IP address and copy it to the clipboard.
-# Usage: get_target
-# Category: [ func:memorize, func:shortcut ]
-function get_target() {
-    target=$(g target)
-    if [[ "$target" == "-1" ]]; then
-        swiss_logger error "[e] Target not found."
-    elif [[ "$target" == "-2" ]]; then
-        swiss_logger error "[e] Config file not found."
-    else
-        echo -n "$target" | xclip -selection clipboard
-        swiss_logger info "[i] Target '$target' copied to clipboard."
-    fi
-}
-
 # Description:
 #   Copy a linpeas-like script to the clickboard. You can paste it to the target machine (Linux) directly without any file transfer effort.
 #   This is helpful to help you to enumerate the target machine.
@@ -890,59 +869,6 @@ function listen_target() {
 }
 
 # Description:
-#   Generate workspace for pen test. Including:
-#       - Create a directory with the format <name>-<ip>
-#       - Create username.txt and password.txt
-#       - Set the current path as workspace, you can use go_workspace to jump to the workspace across sessions
-#       - Set the target IP address, you can use get_target to copy the target IP address to the clipboard
-#       - Copy the ip to the clipboard
-# Usage: init_workspace
-# Category: [ func:shortcut, func:plan ]
-function init_workspace() {
-    swiss_logger info "[i] Initializing workspace ..."
-    swiss_logger prompt "[i] Enter workspace name: \c"
-    read -r workspace_name
-    swiss_logger prompt "[i] Enter IP address: \c"
-    read -r ip_address
-
-    local ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
-    if [[ ! $ip_address =~ $ip_regex ]]; then
-        swiss_logger error "[e] Invalid IP address format."
-        return 1
-    fi
-
-    local dir_name="${workspace_name}-${ip_address}"
-
-    mkdir -p "$dir_name"
-    cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
-
-    touch username.txt
-    touch password.txt
-
-    set_workspace
-    set_target "$ip_address"
-    get_target
-}
-
-# Description: set the current path as workspace (cross-session)
-# Usage: set_workspace
-# Category: [ func:shortcut ]
-function set_workspace() {
-    s workspace $PWD
-}
-
-# Description: go to the path defined as workspace (cross-session)
-# Usage: go_workspace
-# Category: [ func: shortcut ]
-function go_workspace() {
-    if [[ -d $(g workspace) ]]; then
-        cd $(g workspace)
-    else
-        swiss_logger error "[e] workspace does not exist"
-    fi
-}
-
-# Description:
 #   Spawn the new session in the workspace, and set target into the variables.
 #   The  function is configured by the environment variable _swiss_spawn_session_in_workspace_start_at_new_session
 #   See settings.json for more details.
@@ -950,10 +876,8 @@ function go_workspace() {
 # Category: [ func:shortcut ]
 function spawn_session_in_workspace() {
     if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
-        if [[ -d $(g workspace) ]]; then
-            cd $(g workspace)
-            target=$(g target)
-        fi
+        go_workspace
+        get_target
     fi
 }
 
@@ -1639,6 +1563,176 @@ function check_extension() {
             swiss_logger warn "[w] $var_name is invalid or does not exist: $expanded_file_path"
         fi
     done < "$alias_file"
+}
+
+# Description: go to the path defined as workspace (cross-session)
+# Usage: go_workspace
+# Category: [ func: shortcut ]
+function go_workspace() {
+    if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
+        check_workspace
+    fi
+
+    local cur_workspace_path
+    cur_workspace_path=$(jq -r '.swiss_variable.workspace.cur.path // empty' "$swiss_settings")
+
+    if [[ -n "$cur_workspace_path" && -d "$cur_workspace_path" ]]; then
+        cd "$cur_workspace_path" || { echo "[e] Failed to navigate to directory '$cur_workspace_path'"; return 1; }
+    else
+        echo "[e] Workspace path is empty or does not exist"
+    fi
+}
+
+# # Description:
+# #   Generate workspace for pen test. Including:
+# #       - Create a directory with the format <name>-<ip>
+# #       - Create username.txt and password.txt
+# #       - Set the current path as workspace, you can use go_workspace to jump to the workspace across sessions
+# #       - Set the target IP address, you can use get_target to copy the target IP address to the clipboard
+# #       - Copy the ip to the clipboard
+# # Usage: init_workspace
+# # Category: [ func:shortcut, func:plan ]
+function init_workspace() {
+    local name=""
+    local ip=""
+
+    _helper() {
+        swiss_logger info "[i] Usage: init_workspace <-n, --name workspace_name> <-i, --ip IP>"
+    }
+
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -i|--ip)
+                ip="$2"
+                shift 2
+                ;;
+            -n|--name)
+                name="$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$name" || -z "$ip" ]]; then
+        _helper
+        return 1
+    fi
+    local dir_name="${name}-${ip}"
+    echo $dir_name
+    mkdir -p "$dir_name"
+    cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
+
+    touch username.txt
+    touch password.txt
+
+    set_workspace $PWD $ip
+}
+
+# Description: set the current path as workspace (cross-session)
+# Usage: set_workspace
+# Category: [ func:shortcut ]
+function set_workspace() {
+    local workspace_path="$1"
+    local workspace_target="$2"
+
+    if [[ -d "$workspace_path" ]]; then
+        jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+        swiss_logger debug "[d] Current workspace path set to $workspace_path"
+    else
+        swiss_logger error "[e] Directory '$workspace_path' does not exist"
+        return 1
+    fi
+
+    jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+    swiss_logger debug "[d] Target set to $workspace_target"
+
+    local exists_in_list
+    exists_in_list=$(jq --arg path "$workspace_path" --arg target "$workspace_target" \
+        '.swiss_variable.workspace.list[] | select(.path == $path and .target == $target)' "$swiss_settings")
+
+    if [[ -z "$exists_in_list" ]]; then
+        jq --arg path "$workspace_path" --arg target "$workspace_target" \
+            '.swiss_variable.workspace.list += [{"path": $path, "target": $target}]' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+        swiss_logger debug "[d] Workspace added to list: $workspace_path with target $workspace_target"
+    else
+        swiss_logger debug "[d] Workspace already exists in the list"
+    fi
+
+    # set variable
+    target="$workspace_target"
+}
+
+function select_workspace() {
+    if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
+        check_workspace
+    fi
+
+    local paths
+    paths=($(jq -r '.swiss_variable.workspace.list[].path' "$swiss_settings"))
+    
+    if [ ${#paths[@]} -lt 1 ]; then
+        swiss_logger info "[i] No workspace found."
+        return 0
+    fi
+
+    swiss_logger prompt "Please choose a workspace:"
+    for ((i=1; i<=${#paths[@]}; i++)); do
+        swiss_logger prompt "$((i)). ${paths[i]}"
+    done
+
+    swiss_logger prompt "Enter your choice: \c"
+    read choice
+
+    if [[ "$choice" -gt 0 && "$choice" -le "${#paths[@]}" && -d "${paths[choice]}" ]]; then
+
+        selected_path="${paths[choice]}"
+        selected_target=$(jq -r ".swiss_variable.workspace.list[$choice].target" "$swiss_settings")
+        jq --arg path "$selected_path" --arg target "$selected_target" \
+           '.swiss_variable.workspace.cur = { "path": $path, "target": $target }' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+
+        cd $selected_path || { swiss_logger error "[e] Failed to enter directory '${paths[choice]}'"; return 1; }
+    else
+        swiss_logger error "[e] Invalid choice or directory does not exist"
+    fi
+}
+
+# Description: check all workspaces' paths are exist. If a workspace does not exist, it will be removed automatically
+function check_workspace() {
+    local updated_list=()
+
+    jq -c '.swiss_variable.workspace.list[]' "$swiss_settings" | while read -r item; do
+        local cur_path=$(echo "$item" | jq -r '.path')
+        if [[ -d "$cur_path" ]]; then
+            updated_list+=("$item")
+        else
+            swiss_logger info "[i] Removing non-existent workspace path: $cur_path"
+        fi
+    done
+
+    jq --argjson list "$(printf '%s\n' "${updated_list[@]}" | jq -s '.')" '.swiss_variable.workspace.list = $list' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+    
+    local cur_workspace_path
+    cur_workspace_path=$(jq -r '.swiss_variable.workspace.cur.path // empty' "$swiss_settings")
+
+    if [[ -n "$cur_workspace_path" && ! -d "$cur_workspace_path" ]]; then
+        swiss_logger info "[i] Current workspace path does not exist: $cur_workspace_path"
+        jq '.swiss_variable.workspace.cur = {}' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+    fi
+}
+
+# # Description: get the target IP address and copy it to the clipboard.
+# # Usage: get_target
+# # Category: [ func:memorize, func:shortcut ]
+function get_target() {
+    cur_target=$(jq -r '.swiss_variable.workspace.cur.target // ""' "$swiss_settings")
+
+    if [[ -z $target ]]; then
+        target=$cur_target
+        echo $cur_target | xclip -selection clipboard
+    fi
 }
 
 spawn_session_in_workspace

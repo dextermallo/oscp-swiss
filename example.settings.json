@@ -51,9 +51,19 @@
       "default_port": 443,
       "generate_stage": false,
       "generate_stageless": true
+    },
+    "workspace": {
+      "auto_cleanup": true
+    },
+    "svc": {
+      "wsgi": "/home/kali/.local/bin/wsgidav",
+      "wsgi_default_port": 80
     }
   },
   "swiss_variable": {
-
+    "workspace": {
+      "cur": {},
+      "list": []
+    }
   }
 }

@@ -6,11 +6,13 @@
 # Interesting Files - Filename #
 ################################
 # Basic
-dir *.txt /s
 Get-ChildItem -Path C:\ -Include *.kdbx -File -Recurse -ErrorAction SilentlyContinue
 dir /S /B *pass*.txt
 where /R C:\ *.ini
 where /R C:\ user.txt
+
+# find flags
+Get-ChildItem -Path "C:\" -Recurse -Include "local.txt", "proof.txt" -ErrorAction SilentlyContinue | Where-Object { $_.Name -in @("local.txt", "proof.txt") }
 
 # Dump a tree of all the folders / files on the HDD
 tree c:\\ > c:\\users\\public\\folders.txt
