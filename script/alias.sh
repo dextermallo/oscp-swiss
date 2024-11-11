@@ -194,7 +194,7 @@ wordlist_traversal="$wordlist_path/IntruderPayloads/FuzzLists/traversal.txt"
 ###########
 # windows #
 ###########
-windows_path="/usr/share/windows-resources"
+windows_resource="/usr/share/windows-resources"
 windows_powercat='/usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1'
 windows_powerup='/usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1'
 windows_powerview='/usr/share/windows-resources/powersploit/Recon/PowerView.ps1'
@@ -209,3 +209,4 @@ linux_privesc="/usr/bin/unix-privesc-check"
 ########
 hasncat_potfile_path="$HOME/.local/share/hashcat/hashcat.potfile"
 nmap_scripts_path="/usr/share/nmap/scripts"
+payload_backdoor="/usr/share/davtest/backdoors"

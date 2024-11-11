@@ -209,8 +209,31 @@ function find_category() {
 # Usage: i
 # Category: [ ]
 function i() {
-    ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'
-    ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
+    local auto_copy=false
+
+    _helper() {
+        swiss_logger info "[i] Usage: i [-c|--copy]"
+    }
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -c|--copy)
+                auto_copy=true
+                shift
+            ;;
+            *)
+                _helper
+                return 1
+            ;;
+        esac
+    done
+
+    local default_ip=$(ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}')
+    swiss_logger info "[i] $_swiss_default_network_interface: $default_ip"
+
+    if [[ "$auto_copy" = true ]]; then
+        echo -n $default_ip | xclip -selection clipboard
+    fi
 }
 
 # Description: Wrapped nmap command with default options
@@ -752,33 +775,109 @@ function gobuster_vhost_default() {
 # Example: hydra_default
 # Category: [ recon, brute-force, ftp, ssh ]
 function hydra_default() {
-    local IP=$1
-    local PORTS=$2
+    local IP
+    local service
+    local port
+    local used_username="$PWD/username.txt"
+    local used_password="$PWD/password.txt"
+
+    _helper() {
+        swiss_logger info "[i] Usage: hydra_default <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]"
+    }
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -i|--ip)
+                IP="$2"
+                shift 2
+                ;;
+            -s|--service)
+                service="$1"
+                shift 2
+                ;;
+            -P|--port)
+                port="$1"
+                shift 2
+                ;;
+            -u|--username)
+                used_username="$1"
+                shift 2
+                ;;
+            -p|--password)
+                used_password="$1"
+                shift 2
+                ;;
+            *)
+                _helper
+                return 0
+                ;;
+        esac
+    done
 
     if [ ! -f "username.txt" ]; then
         swiss_logger error "[e] username.txt not found in the current directory."
         return 1
     fi
 
-    for PORT in $(echo $PORTS | tr "," "\n"); do
-        case $PORT in
-            21)
-                swiss_logger info "[i] Running hydra for FTP on port $PORT..."
-                hydra -L username.txt -e nsr -s $PORT ftp://$IP
-                ;;
-            22)
-                swiss_logger info "[i] Running hydra for SSH on port $PORT..."
-                hydra -L username.txt -e nsr -s $PORT ssh://$IP
-                ;;
-            23)
-                swiss_logger info "[i] Running hydra for Telnet on port $PORT..."
-                hydra -L username.txt -e nsr -s $PORT telnet://$IP
-                ;;
-            *)
-                swiss_logger error "[e] Port $PORT not recognized or not supported for brute-forcing by this script."
-                ;;
-        esac
-    done
+    case $service in
+        ftp)
+            local used_port="${port:-21}"
+
+            swiss_logger info "[i] Running hydra_default for FTP"
+            swiss_logger info "[i] Run -e nsr with $used_username"
+
+            if [ -f "$used_username" ]; then
+                hydra -L $used_username -e nsr -s $used_port ftp://$IP
+            elif [ -n "$used_username" ]; then
+                hydra -l $used_username -e nsr -s $used_port ftp://$IP
+            fi
+
+            swiss_logger info "[i] Run $used_username with $used_password"
+            if [ -f "$used_username" ]; then   
+                if [ -f "$used_password" ]; then
+                    hydra -L $used_username -P $used_password -s $used_port ftp://$IP
+                else
+                    hydra -L $used_username -p $used_password -s $used_port ftp://$IP
+                fi
+            elif [ -n "$used_username" ]; then
+                if [ -f "$used_password" ]; then
+                    hydra -l $used_username -P $used_password -s $used_port ftp://$IP
+                else
+                    hydra -l $used_username -p $used_password -s $used_port ftp://$IP
+                fi
+            fi
+            ;;
+        ssh)
+            local used_port="${port:-22}"
+
+            swiss_logger info "[i] Running hydra_default for SSH"
+            swiss_logger info "[i] Run -e nsr with $used_username"
+
+            if [ -f "$used_username" ]; then
+                hydra -L $used_username -e nsr -s $used_port ssh://$IP
+            elif [ -n "$used_username" ]; then
+                hydra -l $used_username -e nsr -s $used_port ssh://$IP
+            fi
+
+            swiss_logger info "[i] Run $used_username with $used_password"
+            if [ -f "$used_username" ]; then   
+                if [ -f "$used_password" ]; then
+                    hydra -L $used_username -P $used_password -s $used_port ssh://$IP
+                else
+                    hydra -L $used_username -p $used_password -s $used_port ssh://$IP
+                fi
+            elif [ -n "$used_username" ]; then
+                if [ -f "$used_password" ]; then
+                    hydra -l $used_username -P $used_password -s $used_port ssh://$IP
+                else
+                    hydra -l $used_username -p $used_password -s $used_port ssh://$IP
+                fi
+            fi
+            ;;
+        *)
+            swiss_logger error "[e] Port $PORT not recognized or not supported for brute-forcing by this script."
+            ;;
+    esac
 }
 
 # Description: get all urls from a web page
@@ -852,7 +951,7 @@ function listen_target() {
     swiss_logger info "[i] tcpdump to listen on traffic from/to an IP address"
     swiss_logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
 
-    local interface="${DEFAULT_NETWORK_INTERFACE:-tun0}"
+    local interface="${DEFAULT_NETWORK_INTERFACE:-any}"
     local ip=""
 
     while [[ $# -gt 0 ]]; do
@@ -1453,25 +1552,29 @@ function memory() {
         fi
     }
 
+    _view_tree() {
+        swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
+        tree -C "$absolute_path" -L 1 | while read -r line; do
+            filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
+            if grep -q "^# Utils: $filename$" "$notes_path"; then
+                local description=$(grep -A 1 "^# Utils: $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
+                echo -e "$line \033[33m$description\033[0m"
+            else
+                echo "$line"
+            fi
+        done
+    }
+
     if [[ -d "$absolute_path" ]]; then
         case $mode in
             add)
                 _add_note
                 ;;
             view)
-                _view_note
+                _view_tree
                 ;;
             default)
-                swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
-                tree -C "$absolute_path" -L 1 | while read -r line; do
-                    filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
-                    if grep -q "^# Utils: $filename$" "$notes_path"; then
-                        local description=$(grep -A 1 "^# Utils: $filename$" "$notes_path" | grep '^## Description' | cut -d':' -f2-)
-                        echo -e "$line \033[33m$description\033[0m"
-                    else
-                        echo "$line"
-                    fi
-                done
+                _view_note
                 ;;
             *)
                 swiss_logger error "[e] Mode type incorrect."
@@ -1595,8 +1698,9 @@ function go_workspace() {
 
     if [[ -n "$cur_workspace_path" && -d "$cur_workspace_path" ]]; then
         cd "$cur_workspace_path" || { echo "[e] Failed to navigate to directory '$cur_workspace_path'"; return 1; }
-    else
-        echo "[e] Workspace path is empty or does not exist"
+    # TODO: in spawn_session_in_workspace, the else condition should not print the error if the variable is empty
+    # else
+        # echo "[e] Workspace path is empty or does not exist"
     fi
 }
 
@@ -1642,8 +1746,17 @@ function init_workspace() {
     mkdir -p "$dir_name"
     cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
 
-    touch username.txt
-    touch password.txt
+    if [ -f "$_swiss_init_workspace_default_username_wordlist" ]; then
+        cp $_swiss_init_workspace_default_username_wordlist username.txt
+    else
+        touch username.txt
+    fi
+
+    if [ -f "$$_swiss_init_workspace_default_password_wordlist" ]; then
+        cp $_swiss_init_workspace_default_password_wordlist password.txt
+    else
+        touch password.txt
+    fi
 
     set_workspace $PWD $ip
 }
@@ -1656,14 +1769,14 @@ function set_workspace() {
     local workspace_target="$2"
 
     if [[ -d "$workspace_path" ]]; then
-        jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+        jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
         swiss_logger debug "[d] Current workspace path set to $workspace_path"
     else
         swiss_logger error "[e] Directory '$workspace_path' does not exist"
         return 1
     fi
 
-    jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+    jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
     swiss_logger debug "[d] Target set to $workspace_target"
 
     local exists_in_list
@@ -1672,7 +1785,7 @@ function set_workspace() {
 
     if [[ -z "$exists_in_list" ]]; then
         jq --arg path "$workspace_path" --arg target "$workspace_target" \
-            '.swiss_variable.workspace.list += [{"path": $path, "target": $target}]' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+            '.swiss_variable.workspace.list += [{"path": $path, "target": $target}]' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
         swiss_logger debug "[d] Workspace added to list: $workspace_path with target $workspace_target"
     else
         swiss_logger debug "[d] Workspace already exists in the list"
@@ -1708,10 +1821,13 @@ function select_workspace() {
 
     if [[ "$choice" -gt 0 && "$choice" -le "${#paths[@]}" && -d "${paths[choice]}" ]]; then
 
-        selected_path="${paths[choice]}"
-        selected_target=$(jq -r ".swiss_variable.workspace.list[$choice].target" "$swiss_settings")
+        local selected_path="${paths[choice]}"
+        local selected_target=$(jq -r ".swiss_variable.workspace.list[$choice - 1].target" "$swiss_settings")
+
+        swiss_logger debug "[d] change to path: $selected_path, target: $selected_target"
+
         jq --arg path "$selected_path" --arg target "$selected_target" \
-           '.swiss_variable.workspace.cur = { "path": $path, "target": $target }' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+           '.swiss_variable.workspace.cur = { "path": $path, "target": $target }' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
 
         cd $selected_path || { swiss_logger error "[e] Failed to enter directory '${paths[choice]}'"; return 1; }
     else
@@ -1734,14 +1850,14 @@ function check_workspace() {
         fi
     done
 
-    jq --argjson list "$(printf '%s\n' "${updated_list[@]}" | jq -s '.')" '.swiss_variable.workspace.list = $list' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+    jq --argjson list "$(printf '%s\n' "${updated_list[@]}" | jq -s '.')" '.swiss_variable.workspace.list = $list' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
     
     local cur_workspace_path
     cur_workspace_path=$(jq -r '.swiss_variable.workspace.cur.path // empty' "$swiss_settings")
 
     if [[ -n "$cur_workspace_path" && ! -d "$cur_workspace_path" ]]; then
         swiss_logger info "[i] Current workspace path does not exist: $cur_workspace_path"
-        jq '.swiss_variable.workspace.cur = {}' "$swiss_settings" > tmp.$$.json && mv tmp.$$.json "$swiss_settings"
+        jq '.swiss_variable.workspace.cur = {}' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
     fi
 }
 
@@ -1752,8 +1868,7 @@ function check_workspace() {
 # Category: [ ]
 function get_target() {
     cur_target=$(jq -r '.swiss_variable.workspace.cur.target // ""' "$swiss_settings")
-
-    if [[ -z $target ]]; then
+    if [[ -n $target ]]; then
         target=$cur_target
         echo $cur_target | xclip -selection clipboard
     fi

@@ -58,6 +58,10 @@
     "svc": {
       "wsgi": "/home/kali/.local/bin/wsgidav",
       "wsgi_default_port": 80
+    },
+    "init_workspace": {
+      "default_username_wordlist": "/usr/share/wordlists/seclists/Usernames/top-usernames-shortlist.txt",
+      "default_password_wordlist": "/usr/share/wordlists/seclists/Passwords/Common-Credentials/10-million-password-list-top-100.txt"
     }
   },
   "swiss_variable": {
