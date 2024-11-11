@@ -1,35 +1,19 @@
 #!/bin/bash
+# About installation.sh
+# installation.sh is a collection of installation functions that are used across the oscp-swiss scripts.
+# TODO: add all binaries, files, etc being used to the installation script
+
 
 source $HOME/oscp-swiss/script/utils.sh
-base=$HOME/oscp-swiss/utils
 
-mkdir -p $base
-
-# pspy
-# REF: https://github.com/DominicBreuker/pspy/releases/tag/v1.2.1
-mkdir $base/pspy
-wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 -P $base/pspy
-wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32s -P $base/pspy
-wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 -P $base/pspy
-wget https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64s -P $base/pspy
-
-# Linpeas/Winpeas
-# REF: https://github.com/peass-ng/PEASS-ng/releases/tag/20240721-1e44f951
-mkdir $base/Peas
-wget https://github.com/peass-ng/PEASS-ng/releases/download/20240721-1e44f951/linpeas.sh -P $base/Peas
-wget https://github.com/peass-ng/PEASS-ng/releases/download/20240721-1e44f951/winPEASx64.exe -P $base/Peas
-wget https://github.com/peass-ng/PEASS-ng/releases/download/20240721-1e44f951/winPEASx86.exe -P $base/Peas
-
-cd $HOME/oscp-swiss/wordlist
-
-# directory traversal
+# create directory traversal wordlist
 merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal-short.txt \
         /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal.txt \
         '/usr/share/wordlists/PayloadsAllTheThings/Directory Traversal/Intruder/deep_traversal.txt' \
         '/usr/share/wordlists/PayloadsAllTheThings/Directory Traversal/Intruder/traversals-8-deep-exotic-encoding.txt' \
-        -o file-traversal-default.txt
+        -o $swiss_wordlist/file-traversal-default.txt
 
-# web fuzzing
+# create web fuzzing wordlist
 merge   /usr/share/wordlists/seclists/Discovery/Web-Content/raft-large-files.txt \
         /usr/share/wordlists/seclists/Discovery/Web-Content/raft-large-directories.txt \
         /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt \
@@ -37,15 +21,15 @@ merge   /usr/share/wordlists/seclists/Discovery/Web-Content/raft-large-files.txt
         /usr/share/wordlists/dirb/common.txt \
         /usr/share/wordlists/dirb/big.txt \
         /usr/share/wordlists/seclists/Discovery/Web-Content/dirsearch.txt \
-        -o ffuf-default.txt
+        -o $swiss_wordlist/ffuf-default.txt
 
-# subdomain & vhost fuzzing
+# create subdomain & vhost fuzzing wordlist
 merge   /usr/share/wordlists/amass/subdomains-top1mil-110000.txt \
         /usr/share/wordlists/seclists/Discovery/DNS/fierce-hostlist.txt \
         /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
-        -o subdomain+vhost-default.txt
+        -o $swiss_wordlist/subdomain+vhost-default.txt
 
-# sqli
+# create sqli wordlist
 merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-error-based.txt \
         /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-time-based.txt \
         /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-union-select.txt \
@@ -82,11 +66,11 @@ merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-error-based.txt \
         '/usr/share/wordlists/PayloadsAllTheThings/SQL Injection/Intruder/payloads-sql-blind-MySQL-INSERT' \
         '/usr/share/wordlists/PayloadsAllTheThings/SQL Injection/Intruder/payloads-sql-blind-MySQL-ORDER_BY' \
         '/usr/share/wordlists/PayloadsAllTheThings/SQL Injection/Intruder/payloads-sql-blind-MySQL-WHERE' \
-        -o sqli-custom.txt
+        -o $swiss_wordlist/sqli-custom.txt
 
+
+# create symlink for the wordlist
+ln -s /usr/share/wordlists $HOME/oscp-swiss/wordlist
+# create symlink for the windows binaries
 ln -s /usr/share/windows-binaries $HOME/oscp-swiss/utils/windows
 ln -s /usr/share/windows-resources $HOME/oscp-swiss/utils/windows
-ln -s /usr/share/wordlists $HOME/oscp-swiss/wordlist
-
-# nnn installation
-# https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn

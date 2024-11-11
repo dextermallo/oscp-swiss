@@ -1,6 +1,6 @@
 #!/bin/bash
 # About utils.sh
-# TODO: Doc
+# utils.sh is a collection of utility functions that are used across the oscp-swiss scripts.
 
 
 swiss_root="$HOME/oscp-swiss"
@@ -11,11 +11,13 @@ swiss_extension="$swiss_root/script/extension.sh"
 swiss_utils="$swiss_root/utils"
 swiss_private="$swiss_root/private"
 swiss_wordlist="$swiss_root/wordlist"
-
 swiss_settings="$swiss_root/settings.json"
 
-
-_log() {
+# Description:
+#   _log is the low level function for logging,
+#   which wrap the echo command with ANSI color codes.
+# Usage: _log [options] <text>
+function _log() {
     local bold=""
     local fg_color=""
     local bg_color=""
@@ -116,19 +118,40 @@ _log() {
     fi
 }
 
+# Description:
+#   _check_logger_level is a helper function to check the logger level,
+#   the function will return 0 if the given level is equal or higher than the global logger level.
+# Configuration: global_settings.logger_level <debug|info|warn|error>
+# Usage: _check_logger_level <level>
+function _check_logger_level() {
+    case "$_swiss_logger_level" in
+        debug) return 0 ;;
+        info) [[ "$1" != "debug" ]] ;;
+        warn) [[ "$1" == "warn" || "$1" == "error" ]] ;;
+        error) [[ "$1" == "error" ]] ;;
+        *) return 1 ;;
+    esac
+}
+
+# Description: impl of logger
+# Usage: swiss_logger <level> <text>
 function swiss_logger() {
     case "$1" in
         debug)
-            _log -f white "$@"
+            _check_logger_level "debug" && _log -f white "$@"
             ;;
         info)
-            _log -f green "$@"
+            _check_logger_level "info" && _log -f green "$@"
             ;;
         warn)
-            _log -f yellow "$@"
+            _check_logger_level "warn" && _log -f yellow "$@"
             ;;
         error)
-            _log --bold -f red "$@"
+            _check_logger_level "error" && _log --bold -f red "$@"
+            ;;
+        prompt)
+            # prompt must be display in any given level
+            _check_logger_level "error" && _log -f green "$@"
             ;;
         hint)
             _log -f cyan "$@"
@@ -145,7 +168,12 @@ function swiss_logger() {
     esac
 }
 
-load_private_scripts() {
+# Description:
+#   Load all scripts under the $oscp-swiss/private directory.
+#   If you have any private aliases, functions or variables, you can put them in the private directory.
+#   Or if you already have a bunch of scripts, you can put them in the directory without any changes.
+# Usage: _load_private_scripts
+function _load_private_scripts() {
     if [ -d "$swiss_private" ]; then
         for script in "$swiss_private"/*.sh; do
             if [ -f "$script" ]; then
@@ -157,92 +185,32 @@ load_private_scripts() {
     fi
 }
 
-# Description: Simplified version of the `ip` command to show the IP address of the default network interface.
-# TODO: move to oscp-swiss.sh
-function i() {
-    ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'
-}
-
-# Description: Get the default network interface's IP address and copy it to the clipboard.
-function gi() {
-    swiss_logger info "[i] get default network interface's IP address"
-    ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
-}
-
 # Description: Get the default network interface's IP address.
-function get_default_network_interface_ip() {
+# Usage: _get_default_network_interface_ip
+function _get_default_network_interface_ip() {
     ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}'
 }
 
-# Description:
-#   Abbrivation for "set" to set a key-value item in the configuration file.
-#   Uses with the function g (abbr for "get"). Works across different terminal sessions.
-# Usage: s <key_name> <value>
-# Example:
-#   $> s next-attempt-url http://localhost
-#   and you can use the command g to get it in another terminal session
-#   $> g next-attempt-url
-function s() {
-    local arg_name="$1"
-    local arg_value="$2"
-
-    if [[ ! -f $swiss_settings ]]; then
-        swiss_logger info "[i] Config file not found, creating one..."
-        echo '{"swiss_variable": {}}' > "$swiss_settings"
-    fi
-
-    jq --arg name "$arg_name" --arg value "$arg_value" '.swiss_variable[$name] = $value' "$swiss_settings" > "${swiss_settings}.tmp" && mv "${swiss_settings}.tmp" "$swiss_settings"
-    swiss_logger info "[i] $arg_name set to: $arg_value"
-}
-
-# Description:
-#   Abbrivation for "get" to get a key-value item in the configuration file.
-#   Uses with the function g (abbr for "set"). Works across different terminal sessions.
-# 
-# Usage: g <key_name>
-# Example:
-#   $> s next-attempt-url http://localhost
-#   
-#   and you can use the command g to get it in another terminal session
-#   $> g next-attempt-url
-function g() {
-    local arg_name="$1"
-
-    if [[ ! -f $swiss_settings ]]; then
-        echo -n "-2"
-        return
-    fi
-
-    local arg_value=$(jq -r --arg name "$arg_name" '.swiss_variable[$name] // empty' "$swiss_settings")
-
-    if [[ -z $arg_value ]]; then
-        echo -n "-1"
-    else
-        # Add underscore in front when outputting the variable
-        echo -n "$arg_value"
-    fi
-}
-
 # Description: Display a banner for commands, which are replaced by aliases.
-# Usage: override_cmd_banner
-override_cmd_banner() {
+# Usage: _override_cmd_banner
+function _override_cmd_banner() {
     if [ "$disable_sys_custom_command_banner" = false ]; then
         swiss_logger highlight "[ custom command, for default, add the sign _ in front of the command ]\n";
     fi
 }
 
 # Description: Display a banner for extension functions.
-# Usage: extension_fn_banner
-extension_fn_banner() {
+# Usage: _extension_fn_banner
+function _extension_fn_banner() {
     swiss_logger highlight "[ The function may relies on non-native command, binaries, and libraries. You may need to check extension.sh before the run ]\n";
 }
 
 # Description:
 #   Load the settings from the settings.json file.
-#   All the key-value pairs under `{ env }` are exported as environment variables.
-#   The settings.json file should be located at $HOME/oscp-swiss/settings.json
-# Usage: load_settings
-function load_settings() {
+#   All the key-value pairs under `global_settings` and `functions` are exported as environment variables.
+#   Default location: $HOME/oscp-swiss/settings.json
+# Usage: _load_settings
+function _load_settings() {
     if [ ! -f "$swiss_settings" ]; then
         swiss_logger error "[e] $swiss_settings not found."
         return 1
@@ -255,8 +223,7 @@ function load_settings() {
     done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$swiss_settings")
 }
 
-# TODO: doc
-check_cmd_exist() {
+function _check_cmd_exist() {
     if command -v "$1" &> /dev/null
     then
         return 0

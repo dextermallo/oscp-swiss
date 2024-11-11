@@ -36,14 +36,14 @@ PrintSpoofer64.exe -i -c cmd
 # Utils: alpine-v3.13-x86_64-20210218_0139.tar.gz
 ## Description: lxd Group Privilege Escalation
 ## Path: /utils/linux/alpine-v3.13-x86_64-20210218_0139.tar.gz
-## Shortcut: linux_PE_lxd_group
+## Shortcut: linux_lxd_group
 ## Usage:
 <-- Declare the usage here -->
 
 # Utils: windows-addUser
 ## Description: .exe to add user to PE as administrator (binary hijacking etc)
 ## Path: /utils/windows/windows-addUser
-## Shortcut: windows_PE_addUser
+## Shortcut: windows_addUser
 ## Usage:
 <-- Declare the usage here -->
 
@@ -57,7 +57,7 @@ PrintSpoofer64.exe -i -c cmd
 # Utils: pspy
 ## Description: Check all hidden process 
 ## Path: /utils/linux/pspy
-## Shortcut: linux_recon_pspy
+## Shortcut: linux_pspy
 ## Usage:
 ```sh
 ./pspy
@@ -66,7 +66,7 @@ PrintSpoofer64.exe -i -c cmd
 # Utils: dll-addUser.c
 ## Description: Payload for DLL to add user as administrator
 ## Path: windows/dll-addUser.c
-## Shortcut: windows_PE_dllAdduser
+## Shortcut: windows_dllAdduser
 ## Usage:
 ```sh
 x86_64-w64-mingw32-gcc TextShaping.cpp --shared -o TextShaping.dll
@@ -75,7 +75,7 @@ x86_64-w64-mingw32-gcc TextShaping.cpp --shared -o TextShaping.dll
 # Utils: accesschk
 ## Description: permission check 
 ## Path: /utils/windows/accesschk
-## Shortcut: windows_PE_accesschk
+## Shortcut: windows_accesschk
 ## Usage:
 ```powershell
 .\accesschk64.exe -accepteula -wv (whoami) C:\Users\steve\Pictures\BackendCacheCleanup.exe
@@ -84,7 +84,7 @@ x86_64-w64-mingw32-gcc TextShaping.cpp --shared -o TextShaping.dll
 # Utils: SharpHound-v2.4.1
 ## Description: BloodHound (bloodhound-ce)
 ## Path: /utils/windows/SharpHound-v2.4.1
-## Shortcut: windows_RECON_SharpHound2_4_1
+## Shortcut: windows_sharphound_2_4_1
 ## Usage:
 ```sh
 svc bloodhound-ce
@@ -93,7 +93,7 @@ svc bloodhound-ce
 # Utils: mimikatz
 ## Description: 
 ## Path: windows/windows-resources/mimikatz
-## Shortcut: windows_PE_mimikatz
+## Shortcut: windows_mimikatz
 ## Usage:
 
 # Utils: Spray-Passwords.ps1
@@ -109,7 +109,7 @@ svc bloodhound-ce
 # Utils: Rubeus.exe
 ## Description: Kerberoasting, AS-REP Roasting, and others
 ## Path: /utils/windows/Rubeus.exe
-## Shortcut: windows_PE_rubeus
+## Shortcut: windows_rubeus
 ## Usage:
 ```powershell
 # AS-Rep Roasting
@@ -118,3 +118,36 @@ svc bloodhound-ce
 # Keroasting
 .\Rubeus.exe kerberoast /outfile:hashes.kerberoast
 ```
+# Utils: BloodHoundCollector-4.3.1
+## Description: BloodHound 4.3.1 collector
+## Path: windows/BloodHoundCollector-4.3.1
+## Shortcut: windows_bloodhound_4_3_1
+## Usage:
+```powershell
+.\SharpHound.exe -c All
+```
+
+# Utils: CVE-2022-0847-DirtyPipe-Exploits
+## Description: DirtyPipe Exploits 
+## Path: CVE/CVE-2022-0847-DirtyPipe-Exploits
+## Shortcut: CVE_DirtyPipe
+## Usage:
+```bash
+# Ref: https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits
+
+# Version
+Linux kernel versions newer than 5.8 are affected.
+So far the vulnerability has been patched in the following Linux kernel versions:
+- 5.16.11
+- 5.15.25
+- 5.10.102
+
+# Test
+# Ref: https://github.com/basharkey/CVE-2022-0847-dirty-pipe-checker
+./dpipe.sh
+
+# Exploit
+./exploit-1
+
+```
+
