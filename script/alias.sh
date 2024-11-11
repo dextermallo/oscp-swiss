@@ -1,10 +1,11 @@
 #!/bin/bash
 # About alias.sh
-# TODO: Doc
+# alias.sh is a collection of alias commands that are used across the oscp-swiss scripts.
+# The functions under alias.sh are the default commands that are replaced with the custom commands.
 
 
 source $HOME/oscp-swiss/script/utils.sh
-load_settings
+_load_settings
 
 alias grep="grep --color=auto"
 alias diff="diff --color=auto"
@@ -34,11 +35,23 @@ function cd() {
 #   The default argument is to:
 #       1. ignore the certificate
 #       2. set the resolution to your preferred screen resolution
-#       3. mount to the current directory
-alias _xfreerdp="/usr/bin/xfreerdp"
-
-function xfreerdp_default() {
-    override_cmd_banner
+#       3. mount to the current directory (optional)
+#       4. set a preferred screen resolution (dynamic/full/half)
+#   Arguments:
+#       -m, --mode <string> (dynamic/full/half)
+#   Configuration:
+#       - function.xfreerdp.use_custom_xfreerdp <boolean>: Use the custom xfreerdp function
+#       - function.xfreerdp.prompt_create_mount <boolean>: Prompt to create a mount
+#       - function.xfreerdp.create_mount_by_default <boolean>: Create a mount by default
+#       - function.xfreerdp.default_mode <string>: Default mode (dynamic/full/half)
+#       - function.xfreerdp.full_width <integer>: Full width resolution
+#       - function.xfreerdp.half_width <integer>: Half width resolution
+#       - function.xfreerdp.full_height <integer>: Full height resolution
+#   Example:
+#       xfreerdp -m dynamic /u:username /p:password /v:$target
+#       xfreerdp -m full /u:username /p:password /v:$target
+function _xfreerdp_default() {
+    _override_cmd_banner
     local create_mount=$_swiss_xfreerdp_create_mount_by_default
     local mode=$_swiss_xfreerdp_default_mode
     local new_args=()
@@ -108,9 +121,8 @@ function xfreerdp_default() {
     fi
 
 }
-
 if [ $_swiss_xfreerdp_use_custom_xfreerdp = true ]; then
-    alias xfreerdp=xfreerdp_default
+    alias xfreerdp=_xfreerdp_default
 fi
 
 # Description:
@@ -119,23 +131,24 @@ fi
 #       1. enumerate users, plugins, and themes
 #       2. use aggressive plugin detection
 #       3. use the WPSCAN_API_TOKEN environment variable (optional)
-alias _wpscan="/usr/bin/wpscan"
-alias wpscan="override_cmd_banner; wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
+#   You can request a free API token from https://wpscan.com/api
+# Configuration: function.wpscan.wpscan_token <string>
+alias wpscan="_override_cmd_banner; \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
 
-# Description:
-#   Replace the default argument of the command cat
-#   The default argument is to:
-#       1. display the content of the file with color under dark-mode Kali.
+# Description: Use pygmentize to display the content of the file with color under dark-mode Kali.
+# Configuration: function.cat.use_pygmentize <boolean>
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
-
-alias _cat="/usr/bin/cat"
-
+# TODO: Documentation
 if [ $_swiss_cat_use_pygmentize = true ]; then
-    alias cat="override_cmd_banner; pygmentize -P style=dracula -g"
+    alias cat="_override_cmd_banner; pygmentize -P style=dracula -g"
 fi
 
-alias _ls="ls"
-
+# Description: Use the nnn file manager as the default file manager
+# Configuration: function.ls.use_nnn <boolean>
+# References:
+#   - https://github.com/jarun/
+#   - https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn
+# TODO: Documentation
 if [ $_swiss_ls_use_nnn = true ]; then
     alias ls="n -dEH"
 fi
@@ -194,5 +207,5 @@ linux_privesc="/usr/bin/unix-privesc-check"
 ########
 # disc #
 ########
-hasncat_potfile_path="~/.local/share/hashcat/hashcat.potfile"
+hasncat_potfile_path="$HOME/.local/share/hashcat/hashcat.potfile"
 nmap_scripts_path="/usr/share/nmap/scripts"

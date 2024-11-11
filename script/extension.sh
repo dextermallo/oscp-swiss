@@ -2,13 +2,13 @@
 # About extension.sh
 # The extension.sh is for the non-native functions that are used in the script.
 # You may need to download the tools and scripts or modify the path to use them.
-# for extension function, you should use the `extension_fn_banner` function to display the banner
+# for extension function, you should use the `_extension_fn_banner` function to display the banner
 # to inform the user that the function is an extension function.
 
 
 source $HOME/oscp-swiss/script/utils.sh
 source $HOME/oscp-swiss/script/alias.sh
-load_settings
+_load_settings
 
 CVE_sudo_PE="$HOME/oscp-swiss/utils/CVE/CVE-2021-3156"
 

