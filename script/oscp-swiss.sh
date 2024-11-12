@@ -769,13 +769,19 @@ function gobuster_vhost_default() {
 }
 
 # Description: bruteforce services
-# Usage: hydra_default <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]
+# Usage: bruteforce <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]
 # Example: 
 #   ```sh
 #   bruteforce -i 192.168.1.1 ssh    
 #   ```
-# Category: [ recon, brute-force, ftp, ssh ]
+# Category: [ recon, brute-force, ftp, ssh, auto-exploit ]
 function bruteforce() {
+    _disable_auto_exploit_function
+
+    if [ $? -eq 1 ]; then
+        return 1
+    fi
+
     local IP
     local service
     local port
@@ -793,19 +799,19 @@ function bruteforce() {
                 shift 2
                 ;;
             -s|--service)
-                service="$1"
+                service="$2"
                 shift 2
                 ;;
             -P|--port)
-                port="$1"
+                port="$2"
                 shift 2
                 ;;
             -u|--username)
-                used_username="$1"
+                used_username="$2"
                 shift 2
                 ;;
             -p|--password)
-                used_password="$1"
+                used_password="$2"
                 shift 2
                 ;;
             *)
@@ -814,6 +820,8 @@ function bruteforce() {
                 ;;
         esac
     done
+
+    swiss_logger debug "[d] service: $service"
 
     if [[ ! -f "$used_username" && ! -n "$used_username" ]]; then
         swiss_logger error "[e] type of username incorrect. Required: string, files"
@@ -879,7 +887,7 @@ function bruteforce() {
             fi
             ;;
         smb)
-            crackmapexec smb $IP -u $used_username -p $used_password
+            _wrap "crackmapexec smb $IP -u $used_username -p $used_password"
             ;;
         *)
             swiss_logger error "[e] Port $PORT not recognized or not supported for brute-forcing by this script."

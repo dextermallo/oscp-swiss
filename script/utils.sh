@@ -231,3 +231,17 @@ function _check_cmd_exist() {
         return 1
   fi
 }
+
+function _wrap() {
+    for cmd in "$@"; do
+        swiss_logger info "[i] Executing Commnad: $cmd"
+        eval "$cmd"
+    done
+}
+
+function _disable_auto_exploit_function() {
+    swiss_logger highlight "[ The function MAY considered as automatic exploitation. Make sure you read the scripts! ]"
+    if [ "$_swiss_disable_auto_exploit_function" = true ]; then
+        return 1
+    fi
+}
