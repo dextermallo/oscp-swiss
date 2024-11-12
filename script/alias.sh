@@ -94,10 +94,10 @@ function _xfreerdp_default() {
                 \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /dynamic-resolution ${new_args[@]}
             ;;
             full)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
             ;;
             half)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
             ;;
             *)
                 swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
