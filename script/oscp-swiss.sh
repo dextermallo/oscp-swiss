@@ -1750,7 +1750,7 @@ function init_workspace() {
         touch username.txt
     fi
 
-    if [ -f "$$_swiss_init_workspace_default_password_wordlist" ]; then
+    if [ -f "$_swiss_init_workspace_default_password_wordlist" ]; then
         cp $_swiss_init_workspace_default_password_wordlist password.txt
     else
         touch password.txt
