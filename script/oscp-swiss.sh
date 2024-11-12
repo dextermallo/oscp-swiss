@@ -407,19 +407,17 @@ function svc() {
             ;;
         ligolo)
             _extension_fn_banner
-            swiss_logger info "[i] start ligolo agent"
             swiss_logger warn "[w] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
-            swiss_logger info "[i] under target (find agent executable under \$ligolo_path):"
-            swiss_logger info "[i] agent.exe -connect $(_get_default_network_interface_ip):443 -ignore-cert"
-            swiss_logger warn "[w] Using fingerprint: "
-            swiss_logger warn "[w] agent.exe -connect $(_get_default_network_interface_ip):443 -accept-fingerprint [selfcert-value]"
-
+            swiss_logger info "[i] Example (On target): "
+            swiss_logger info "[i] Linux: .\ligolo-ng_agent_0.6.2_linux_amd64 -connect $(_get_default_network_interface_ip):443 -ignore-cert"
+            swiss_logger info "[i] Windows: .\ligolo-ng_agent_0.6.2_windows_amd64.exe -connect $(_get_default_network_interface_ip):443 -ignore-cert"
             swiss_logger info "[i] after connection: "
             swiss_logger info "[i] > session                                    # choose the session"
             swiss_logger info "[i] > ifconfig                                   # check interface"
             swiss_logger info "[i] sudo ip route add 192.168.0.0/24 dev ligolo  # add interface"
             swiss_logger warn "[w] ip route del 122.252.228.38/32               # removal after use"
             swiss_logger info "[i] start                                        # start the agent"
+            swiss_logger info "[i] Add listener (e.g., for svc http): listener_add --addr 0.0.0.0:80 --to 127.0.0.1:80 --tcp"
             # TODO: add to configuration
             local ligolo_agent_path="$swiss_utils/tunnel/ligolo-0.6.2/proxy"
             $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
@@ -1829,6 +1827,9 @@ function select_workspace() {
         jq --arg path "$selected_path" --arg target "$selected_target" \
            '.swiss_variable.workspace.cur = { "path": $path, "target": $target }' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
 
+        # reset variable target
+        target=$selected_target
+
         cd $selected_path || { swiss_logger error "[e] Failed to enter directory '${paths[choice]}'"; return 1; }
     else
         swiss_logger error "[e] Invalid choice or directory does not exist"
@@ -1868,7 +1869,7 @@ function check_workspace() {
 # Category: [ ]
 function get_target() {
     cur_target=$(jq -r '.swiss_variable.workspace.cur.target // ""' "$swiss_settings")
-    if [[ -n $target ]]; then
+    if [[ -n $cur_target ]]; then
         target=$cur_target
         echo $cur_target | xclip -selection clipboard
     fi
