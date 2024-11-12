@@ -14,6 +14,8 @@ CVE_sudo_PE="$HOME/oscp-swiss/utils/CVE/CVE-2021-3156"
 CVE_DirtyPipe="$HOME/oscp-swiss/utils/CVE/CVE-2022-0847-DirtyPipe-Exploits"
 
 ligolo_path="$swiss_utils/tunnel/ligolo-0.6.2"
+ligolo_windows="$swiss_utils/tunnel/ligolo-0.6.2/ligolo-ng_agent_0.6.2_windows_amd64.exe"
+ligolo_linux="$swiss_utils/tunnel/ligolo-0.6.2/ligolo-ng_agent_0.6.2_linux_amd64"
 
 linux_lxd_group="$HOME/oscp-swiss/utils/linux/alpine-v3.13-x86_64-20210218_0139.tar.gz"
 linux_linpeas="$swiss_utils/Peas/linpeas-v20240721.sh"
@@ -56,3 +58,6 @@ windows_rubeus="$swiss_utils/windows/Rubeus.exe"
 windows_bloodhound_4_3_1="$swiss_utils/windows/BloodHoundCollector-4.3.1"
 service_jdwp_shellifier="$HOME/oscp-swiss/utils/service/jdwp-shellifier"
 CVE_screen_4_5_0="$HOME/oscp-swiss/utils/CVE/screen-v4.5.0-priv-escalate"
+
+windows_family=( $windows_GodPotato_NET4 $windows_mimikatz_x64 $windows_PrintSpoofer64 $windows_winpeas_x64 $windows_nc64 $windows_powerview $windows_powerup )
+linux_family=( $linux_pspy64 $linux_linpeas )
