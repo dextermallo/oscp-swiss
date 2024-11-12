@@ -768,11 +768,14 @@ function gobuster_vhost_default() {
     fi
 }
 
-# Description: hydra default
-# Usage: hydra_default <IP> <PORTS>
-# Example: hydra_default
+# Description: bruteforce services
+# Usage: hydra_default <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]
+# Example: 
+#   ```sh
+#   bruteforce -i 192.168.1.1 ssh    
+#   ```
 # Category: [ recon, brute-force, ftp, ssh ]
-function hydra_default() {
+function bruteforce() {
     local IP
     local service
     local port
@@ -812,9 +815,12 @@ function hydra_default() {
         esac
     done
 
-    if [ ! -f "username.txt" ]; then
-        swiss_logger error "[e] username.txt not found in the current directory."
-        return 1
+    if [[ ! -f "$used_username" && ! -n "$used_username" ]]; then
+        swiss_logger error "[e] type of username incorrect. Required: string, files"
+    fi
+
+    if [[ ! -f "$used_password" && ! -n "$used_password" ]]; then
+        swiss_logger error "[e] type of password incorrect. Required: string, files"
     fi
 
     case $service in
@@ -858,7 +864,7 @@ function hydra_default() {
             fi
 
             swiss_logger info "[i] Run $used_username with $used_password"
-            if [ -f "$used_username" ]; then   
+            if [ -f "$used_username" ]; then
                 if [ -f "$used_password" ]; then
                     hydra -L $used_username -P $used_password -s $used_port ssh://$IP
                 else
@@ -871,6 +877,9 @@ function hydra_default() {
                     hydra -l $used_username -p $used_password -s $used_port ssh://$IP
                 fi
             fi
+            ;;
+        smb)
+            crackmapexec smb $IP -u $used_username -p $used_password
             ;;
         *)
             swiss_logger error "[e] Port $PORT not recognized or not supported for brute-forcing by this script."
