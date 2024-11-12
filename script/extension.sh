@@ -54,3 +54,5 @@ windows_mimikatz_x64="$swiss_utils/windows/windows-resources/mimikatz/x64/mimika
 windows_spary_password="$swiss_utils/windows/Spray-Passwords.ps1"
 windows_rubeus="$swiss_utils/windows/Rubeus.exe"
 windows_bloodhound_4_3_1="$swiss_utils/windows/BloodHoundCollector-4.3.1"
+service_jdwp_shellifier="$HOME/oscp-swiss/utils/service/jdwp-shellifier"
+CVE_screen_4_5_0="$HOME/oscp-swiss/utils/CVE/screen-v4.5.0-priv-escalate"
