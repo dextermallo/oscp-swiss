@@ -150,6 +150,7 @@ fi
 #   - https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn
 # TODO: Documentation
 if [ $_swiss_ls_use_nnn = true ]; then
+    alias l="\ls"
     alias ls="n -dEH"
 fi
 

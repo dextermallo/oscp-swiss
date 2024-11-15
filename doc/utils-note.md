@@ -225,3 +225,12 @@ screen -D -m -L ld.so.preload echo -ne "\x0a/tmp/libhax.so"
 screen -ls
 /tmp/rootshell
 ```
+# Utils: IOXIDResolver
+## Description: find additional active interfaces (windows)
+## Path: recon/IOXIDResolver
+## Shortcut: recon_IOXIDResolver
+## Usage:
+```bash
+python3 IOXIDResolver.py -t $target
+```
+

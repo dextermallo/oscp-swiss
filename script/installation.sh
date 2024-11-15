@@ -11,6 +11,7 @@ merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal-short.txt \
         /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal.txt \
         '/usr/share/wordlists/PayloadsAllTheThings/Directory Traversal/Intruder/deep_traversal.txt' \
         '/usr/share/wordlists/PayloadsAllTheThings/Directory Traversal/Intruder/traversals-8-deep-exotic-encoding.txt' \
+        '/usr/share/seclists/Fuzzing/LFI/LFI-LFISuite-pathtotest-huge.txt' \
         -o $swiss_wordlist/file-traversal-default.txt
 
 # create web fuzzing wordlist
