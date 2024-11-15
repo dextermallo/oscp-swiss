@@ -213,6 +213,10 @@ function check() {
             log --bold -f red "[i] Root CRON JOB may not be visible, should try pspy as well\n"
             cat /etc/crontab
             crontab -l
+
+            log --bold -f yellow "[i] /etc/cron.*"
+            ls -alR /etc/cron.*
+
             ;;
         10|net|network)
             clear 2>/dev/null
