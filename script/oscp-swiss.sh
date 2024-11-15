@@ -282,18 +282,15 @@ function nmap_default() {
             ;;
         tcp)
             mkdir -p $saved_file_path/tcp
-            swiss_logger info "[i] Start tcp check. Saved to $saved_file_path/tcp/check-1"
-            nmap -p0-65535 -v $ip -oN $saved_file_path/tcp/check-1
+            swiss_logger info "[i] Start tcp check. Saved to $saved_file_path/tcp/check"
+            nmap -p0-65535 -v $ip -oN $saved_file_path/tcp/check
 
-            local ports=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check-1 | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
+            local ports=$(grep -oP '^\d+\/\w+' $saved_file_path/tcp/check | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
             swiss_logger info "[i] Checking service on ports - $ports. Saved to $saved_file_path/tcp/svc"
             nmap -p$ports -sVC $ip -oN $saved_file_path/tcp/svc
 
             swiss_logger info "[i] Checking vuln script - $ports. Saved to $saved_file_path/tcp/vuln"
             nmap -p$ports --script vuln $ip -oN $saved_file_path/tcp/vuln
-
-            swiss_logger warn "[w] Services found in the second round but not in the first round:"
-            comm -13 <(echo "$services_first") <(echo "$services_second")
             ;;
         udp)
             mkdir -p $saved_file_path/udp
@@ -659,7 +656,7 @@ function ffuf_default() {
         if [ $_swiss_ffuf_default_use_dirsearch = true ]; then
             if _check_cmd_exist dirsearch; then
                 swiss_logger info "[i] (Extension) dirsearch quick scan"
-                dirsearch -u $stripped_url
+                dirsearch -u $stripped_url -r -R 2
             else
                 swiss_logger error "[e] dirsearch is not installed"
             fi
@@ -1783,15 +1780,17 @@ function set_workspace() {
     local workspace_path="$1"
     local workspace_target="$2"
 
+    local tmp_conf="$(mktemp).json"
+
     if [[ -d "$workspace_path" ]]; then
-        jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
+        jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
         swiss_logger debug "[d] Current workspace path set to $workspace_path"
     else
         swiss_logger error "[e] Directory '$workspace_path' does not exist"
         return 1
     fi
 
-    jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
+    jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
     swiss_logger debug "[d] Target set to $workspace_target"
 
     local exists_in_list
@@ -1800,7 +1799,7 @@ function set_workspace() {
 
     if [[ -z "$exists_in_list" ]]; then
         jq --arg path "$workspace_path" --arg target "$workspace_target" \
-            '.swiss_variable.workspace.list += [{"path": $path, "target": $target}]' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
+            '.swiss_variable.workspace.list += [{"path": $path, "target": $target}]' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
         swiss_logger debug "[d] Workspace added to list: $workspace_path with target $workspace_target"
     else
         swiss_logger debug "[d] Workspace already exists in the list"
