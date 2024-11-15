@@ -4,9 +4,6 @@
 # The functions under alias.sh are the default commands that are replaced with the custom commands.
 
 
-source $HOME/oscp-swiss/script/utils.sh
-_load_settings
-
 alias grep="grep --color=auto"
 alias diff="diff --color=auto"
 

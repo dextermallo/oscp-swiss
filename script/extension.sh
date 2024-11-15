@@ -5,11 +5,6 @@
 # for extension function, you should use the `_extension_fn_banner` function to display the banner
 # to inform the user that the function is an extension function.
 
-
-source $HOME/oscp-swiss/script/utils.sh
-source $HOME/oscp-swiss/script/alias.sh
-_load_settings
-
 CVE_sudo_PE="$HOME/oscp-swiss/utils/CVE/CVE-2021-3156"
 CVE_DirtyPipe="$HOME/oscp-swiss/utils/CVE/CVE-2022-0847-DirtyPipe-Exploits"
 

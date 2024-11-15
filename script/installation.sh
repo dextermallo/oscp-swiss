@@ -3,9 +3,6 @@
 # installation.sh is a collection of installation functions that are used across the oscp-swiss scripts.
 # TODO: add all binaries, files, etc being used to the installation script
 
-
-source $HOME/oscp-swiss/script/utils.sh
-
 # create directory traversal wordlist
 merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal-short.txt \
         /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal.txt \
