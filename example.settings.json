@@ -50,6 +50,7 @@
     },
     "windows_rev": {
       "default_port": 443,
+      "default_arch": "x64",
       "generate_stage": false,
       "generate_stageless": true
     },

@@ -500,5 +500,50 @@ function listen() {
     rlwrap nc -lvnp $1
 }
 
+
+# Description: 
+#   _help generates a shell-script Docstring.
+#   By default, it uses in a function, and prints all information from the line
+#   "# Description" to the end of function $function-name()
+_help() {
+    local script_file
+    local function_name
+    local annotations=()
+    local start_reading=false
+
+    if [ -n "$ZSH_VERSION" ]; then
+        function_name="${funcstack[-1]}"
+        script_file=($functions_source[$function_name])
+    elif [ -n "$BASH_VERSION" ]; then
+        function_name="${FUNCNAME[1]}"
+        script_file="${BASH_SOURCE[-1]}"
+    else
+        swiss_logger error "[e] current support shell: zsh, bash"
+    fi
+
+    while IFS= read -r line; do
+        # Start reading when "# Description" is encountered
+        if [[ $line =~ ^#\ Description ]]; then
+            start_reading=true
+        fi
+
+        # Stop reading when the function definition is reached
+        if [[ $line =~ ^function\ $function_name\(\) ]]; then
+            break
+        fi
+
+        # Collect lines starting with "#" after "# Description"
+        if $start_reading && [[ $line =~ ^# ]]; then
+            annotations+=("${line/#/}")  # Remove the "#" for cleaner output
+        fi
+    done < "$script_file"
+
+    for annotation in "${annotations[@]}"; do
+        clean_annotation="${annotation/#\# /}"
+        swiss_logger info "$clean_annotation"
+    done
+}
+
+
 _load_settings
 _load_private_scripts

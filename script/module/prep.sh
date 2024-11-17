@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # Description: 
 #   Command `memory` is a cheatsheet function for your binaries, scripts, and all files you keep.
 #   You can take notes and read it effortlessly to find what you need rapidly.
@@ -322,4 +325,8 @@ function check_extension() {
             swiss_logger warn "[w] $var_name is invalid or does not exist: $expanded_file_path"
         fi
     done < "$alias_file"
+}
+
+function cb() {
+    \cat $1 | xclip -selection clickboard
 }

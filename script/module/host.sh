@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Description: lookup the public IP address of the host
 # Usage: host_public_ip
 # Category: [ network ]

@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # Description:
 #   Copy a linpeas-like script to the clickboard. You can paste it to the target machine (Linux) directly without any file transfer effort.
 #   This is helpful to help you to enumerate the target machine.
@@ -27,12 +30,12 @@
 # Category: [ pe, recon, linux ]
 function cp_target_script() {
     swiss_logger info "Usage: cp_target_script"
-    local shell_path="$swiss_root/script/target-enum-script.sh"
+    local shell_path="$swiss_root/script/target/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
     \cat $shell_path > $new_file_path
     echo "" >> $new_file_path
     echo "host='$(_get_default_network_interface_ip)'" >> $new_file_path
-    echo "clear" >> $new_file_path
+    echo "clear; log --bold -f green '[i] target-enum-script loaded.'" >> $new_file_path
     \cat $new_file_path | xclip -selection clipboard
     rm $new_file_path
 }

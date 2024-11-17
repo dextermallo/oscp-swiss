@@ -67,6 +67,10 @@ merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-error-based.txt \
         -o $swiss_wordlist/sqli-custom.txt
 
 
+merge   '/usr/share/wordlists/seclists/Discovery/Web-Content/burp-parameter-names.txt' \
+        '/usr/share/wordlists/seclists/Fuzzing/template-engines-special-vars.txt' \
+        -o $swiss_wordlist/ssti-custom.txt
+
 # create symlink for the wordlist
 ln -s /usr/share/wordlists $HOME/oscp-swiss/wordlist
 # create symlink for the windows binaries

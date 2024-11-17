@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # Description: go to the path defined as workspace (cross-session)
 # Usage: go_workspace
 # Category: [ func: shortcut ]

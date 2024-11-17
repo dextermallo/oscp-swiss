@@ -81,7 +81,7 @@ function find_category() {
 
         local categories_list=()
         
-        local category_exists() {
+        category_exists() {
             local category="$1"
             for existing_category in "${categories_list[@]}"; do
                 if [[ "$existing_category" == "$category" ]]; then
@@ -121,7 +121,7 @@ function find_category() {
         return 0
     fi
 
-    local evaluate_condition() {
+    evaluate_condition() {
         local condition="$1"
         local match=true
 

@@ -102,7 +102,7 @@ function check() {
         2|su)
             clear 2>/dev/null
             log --bold -f red "=== Easy Su===\n"
-            log --bold -f yellow "[i] manual test for 'sudo -l', 'su - root', and/or 'sudo su'"
+            log --bold -f yellow "[i] manual test for 'sudo -l -n 2>&1' and 'su - root'"
 
             # Disabled
             # printf "\n[i] check if brute-focrable\n"
@@ -202,10 +202,8 @@ function check() {
             clear 2>/dev/null
             log --bold -f red "=== Process ===\n"
             log --bold -f red "[i] some processes may not be visible, should try pspy as well\n"
+            log --bold -f red "[i] use auxfww | grep root if needed"
             ps auxfww
-
-            log --bold -f yellow "[i] root process\n"
-            ps aux | grep root            
             ;;
         9|cron|crontab)
             clear 2>/dev/null
@@ -213,10 +211,8 @@ function check() {
             log --bold -f red "[i] Root CRON JOB may not be visible, should try pspy as well\n"
             cat /etc/crontab
             crontab -l
-
             log --bold -f yellow "[i] /etc/cron.*"
             ls -alR /etc/cron.*
-
             ;;
         10|net|network)
             clear 2>/dev/null
@@ -229,7 +225,7 @@ function check() {
         11|dir-filename)
             clear 2>/dev/null
             log --bold -f red "=== Interesting filename under the current directory ===\n"
-            ignore_list=("./usr/src/*" "./var/lib/*" "./etc/*" "./usr/share/*" "./snap/*" "./sys/*" "./usr/lib/*" "./usr/bin/*" "./run/*" "./boot/*" "./usr/sbin/*" "./proc/*" "./var/snap/*")
+            ignore_list=("./usr/src/*" "./var/lib/*" "./etc/*" "./usr/share/*" "./snap/*" "./sys/*" "./usr/lib/*" "./usr/bin/*" "./run/*" "./boot/*" "./usr/sbin/*" "./proc/*" "./var/snap/*" "./usr/include/*")
             search_items=("*.txt" "*.sqlite" "*conf*" "*data*" "*.pdf" "*.apk" "*.cfg" "*.json" "*.ini" "*.log" "*.sh" "*password*" "*cred*" "*.env" "config" "HEAD" "*mbox" "*.sdf")
 
             find_command="find . -type f"

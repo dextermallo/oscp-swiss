@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # TODO: Doc
 # Category: [ http ]
 function url_encode() {

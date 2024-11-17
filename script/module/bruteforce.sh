@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # Description: bruteforce services
 # Usage: bruteforce <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]
 # Example: 

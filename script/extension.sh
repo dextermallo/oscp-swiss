@@ -40,6 +40,7 @@ windows_winpeas_x86="$swiss_utils/Peas/winPEASx86-v20240721.exe"
 windows_winpeas_x64="$swiss_utils/Peas/winPEASx64-v20240721.exe"
 
 wordlist_credential_small="$swiss_wordlist/small-credential-custom.txt"
+wordlist_ssti="$swiss_wordlist/ssti-custom.txt"
 
 windows_dllAdduser="$swiss_utils/windows/dll-addUser.c"
 windows_accesschk="$swiss_utils/windows/accesschk"
