@@ -234,3 +234,23 @@ screen -ls
 python3 IOXIDResolver.py -t $target
 ```
 
+# Utils: CVE-polkit
+## Description: polkit exploit
+## Path: CVE/CVE-polkit
+## Shortcut: CVE_polkit
+## Usage: 
+```sh
+# unzip
+tar -xf 47167.zip
+
+python3 -c "
+import zipfile
+with zipfile.ZipFile('47167.zip', 'r') as zip_ref:
+    zip_ref.extractall('.')
+
+chmod +x polkit/exploit.polkit.sh
+# and exec
+./exploit.polkit.sh
+"
+```
+

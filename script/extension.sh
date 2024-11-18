@@ -58,3 +58,4 @@ CVE_screen_4_5_0="$HOME/oscp-swiss/utils/CVE/screen-v4.5.0-priv-escalate"
 windows_family=( $windows_GodPotato_NET4 $windows_mimikatz_x64 $windows_PrintSpoofer64 $windows_winpeas_x64 $windows_nc64 $windows_powerview $windows_powerup )
 linux_family=( $linux_pspy64 $linux_linpeas )
 recon_IOXIDResolver="$HOME/oscp-swiss/utils/recon/IOXIDResolver"
+CVE_polkit="$HOME/oscp-swiss/utils/CVE/CVE-polkit"
