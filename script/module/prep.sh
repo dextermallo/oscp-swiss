@@ -330,3 +330,27 @@ function check_extension() {
 function cb() {
     \cat $1 | xclip -selection clickboard
 }
+
+function merge_to_md() {
+    output_file="report.md"
+    echo "" > "$output_file"
+
+    for file in *; do
+        if [[ ! -f "$file" || "$file" == "$output_file" ]]; then
+            continue
+        fi
+
+        if [[ "$file" == *.* ]]; then
+            filetype="${file##*.}"
+        else
+            filetype=""
+        fi
+
+        echo "- \`$file\`"  >> "$output_file"
+        echo -e "\t\`\`\`$filetype"  >> "$output_file"
+        sed 's/^/\t/' "$file" >> "$output_file"
+        echo -e "\t\`\`\`"  >> "$output_file"
+    done
+
+    swiss_logger info "[i] Contents in the current path are merged into $output_file."
+}
