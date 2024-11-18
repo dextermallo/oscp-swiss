@@ -207,3 +207,24 @@ function spawn_session_in_workspace() {
         get_target
     fi
 }
+
+
+clean_workspace() {
+  if [[ ! -f "$swiss_settings" ]]; then
+    swiss_logger error "[e] File not found: $swiss_settings"
+    return 1
+  fi
+
+  local tmp_file="$mktemp.json"
+
+  jq '.swiss_variable.workspace.list = [] | .swiss_variable.workspace.cur = {}' "$swiss_settings" > $tmp_file
+
+  if [[ $? -eq 0 ]]; then
+    mv "$tmp_file" "$swiss_settings"
+    swiss_logger info "[i] Workspaces have been cleaned up."
+  else
+    swiss_logger error "[e] Failed to clean workspace."
+    rm -f "$tmp_file"
+    return 1
+  fi
+}
