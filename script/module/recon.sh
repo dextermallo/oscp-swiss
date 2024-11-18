@@ -28,7 +28,7 @@ function nmap_default() {
     mkdir -p $saved_file_path
 
     check_service_and_vuln() {
-        data_path=$1
+        local data_path=$1
 
         local ports=$(grep -oP '^\d+\/\w+' $data_path | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
         swiss_logger warn "[w] Ports found: $ports."
@@ -48,7 +48,6 @@ function nmap_default() {
 
             swiss_logger info "[i] Check UDP top 200 ports. Saved to $saved_file_path/udp-top-200"
             sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200
-            check_service_and_vuln $saved_file_path/udp-top-200
 
             swiss_logger warn "[w] Remember to run tcp and udp mode for full enumeration"
             ;;
@@ -60,7 +59,6 @@ function nmap_default() {
         udp)
             swiss_logger info "[i] Start udp check (top 200 ports). Saved to $saved_file_path/udp-top-200"
             sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200
-            check_service_and_vuln $saved_file_path/udp-top-200
             ;;
         udp-all)
             mkdir -p $saved_file_path/udp
