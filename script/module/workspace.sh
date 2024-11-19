@@ -3,7 +3,6 @@
 
 # Description: go to the path defined as workspace (cross-session)
 # Usage: go_workspace
-# Category: [ func: shortcut ]
 function go_workspace() {
     if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
         check_workspace
@@ -22,7 +21,6 @@ function go_workspace() {
 
 # Description: set the workspace path and target
 # Usage: set_workspace <workspace_path> <workspace_target>
-# Category: [ ]
 function set_workspace() {
     local workspace_path="$1"
     local workspace_target="$2"
@@ -58,7 +56,6 @@ function set_workspace() {
 
 # Description: select a workspace from the list
 # Usage: select_workspace
-# Category: [ ]
 function select_workspace() {
     if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
         check_workspace
@@ -101,7 +98,6 @@ function select_workspace() {
 
 # Description: check all workspaces' paths are exist. If a workspace does not exist, it will be removed automatically
 # Usage: check_workspace
-# Category: [ ]
 function check_workspace() {
     local updated_list=()
 
@@ -133,7 +129,6 @@ function check_workspace() {
 # #       - Set the target IP address, you can use get_target to copy the target IP address to the clipboard
 # #       - Copy the ip to the clipboard
 # # Usage: init_workspace
-# # Category: [ prep ]
 function init_workspace() {
     local name=""
     local ip=""
@@ -186,7 +181,6 @@ function init_workspace() {
 #   - get the target IP address and copy it to the clipboard.
 #   - set the variable `target` to the target IP address
 # Usage: get_target
-# Category: [ ]
 function get_target() {
     cur_target=$(jq -r '.swiss_variable.workspace.cur.target // ""' "$swiss_settings")
     if [[ -n $cur_target ]]; then
@@ -200,7 +194,6 @@ function get_target() {
 #   The  function is configured by the environment variable _swiss_spawn_session_in_workspace_start_at_new_session
 #   See settings.json for more details.
 # Usage: spawn_session_in_workspace
-# Category: [ ]
 function spawn_session_in_workspace() {
     if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
         go_workspace

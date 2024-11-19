@@ -7,7 +7,6 @@
 #   ```sh
 #   bruteforce -i 192.168.1.1 ssh    
 #   ```
-# Category: [ recon, brute-force, ftp, ssh, auto-exploit ]
 function bruteforce() {
     _disable_auto_exploit_function
 
@@ -136,7 +135,6 @@ function bruteforce() {
 # Example:
 #   dump ftp $target_ip -u username -p password
 #   dump smb $target_ip -s share
-# Category: [ ftp, smb, file-transfer ]
 # TODO: optimize the logic using flags
 function dump() { 
     _help() {

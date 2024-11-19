@@ -27,7 +27,6 @@
 #   $ check user             # list user information
 #   $ check 3                # list suid permission
 #   $ check 14 funny-content # search file content with 'funny-content' under the current directory
-# Category: [ pe, recon, linux ]
 function cp_target_script() {
     swiss_logger info "Usage: cp_target_script"
     local shell_path="$swiss_root/script/target/target-enum-script.sh"
@@ -47,7 +46,6 @@ function cp_target_script() {
 #  -i, --interface: Network interface to listen on (default: tun0)
 # Example:
 #   listen_target 192.168.1.2 # listen on traffic from/to 192.168.1.2 on the default network interface
-# Category: [ recon, pe ]
 function listen_target() {
     swiss_logger info "[i] tcpdump to listen on traffic from/to an IP address"
     swiss_logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
@@ -79,7 +77,6 @@ function listen_target() {
 
 # Description: lookup an IP address's public information
 # Usage: target_ipinfo <ip>
-# Category: [ recon, network ]
 # TODO: input validation
 function target_ipinfo() {
   curl https://ipinfo.io/$1/json

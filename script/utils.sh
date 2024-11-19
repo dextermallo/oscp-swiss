@@ -251,7 +251,6 @@ function _disable_auto_exploit_function() {
 #   Simplified version of the `ip a` command to show the IP address of the default network interface.
 #   The default network interface's IP address is copied to the clipboard.
 # Usage: i
-# Category: [ ]
 function i() {
     local auto_copy=false
 
@@ -287,7 +286,6 @@ function i() {
 # Example:
 #   svc http # to spawn a http server in the current directory
 #   svc ftp  # to spawn a ftp server in the current directory
-# Category: [ recon, pe ]
 function svc() {
     local service=""
 
@@ -412,7 +410,6 @@ function svc() {
 # Example:
 #   ship ./rce.sh
 #   ship -t windows ./rce.exe
-# Category: [ rce, pe, file-transfer ]
 # TODO: wrap input validation
 function ship() {
     local type="linux"
@@ -515,12 +512,10 @@ function ship() {
 #   One-liner to start a reverse shell listener,
 #   warpped with rlwrap to make the reverse shell interactive
 # Usage: listen <port>
-# Category: [ rce ]
 function listen() {
     i
     rlwrap nc -lvnp $1
 }
-
 
 # Description: 
 #   _help generates a shell-script Docstring.
@@ -564,7 +559,6 @@ _help() {
         swiss_logger info "$clean_annotation"
     done
 }
-
 
 _load_settings
 _load_private_scripts

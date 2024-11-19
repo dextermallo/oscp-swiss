@@ -5,7 +5,6 @@
 # Usage: nmap_default <IP> [mode]
 # Modes: fast (default), tcp, udp, udp-all, stealth
 # Example: nmap_default 192.168.1.1
-# Category: [ recon ]
 function nmap_default() {
     local ip=""
     local mode=${2:-"tcp"}
@@ -79,7 +78,6 @@ function nmap_default() {
 # Description: file traversal fuzzing using ffuf, compatible with original arguments
 # Usage: ffuf_traversal [URL] (options)
 # Example: ffuf_traversal http://example.com -fc 400
-# Category: [ recon, http ]
 function ffuf_traversal_default() {
     _helper() {
         swiss_logger info "Usage: ffuf_traversal_default [URL] (options)"
@@ -112,7 +110,6 @@ function ffuf_traversal_default() {
 # Description: subdomain fuzzing using gobuster, compatible with original arguments
 # Usage: gobuster_subdomain_default [domain_name] (options)
 # Example: gobuster_subdomain_default example.com
-# Category: [ recon, http ]
 function gobuster_subdomain_default() {
     _helper() {
         swiss_logger info "Usage: gobuster_subdomain_default [domain_name] (options)"
@@ -147,7 +144,6 @@ function gobuster_subdomain_default() {
 #   - ip: IP address
 #   - domain: Domain name (e.g., example.com)
 # Example: gobuster_vhost_default
-# Category: [ recon, http ]
 function gobuster_vhost_default() {
     _helper() {
         swiss_logger info "Usage: gobuster_vhost_default [ip] [domain] (options)"
@@ -177,7 +173,6 @@ function gobuster_vhost_default() {
 
 # Description: get all urls from a web page
 # Usage: get_web_pagelink <url>
-# Category: [ recon, http ]
 function get_web_pagelink() {
     swiss_logger info "[i] start extracting all urls from $1"
     swiss_logger info "[i] original files will be stored at $PWD/links.txt"
@@ -189,7 +184,6 @@ function get_web_pagelink() {
 
 # Description: get keywords from a web page
 # Usage: get_web_keywords <url>
-# Category: [ recon, http ]
 function get_web_keywords() {
     swiss_logger info "Usage: get_web_keywords <url>"
     cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
@@ -198,7 +192,6 @@ function get_web_keywords() {
 # Description: directory fuzzing using fuff, compatible with original arguments
 # Usage: ffuf_default [URL/FUZZ] (options)
 # Example: ffuf_default http://example.com/FUZZ -fc 400
-# Category: [ recon, http ]
 function ffuf_default() {
 
     _helper() {

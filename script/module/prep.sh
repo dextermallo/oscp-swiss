@@ -22,7 +22,6 @@
 # Variable:
 #   - path: path is a filepath or a path to a directory. If it is a file path, it will shows the file's note (if exist). If it is a directory, it will list all files under the directory (with the description).
 # Example: memory utils/windows
-# Category:
 function memory() {
     _helper() {
         swiss_logger info "memorize [mode] [options] <$PATH>"
@@ -199,7 +198,6 @@ function memory() {
 }
 
 # TODO: Doc
-# Category: [ ]
 function shortcut() {
     local file_path
     local name
@@ -267,7 +265,6 @@ function shortcut() {
 #   Path of your cheatsheet files is defined in the `cheatsheet_dir` variable.
 #   Only support for .md files.
 # Usage: cheatsheet
-# Category: [ ]
 # TODO: configurable cheatsheet directory
 function cheatsheet() {
     local cheatsheet_dir="$HOME/oscp-swiss/doc/cheatsheet"
@@ -308,7 +305,6 @@ function cheatsheet() {
 
 # Description: function to check all predefined shortcuts under the extension.sh
 # Usage: check_extension
-# Category: [ prep ]
 function check_extension() {
     local alias_file="$swiss_extension"
     while IFS= read -r line; do

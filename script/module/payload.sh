@@ -6,7 +6,6 @@
 # Usage:
 # Arguments:
 # Example:
-# Category: 
 function payload_lfi_ssh_path() {
     local input="$1"
     local prefix="$2"
@@ -38,7 +37,6 @@ function payload_lfi_ssh_path() {
 #         /usr/share/wordlists/seclists/Discovery/DNS/fierce-hostlist.txt \
 #         /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
 #         -o subdomain+vhost-default.txt
-# Category: [ prep, brute-force ]
 function merge() {
     local output="merged.txt"
     local statistic=true
