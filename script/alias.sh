@@ -33,8 +33,9 @@ function cd() {
 #   2. set the resolution to your preferred screen resolution
 #   3. mount to the current directory (optional)
 #   4. set a preferred screen resolution (dynamic/full/half)
+# Usage: xfreerdp [-h, --help] [-m, --mode mode]
 # Arguments:
-#   -m, --mode <string> (dynamic/full/half)
+#   [-m, --mode mode]: dynamic, full, half
 # Configuration:
 #   - function.xfreerdp.use_custom_xfreerdp <boolean>: Use the custom xfreerdp function
 #   - function.xfreerdp.prompt_create_mount <boolean>: Prompt to create a mount
@@ -58,13 +59,17 @@ function _xfreerdp_default() {
                 mode="$2"
                 shift 2
                 ;;
+            -h|--help)
+                swiss_logger warn "[w] For built-in xfreerdp, check \\\xfreerdp"
+                _help
+                return 0
+                ;;
             *)
                 new_args+=("$1")
                 shift
                 ;;
         esac
     done
-
     if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
         swiss_logger prompt "[i] Mount? (y/n) \c"
         read -r user_input
@@ -78,13 +83,10 @@ function _xfreerdp_default() {
             return 1
         fi
     fi
-
     swiss_logger debug "[d] create_mount: $create_mount"
     swiss_logger debug "[d] mode: $mode"
-
     if [ $create_mount = true ]; then
         mkdir -p xfreerdp-data
-
         case "$mode" in
             dynamic)
                 \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /dynamic-resolution ${new_args[@]}
@@ -115,8 +117,8 @@ function _xfreerdp_default() {
             ;;
         esac
     fi
-
 }
+
 if [ $_swiss_xfreerdp_use_custom_xfreerdp = true ]; then
     alias xfreerdp=_xfreerdp_default
 fi

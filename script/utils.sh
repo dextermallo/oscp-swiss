@@ -4,7 +4,7 @@
 
 
 swiss_root="$HOME/oscp-swiss"
-swiss_script="$swiss_root/script/oscp-swiss.sh"
+swiss_script="$swiss_root/script"
 swiss_alias="$swiss_root/script/alias.sh"
 swiss_extension="$swiss_root/script/extension.sh"
 
@@ -14,8 +14,7 @@ swiss_private="$swiss_root/private"
 swiss_wordlist="$swiss_root/wordlist"
 swiss_settings="$swiss_root/settings.json"
 
-# Description:
-#   _log is the low level function for logging which wrap the echo command with ANSI color codes.
+# Description: _log is the low level function for logging which wrap the echo command with ANSI color codes.
 # Usage: _log [options] <text>
 function _log() {
     local bold=""
@@ -101,20 +100,10 @@ function _log() {
     done
 
     if [ "$_swiss_disable_color" = true ]; then
-
-        if [ "$newline" -eq 1 ]; then
-            echo -e "$text"
-        else
-            echo -e -n "$text"
-        fi
-        
+        [ "$newline" -eq 1 ] && echo -e "$text" || echo -e -n "$text"
     else
-
-        if [ "$newline" -eq 1 ]; then
-            echo -e "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
-        else
-            echo -e -n "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
-        fi
+        [ "$newline" -eq 1 ] && newline_flag="" || newline_flag="-n"
+        echo -e $newline_flag "${bold}${underline}${fg_color}${bg_color}${text}${ansi_reset}"
     fi
 }
 
@@ -259,31 +248,31 @@ function _disable_auto_exploit_function() {
     fi
 }
 
-# Description: 
+# Description:
 #   Simplified version of the `ip a` command to show the IP address of the default network interface.
 #   The default network interface's IP address is copied to the clipboard.
-# Usage: i
+# Usage: i [-c, --copy] [-h, --help]
+# Arguments:
+#   -c, --copy: copy the default interface IP.
 function i() {
     local auto_copy=false
-
-    _helper() {
-        swiss_logger info "[i] Usage: i [-c|--copy]"
-    }
-
     while [[ $# -gt 0 ]]; do
         case $1 in
             -c|--copy)
                 auto_copy=true
                 shift
             ;;
+            -h|--help)
+                _help
+                return 0
+            ;;
             *)
-                _helper
+                swiss_logger error "[e] invalid options. see -h, --help."
                 return 1
             ;;
         esac
     done
-
-    local default_ip=_get_default_network_interface_ip
+    local default_ip="$(_get_default_network_interface_ip)"
     swiss_logger info "[i] $_swiss_default_network_interface: $default_ip"
 
     if [[ "$auto_copy" = true ]]; then
@@ -311,15 +300,7 @@ function i() {
 #   svc http # to spawn a http server in the current directory
 #   svc ftp  # to spawn a ftp server in the current directory
 function svc() {
-    local service=""
-
-    _help() {
-        swiss_logger info "Usage: svc <service name>]"
-        swiss_logger info "service: docker; ftp; http; smb; ssh; bloodhound; bloodhound-ce; ligolo; wsgi; python-venv"
-    }
-
-    service="$1"
-
+    local service="$1"
     if [[ -z "$service" ]]; then
         _help
         return 1
@@ -420,7 +401,7 @@ function svc() {
             source .venv/bin/activate
             ;;
         *)
-            swiss_logger error "[e] Invalid service '$service'. Valid service: docker; ftp; http; smb; ssh; bloodhound; wsgi; python-venv"
+            _help
             return 1
             ;;
     esac
@@ -549,40 +530,44 @@ function listen() {
 _help() {
     local script_file
     local function_name
-    local annotations=()
+    local annotations=""
     local start_reading=false
 
     if [ -n "$ZSH_VERSION" ]; then
         function_name="${funcstack[-1]}"
-        script_file=($functions_source[$function_name])
+        script_file="${functions_source[$function_name]}"
     elif [ -n "$BASH_VERSION" ]; then
         function_name="${FUNCNAME[1]}"
-        script_file="${BASH_SOURCE[-1]}"
+        script_file="${BASH_SOURCE[1]}"
     else
-        swiss_logger error "[e] current support shell: zsh, bash"
+        swiss_logger error "[e] Only Zsh and Bash shells are supported."
+        return 1
     fi
 
     while IFS= read -r line; do
-        # Start reading when "# Description" is encountered
         if [[ $line =~ ^#\ Description ]]; then
             start_reading=true
+            annotations="${line/#\# /}"$'\n'
+            continue
         fi
 
-        # Stop reading when the function definition is reached
-        if [[ $line =~ ^function\ $function_name\(\) ]]; then
-            break
-        fi
-
-        # Collect lines starting with "#" after "# Description"
         if $start_reading && [[ $line =~ ^# ]]; then
-            annotations+=("${line/#/}")  # Remove the "#" for cleaner output
+            annotations+="${line/#\# /}"$'\n'
+            continue
+        fi
+
+        if [[ $line =~ ^function\  ]]; then
+            if [[ $line =~ ^function\ $function_name\(\) ]]; then
+                echo -e "$annotations"
+                return 0
+            fi
+            start_reading=false
+            annotations=""
         fi
     done < "$script_file"
 
-    for annotation in "${annotations[@]}"; do
-        clean_annotation="${annotation/#\# /}"
-        swiss_logger info "$clean_annotation"
-    done
+    # If no annotations were found for the function
+    swiss_logger warn "[w] No annotations found for function: $function_name"
 }
 
 _load_settings

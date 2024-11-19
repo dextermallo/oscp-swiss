@@ -22,8 +22,9 @@ source $HOME/oscp-swiss/script/extension.sh
 #     + recon         functions relate to recon.
 #     + target        functions relate to the target machine.
 #     + workspace     functions to manage cross-terminal session, faster to nagivate.
+#     + private       all scripts (.sh) under the directory /private
 # Configuration:
-#   - _swiss_app_banner: true/false. Show the banner of the app.
+#   - global_settings.app_banner: true/false. Show the banner of the app.
 # Example:
 #   swiss bruteforce
 function swiss() {
@@ -41,66 +42,59 @@ function swiss() {
         swiss_logger info "'--------------------------------------------'"
     }
 
-    if [ $_swiss_app_banner = true ]; then
-        _banner
-    fi
-
-    parse_function() {
-        grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/';    
-    }
-
-    parse_alias() {
-        grep -E '^\s*alias\s+' "$1" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
-    }
-
-    parse_variable() {
-        grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/';
-    }
-    
-
-    swiss_logger info "[i] Functions:"
-    {
-        parse_function $swiss_script
-        parse_function $swiss_extension
-    } | sort | column
-
-    swiss_logger info "[i] Aliases:"
-    {
-        parse_alias $swiss_extension
-        parse_alias $swiss_alias
-    } | sort | column
-    
-    swiss_logger info "[i] Variables:"
-    {
-        parse_variable $swiss_extension
-        parse_variable $swiss_alias
-        parse_variable $swiss_script
-    } | sort | column
-
-    # load /private scripts
-    if [ -d "$swiss_private" ]; then
-        for script in "$swiss_private"/*.sh; do
-        if [ -f "$script" ]; then
-
-            if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$script"; then
-                swiss_logger info "[i] Function under $script:"
-                parse_function $script | sort | column
-            fi
-            
-            if grep -qE '^\s*alias\s+' "$script"; then
-                swiss_logger info "[i] Aliases under $script:"
-                parse_alias $script | sort | column
-            fi
-            
-            if grep -qE '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$script"; then
-                swiss_logger info "[i] Variables under $script:"
-                parse_variable $script | sort | column
-            fi
+    parse() {
+        if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1"; then
+            swiss_logger info "[i] Function under $1:"
+            swiss_logger hint "[i] Check function instructions with <command> -h or which <command>"
+            grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
         fi
-        done
-    else
-        swiss_logger error "[e] Directory $swiss_private not found."
-    fi
+        if grep -qE '^\s*alias\s+' "$1"; then
+            swiss_logger info "[i] Alias under $1:"
+            grep -E '^\s*alias\s+' "$1" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+        fi
+        if grep -qE '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1"; then
+            swiss_logger info "[i] Variable under $1:"
+            grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
+        fi
+    }
+
+    [ $_swiss_app_banner = true ] && _banner
+
+    local module
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                _help
+                return 0
+                ;;
+            *)
+                module=$1
+                shift
+                ;;
+        esac
+    done
+
+    case $module in
+        private)
+        if [ -d "$swiss_private" ]; then
+            for script in "$swiss_private"/*.sh; do
+                [ -f "$script" ] && parse $script
+            done
+        else
+            swiss_logger error "[e] Directory $swiss_private not found."
+        fi
+        ;;
+        utils|alias|extension)
+            parse "$swiss_script/$module.sh"
+        ;;
+        bruteforce|crypto|exploit|host|machine|payload|prep|recon|target|workspace)
+            parse "$swiss_script/module/$module.sh"
+        ;;
+        *)
+            swiss_logger error "[e] invalid modules. see -h, --help."
+        ;;
+    esac
 }
 
 source $swiss_module/bruteforce.sh
