@@ -15,8 +15,7 @@ swiss_wordlist="$swiss_root/wordlist"
 swiss_settings="$swiss_root/settings.json"
 
 # Description:
-#   _log is the low level function for logging,
-#   which wrap the echo command with ANSI color codes.
+#   _log is the low level function for logging which wrap the echo command with ANSI color codes.
 # Usage: _log [options] <text>
 function _log() {
     local bold=""
@@ -122,7 +121,8 @@ function _log() {
 # Description:
 #   _check_logger_level is a helper function to check the logger level,
 #   the function will return 0 if the given level is equal or higher than the global logger level.
-# Configuration: global_settings.logger_level <debug|info|warn|error>
+# Configuration:
+#   - global_settings.logger_level <debug|info|warn|error>: default is info.
 # Usage: _check_logger_level <level>
 function _check_logger_level() {
     case "$_swiss_logger_level" in
@@ -134,7 +134,7 @@ function _check_logger_level() {
     esac
 }
 
-# Description: impl of logger
+# Description: wrap the _log function with the given level.
 # Usage: swiss_logger <level> <text>
 function swiss_logger() {
     case "$1" in
@@ -187,12 +187,16 @@ function _load_private_scripts() {
 }
 
 # Description: Get the default network interface's IP address.
+# Configuration:
+#   - global_settings.default_network_interface: default is eth0.
 # Usage: _get_default_network_interface_ip
 function _get_default_network_interface_ip() {
     ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}'
 }
 
 # Description: Display a banner for commands, which are replaced by aliases.
+# Configuration:
+#   - global_settings.disable_sys_custom_command_banner <boolean>: feature flag to disable the banner.
 # Usage: _override_cmd_banner
 function _override_cmd_banner() {
     if [ "$disable_sys_custom_command_banner" = false ]; then
@@ -224,15 +228,19 @@ function _load_settings() {
     done < <(jq -r '.functions | to_entries[] | .key as $k | .value | to_entries[] | "\($k)_\(.key)=\(.value)"' "$swiss_settings")
 }
 
+# Description: Check if the given command exists.
+# Usage: _check_cmd_exist <command>
 function _check_cmd_exist() {
-    if command -v "$1" &> /dev/null
-    then
+    if command -v "$1" &> /dev/null; then
         return 0
     else
         return 1
-  fi
+    fi
 }
 
+# Description: wrap a function execution.
+# Usage: _wrap <commands>
+# TODO: extend to all functions.
 function _wrap() {
     for cmd in "$@"; do
         swiss_logger info "[i] Executing Commnad: $cmd"
@@ -240,6 +248,10 @@ function _wrap() {
     done
 }
 
+# Description: Disable the automatic exploitation function.
+# Configuration:
+#   - global_settings.disable_auto_exploit_function <boolean>: feature flag to disable the function.
+# Usage: _disable_auto_exploit_function
 function _disable_auto_exploit_function() {
     swiss_logger highlight "[ The function MAY considered as automatic exploitation. Make sure you read the scripts! ]"
     if [ "$_swiss_disable_auto_exploit_function" = true ]; then
@@ -271,7 +283,7 @@ function i() {
         esac
     done
 
-    local default_ip=$(ip -o -f inet addr show | grep $_swiss_default_network_interface | awk '{split($4, a, "/"); printf "%s", a[1]}')
+    local default_ip=_get_default_network_interface_ip
     swiss_logger info "[i] $_swiss_default_network_interface: $default_ip"
 
     if [[ "$auto_copy" = true ]]; then
@@ -279,10 +291,22 @@ function i() {
     fi
 }
 
-# Description: one-liner to start services, including docker, ftp, http, smb, ssh, bloodhound, ligolo (extension), wsgi
-# Usage: svc <service name>
+# Description: one-liner to start services.
+# Usage: svc <service>
 # Arguments:
-#   service name: docker; ftp; http; smb; ssh; bloodhound; ligolo (extension); wsgi
+#   - service: current support:
+#     + docker              start docker service
+#     + ftp                 start a ftp server
+#     + http                start a http server on port 80
+#     + smb                 start a smb server
+#     + ssh                 start sshd service
+#     + bloodhound          start BloodHound (v4.3.1)
+#     + bloodhound-ce       start BloodHound CE (v2.4.1)
+#     + ligolo              start ligolo-ng_agent (v0.6.2)
+#     + wsgi                start wsgid
+#     + python-venv         create a python virtual environment
+# Configuration:
+#   - function.svc_wsgi.default_port <integer>: default is 443.
 # Example:
 #   svc http # to spawn a http server in the current directory
 #   svc ftp  # to spawn a ftp server in the current directory
@@ -291,7 +315,7 @@ function svc() {
 
     _help() {
         swiss_logger info "Usage: svc <service name>]"
-        swiss_logger info "service: docker; ftp; http; smb; ssh; bloodhound; ligolo; wsgi"
+        swiss_logger info "service: docker; ftp; http; smb; ssh; bloodhound; bloodhound-ce; ligolo; wsgi; python-venv"
     }
 
     service="$1"
@@ -305,13 +329,13 @@ function svc() {
         docker)
             swiss_logger info "[i] start docker"
             swiss_logger warn "[w] to stop, use the following commands: "
-            swiss_logger warn "[w] sudo systemctl stop docker"
-            swiss_logger warn "[w] sudo systemctl stop docker.socket"
+            swiss_logger warn "[w] \tsudo systemctl stop docker"
+            swiss_logger warn "[w] \tsudo systemctl stop docker.socket"
             sudo service docker restart
             ;;
         ftp)
             swiss_logger info "[i] start ftp server on host"
-            swiss_logger info "usage:"
+            swiss_logger info "Usage:"
             swiss_logger info "\t(1) run ftp"
             swiss_logger info "\t(2) run open <ip> 21"
             swiss_logger info "\t(2-2) Default Interface ($_swiss_default_network_interface) IP: $(_get_default_network_interface_ip)"
@@ -329,6 +353,7 @@ function svc() {
         smb)
             swiss_logger info "[i] start smb server"
             swiss_logger info "[i] impacket-smbserver smb . -smb2support"
+            swiss_logger info "[i] using default name smb"
             i
             impacket-smbserver smb . -smb2support
             ;;
@@ -336,7 +361,6 @@ function svc() {
             swiss_logger info "[i] start ssh server"
             swiss_logger warn "[w] sudo systemctl stop ssh; kill -9 $(pgrep ssh); sudo systemctl start ssh"
             i
-            # kill all ssh process
             sudo systemctl stop ssh
             kill -9 $(pgrep ssh)
             sudo systemctl start ssh
@@ -403,14 +427,16 @@ function svc() {
 }
 
 # Description: one-liner to ship files to the target machine. With no copy-paste needs.
-# Usage: ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>
+# Usage: ship [-t|--type <linux|windows>] [-a|--auto-host <boolean>] [-m, --mode <http|smb>] <filepath 1> [filepath 2] ...
 # Arguments:
-#   -t|--type: linux|windows (default: linux)
-#   -a|--auto-host-http: auto-host the http server (default: true)
+#   -t, --type <type>: linux or windows (default: linux)
+#   -a, --auto-host <boolean>: auto-host the http server (default: true)
+#   -m, --mode <mode>: http or smb (default: http)
+#   filepath: the path to the file you want to ship. Support multiple files at a time.
 # Example:
 #   ship ./rce.sh
 #   ship -t windows ./rce.exe
-# TODO: wrap input validation
+#   ship -t windows -m smb ./rce.exe
 function ship() {
     local type="linux"
     local mode="http"
@@ -508,9 +534,7 @@ function ship() {
     # TODO: remove the copied files automatically with global conf
 }
 
-# Description:
-#   One-liner to start a reverse shell listener,
-#   warpped with rlwrap to make the reverse shell interactive
+# Description: One-liner to start a interactive reverse shell listener.
 # Usage: listen <port>
 function listen() {
     i
@@ -521,6 +545,7 @@ function listen() {
 #   _help generates a shell-script Docstring.
 #   By default, it uses in a function, and prints all information from the line
 #   "# Description" to the end of function $function-name()
+# Usage: _help
 _help() {
     local script_file
     local function_name

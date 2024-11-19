@@ -1,10 +1,10 @@
 # OSCP Swiss
 
-Swiss Knife on your Kali Linux for OSCP & Bug Bounty.
+Swiss Knife on your Kali Linux to help you move fast.
 
 ## 1. About OSCP Swiss
 
-OSCP Swiss is a collection of functions, aliases, and variables to boost your productivity on Kali Linux for OSCP & Bug Bounty. It is designed to help you automate the repetitive tasks, manage your workspace, and provide you with the necessary tools to perform penetration testing.
+OSCP Swiss is a collection of functions, aliases, and variables to boost your productivity on Kali Linux. It is designed to help you automate the repetitive tasks, manage your workspace, and provide you with the necessary tools to perform penetration testing.
 
 For example, command `ship` is a one-liner to host a file, and automatically copy-paste the command to fetch the files you need on the target machine. For example:
 
@@ -20,6 +20,9 @@ There are other commands to help you with the enumeration, exploitation, and pos
 ### 2.1. About Environments
 >[!NOTE]
 > Tested on `Kali 6.8.11-1kali2 (2024-05-30)`, virtualizing using `UTM 4.4.5` on MacBook Pro (M2, Sonoma 14.5)
+
+>[!Caution]
+> The script is designed to work on Kali Linux. It may not work on other Linux distributions. > Meanwhile, the scripts are developed and tested under Zsh (v5.9). There might be some issues if you are using Bash. PRs and Issues welcome!
 
 ### 2.2. Prerequisites
 
@@ -62,120 +65,54 @@ mv ~/my-script.sh ~/oscp-swiss/private/
 swiss
 ```
 
+### 2.4. Updates
+
+```bash
+# pull the latest changes
+cd ~/oscp-swiss & git pull
+
+# noted that you may need to update your settings.json if there are any changes
+# and restart your terminal
+source ~/.zshrc
+```
+
 ## 3. Usage
 
-### `swiss`: Your Swiss Knife Manual
+> ![Tip]
+> To keep the README concise, the following sections only provide a short description and examples. You can find more detailed information by running the command `<command> -h` or read it under the `/script` directory.
 
-Description: `swiss` shows all your customized variables, functions, and aliases.
+Functions are breaking down into the modules and main functions. For more information, see [4. Development & Customization](#4-development--customization).
 
-Usage:
-```bash
-> swiss
-```
+>[!TIP]
+> You can find configurations for functions under `/settings.json`. For example:
+> ```json
+> {
+>     "global_settings": { ... },
+>     "functions": {
+>         "wpscan": {
+>             "token": "your_token_here"
+>         }
+>     }
+> }
+> ```
 
-Example:
-![swiss](image/swiss-demo.png)
+### 3.1. Main Functions
 
-### `nmap_default`: Wrapped nmap command with default options
+#### 3.1.1. `swiss`
+#### 3.1.2. `cd` (customized)
+#### 3.1.3. `xfreerdp` (customized)
+#### 3.1.4. `wpscan` (customized)
+#### 3.1.5. `cat` (customized)
+#### 3.1.6. `ls` (customized)
+#### 3.1.7. `i`: get the default IP address
+#### 3.1.8. `svc`: start service with simplicity
+#### 3.1.9. `ship`: killer tool for file transfer
+#### 3.1.10. `listen`: wrap the nc listener.
+#### 3.1.7. About Variables
+#### 3.1.8. About Extension
 
-Description: Wrapped nmap command with default options
 
-Usage: 
-```bash
-# Modes: fast (default), tcp, udp, udp-all, stealth
-nmap_default <IP> [mode]
-```
-<!-- TODO: adding example screenshot -->
-Example: 
-
-```bash
-nmap_default 192.168.1.1
-```
-
-### `svc`: one-liner to host services
-
-Description: one-liner to start services, including docker, ftp, http, smb, ssh, bloodhound, ligolo (extension), wsgi
-
-Usage:
-
-```bash
-# service name: docker; ftp; http; smb; ssh; bloodhound; ligolo
-svc <service name>
-```
-
-Example:
-```bash
-# to spawn a http server in the current directory
-svc http
-# to spawn a ftp server in the current directory
-svc ftp
-```
-
-<!-- TODO: adding example screenshot -->
-
-### `ship`
-Description: one-liner to ship files to the target machine. With no copy-paste needs.
-Usage: 
-```bash
-#   -t|--type: linux|windows (default: linux)
-#   -a|--auto-host-http: auto-host the http server (default: true)
-ship [-t|--type linux|windows] [-a|--auto-host-http] <filepath>
-```
-
-Example:
-```bash
-ship ./rce.sh
-ship -t windows ./rce.exe
-```
-
-<!-- TODO: adding example screenshot -->
-### `listen`
-
-Description: One-liner to start a reverse shell listener, warpped with rlwrap to make the reverse shell interactive
-
-# Usage:
-```bash
-listen <port>
-```
-
-<!-- TODO: adding example screenshot -->
-
-### `ffuf_default`
-<!-- TODO: adding example screenshot -->
-### `ffuf_traversal_default`
-<!-- TODO: adding example screenshot -->
-### `gobuster_subdomain_default`
-<!-- TODO: adding example screenshot -->
-### `gobuster_vhost_default`
-<!-- TODO: adding example screenshot -->
-### `hydra_default`
-<!-- TODO: adding example screenshot -->
-### `get_web_pagelink`
-<!-- TODO: adding example screenshot -->
-### `get_web_keywords`
-<!-- TODO: adding example screenshot -->
-### `set_target` & `get_target`
-<!-- TODO: adding example screenshot -->
-### `cp_target_script`
-<!-- TODO: adding example screenshot -->
-### `listen_target`
-<!-- TODO: adding example screenshot -->
-### `init_workspace`, `set_workspace`, & `get_workspace`
-<!-- TODO: adding example screenshot -->
-### `spawn_session_in_workspace`
-<!-- TODO: adding example screenshot -->
-### `merge`
-<!-- TODO: adding example screenshot -->
-### `get_ftp_all_files`
-<!-- TODO: adding example screenshot -->
-### `target_ipinfo`
-<!-- TODO: adding example screenshot -->
-### `host_public_ip`
-<!-- TODO: adding example screenshot -->
-### `show_utils`
-<!-- TODO: adding example screenshot -->
-### `explain`
-<!-- TODO: adding example screenshot -->
+### 3.5. Module/bruteforce
 
 ## 4. Development & Customization
 

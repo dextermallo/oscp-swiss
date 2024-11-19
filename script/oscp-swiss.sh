@@ -1,4 +1,7 @@
 #!/bin/bash
+# About oscp-swiss.sh
+# The oscp-swiss.sh is the main script that contains the main functions to support the OSCP exam.
+# It loads all the modues under the script/module directory and other ncessary scripts.
 
 
 source $HOME/oscp-swiss/script/utils.sh
@@ -9,16 +12,20 @@ source $HOME/oscp-swiss/script/extension.sh
 # Usage: swiss [-h|--help] <module>
 # Arguments:
 #   - module: see /script/module. Current support:
-#       + bruteforce    functions relate to bruteforce
-#       + crypto        functions relate to cryptography
-#       + exploit       functions to support you search and craft payloads for exploitation.
-#       + host          functions to use on your host (virtual machine).
-#       + machine       functions to use on your real machine (e.g., MacOS).
-#       + payload       functions relate to payload.
-#       + prep          functions before you start the work.
-#       + recon         functions relate to recon.
-#       + target        functions relate to the target machine.
-#       + workspace     functions to manage cross-terminal session, faster to nagivate.
+#     + bruteforce    functions relate to bruteforce
+#     + crypto        functions relate to cryptography
+#     + exploit       functions to support you search and craft payloads for exploitation.
+#     + host          functions to use on your host (virtual machine).
+#     + machine       functions to use on your real machine (e.g., MacOS).
+#     + payload       functions relate to payload.
+#     + prep          functions before you start the work.
+#     + recon         functions relate to recon.
+#     + target        functions relate to the target machine.
+#     + workspace     functions to manage cross-terminal session, faster to nagivate.
+# Configuration:
+#   - _swiss_app_banner: true/false. Show the banner of the app.
+# Example:
+#   swiss bruteforce
 function swiss() {
     _banner() {
         swiss_logger info ".--------------------------------------------."
