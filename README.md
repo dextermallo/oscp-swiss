@@ -13,7 +13,7 @@ ship ./linpeas.sh
 # the command will automatically host the file and copy the command for fetching to your click board automatically. All you need is to paste it on the target machine :)
 ```
 
-A quick demos for shiping multiple files at a time:
+A quick demos for shipping multiple files at a time:
 
 ![command-ship](demo/command-ship.gif)
 
@@ -21,7 +21,7 @@ A quick demos for shiping multiple files at a time:
 > it is powerful when you have a set of frequent-used tools. For example:
 > ```bash
 > # under /script/extension.sh
-> # I have a set of utilities that I often use for enumurate on Windows
+> # I have a set of utilities that I often use for enumerate on Windows
 > windows_family=( $windows_mimikatz_x64 $windows_winpeas_x64 $windows_powerview $windows_powerup ... )
 > 
 > # I can easily get all of them on the target VM by:
@@ -124,8 +124,17 @@ Functions are breaking down into the modules and main functions. For more inform
 ![command-i](demo/command-i.gif)
 
 #### 3.1.8. `svc`: start service with simplicity
+
+<video src='demo/command-svc.mov'/>
+
 #### 3.1.9. `ship`: killer tool for file transfer
+
+<video src='demo/command-ship.mov'/>
+
 #### 3.1.10. `listen`: wrap the nc listener.
+
+<video src='demo/command-listen.mov'/>
+
 #### 3.1.7. About Variables
 #### 3.1.8. About Extension
 
