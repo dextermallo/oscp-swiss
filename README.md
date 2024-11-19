@@ -13,6 +13,21 @@ ship ./linpeas.sh
 # the command will automatically host the file and copy the command for fetching to your click board automatically. All you need is to paste it on the target machine :)
 ```
 
+A quick demos for shiping multiple files at a time:
+
+![command-ship](demo/command-ship.gif)
+
+> ![tips]
+> it is powerful when you have a set of frequent-used tools. For example:
+> ```bash
+> # under /script/extension.sh
+> # I have a set of utilities that I often use for enumurate on Windows
+> windows_family=( $windows_mimikatz_x64 $windows_winpeas_x64 $windows_powerview $windows_powerup ... )
+> 
+> # I can easily get all of them on the target VM by:
+> ship -t windows $windows_family
+> ```
+
 There are other commands to help you with the enumeration, exploitation, and post-exploitation, See [3. Usage](#3-usage). You can also customize the settings, add your own scripts, and utilities to the Swiss Knife, See [4. Development & Customization](#4-development--customization). 
 
 ## 2. Getting Started
@@ -105,6 +120,9 @@ Functions are breaking down into the modules and main functions. For more inform
 #### 3.1.5. `cat` (customized)
 #### 3.1.6. `ls` (customized)
 #### 3.1.7. `i`: get the default IP address
+
+![command-i](demo/command-i.gif)
+
 #### 3.1.8. `svc`: start service with simplicity
 #### 3.1.9. `ship`: killer tool for file transfer
 #### 3.1.10. `listen`: wrap the nc listener.
