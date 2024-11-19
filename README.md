@@ -125,15 +125,15 @@ Functions are breaking down into the modules and main functions. For more inform
 
 #### 3.1.8. `svc`: start service with simplicity
 
-<video src='demo/command-svc.mov'/>
+<video src='demo/command-svc.mov'></video>
 
 #### 3.1.9. `ship`: killer tool for file transfer
 
-<video src='demo/command-ship.mov'/>
+<video src='demo/command-ship.mov'></video>
 
 #### 3.1.10. `listen`: wrap the nc listener.
 
-<video src='demo/command-listen.mov'/>
+<video src='demo/command-listen.mov'></video>
 
 #### 3.1.7. About Variables
 #### 3.1.8. About Extension
