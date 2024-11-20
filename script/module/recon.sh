@@ -22,7 +22,7 @@ function nmap_default() {
         return 1
     fi
 
-    local saved_file_path="$(pwd)/nmap/$ip"
+    local saved_file_path="$(pwd)/reports/nmap/$ip"
     swiss_logger info "[i] Creating directory $saved_file_path ..."
     mkdir -p $saved_file_path
 
@@ -75,107 +75,106 @@ function nmap_default() {
     esac
 }
 
+# Description: directory fuzzing by default. compatible with original arguments
+# Usage: recon_directory [-h, --help] [-m, --mode MODE] <URL> [OPTIONS]
+# Arguments:
+#   - MODE: dirsearch | ffuf.
+#   - URL: URL endpoints. e.g., http://example.com/FUZZ
+#   - OPTIONS: options from ffuf or dirsearch.
+# Configuration:
+#   - functions.recon_directory.recursive_depth: recursive depth
+#   - functions.recon_directory.wordlist: default wordlist
+# Example:
+#   recon_directory http://example.com/FUZZ -fc 400
+#   recon_directory -m dirsearch http://example.com
+function recon_directory() {
+    swiss_logger debug "[d] Recursive depth: $_swiss_recon_directory_recursive_depth"
+    swiss_logger debug "[d] Wordlist: $_swiss_recon_directory_wordlist"
+
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+
+    local mode="ffuf"
+    [[ $1 == '-m' ]] && mode=$2 && shift 2
+    
+    local domain_dir=$(_create_web_fuzz_report_directory "$1")
+    _display_wordlist_statistic $_swiss_recon_directory_wordlist
+
+    case $mode in
+        dirsearch)
+            [[ ! $(_cmd_is_exist "dirsearch") ]] && swiss_logger error "[e] dirsearch is not installed" && return 1
+            dirsearch -r -R $((_swiss_recon_directory_recursive_depth+1)) -u ${@} -o "$domain_dir/dirsearch-recon"
+        ;;
+        ffuf)
+            swiss_logger hint "[h] You can use -fc 400,403 to make the output clean."
+            ffuf -w $_swiss_recon_directory_wordlist -recursion \
+                 -recursion-depth $_swiss_recon_directory_recursive_depth \
+                 -c -t 200 \
+                 -u ${@} | tee "$domain_dir/ffuf-recon"
+        ;;
+        *)
+            swiss_logger "[e] Unsupport mode. check -h or --help for instructions." && return 1
+        ;;
+    esac
+}
+
 # Description: file traversal fuzzing using ffuf, compatible with original arguments
-# Usage: ffuf_traversal [URL] (options)
-# Example: ffuf_traversal http://example.com -fc 400
-function ffuf_traversal_default() {
-    _helper() {
-        swiss_logger info "Usage: ffuf_traversal_default [URL] (options)"
-        swiss_logger warn "[w] You may need to try <URL>/FUZZ and <URL>FUZZ"
-    }
-
-    if [ $# -eq 0 ]; then
-        _helper
-    else
-        local url="$1"
-        if [[ "$url" =~ ^https?:// ]]; then
-            local domain=$(echo "$url" | awk -F/ '{print $3}')
-        else
-            local domain=$(echo "$url" | awk -F/ '{print $1}')
-        fi
-        local domain_dir="$(pwd)/ffuf/$domain"
-        swiss_logger info "[i] Creating directory $domain_dir ..."
-        mkdir -p "$domain_dir"
-
-        if [[ -f "$_swiss_ffuf_traversal_default_wordlist.statistic" ]]; then
-            swiss_logger warn "====== Wordlist Statistic ======"
-            \cat $_swiss_ffuf_traversal_default_wordlist.statistic
-            swiss_logger warn "================================"
-        fi
-
-        ffuf -w $_swiss_ffuf_traversal_default_wordlist -u ${@} | tee "$domain_dir/traversal-default"
-    fi
+# Usage: recon_file_traversal [-h, --help] <URL> [options]
+#   [!] You may need to try <URL>/FUZZ and <URL>FUZZ
+# Arguments:
+#   - URL: URL endpoints. e.g., http://example.com/FUZZ
+#   - OPTIONS: options from ffuf.
+# Configuration:
+#   - functions.recon_file_traversal.wordlist: default wordlist
+# Example: recon_file_traversal http://example.comFUZZ -fc 403
+function recon_file_traversal() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    local domain_dir=$(_create_web_fuzz_report_directory "$1")
+    _display_wordlist_statistic $_swiss_recon_file_traversal_wordlist
+    ffuf -w $_swiss_recon_file_traversal_wordlist -c -t 200 -u ${@} | tee "$domain_dir/traversal-recon"
 }
 
 # Description: subdomain fuzzing using gobuster, compatible with original arguments
-# Usage: gobuster_subdomain_default [domain_name] (options)
-# Example: gobuster_subdomain_default example.com
-function gobuster_subdomain_default() {
-    _helper() {
-        swiss_logger info "Usage: gobuster_subdomain_default [domain_name] (options)"
-    }
-
-    if [ $# -eq 0 ]; then
-        _helper
-    else
-        local url="$1"
-        if [[ "$url" =~ ^https?:// ]]; then
-            local domain=$(echo "$url" | awk -F/ '{print $3}')
-        else
-            local domain=$(echo "$url" | awk -F/ '{print $1}')
-        fi
-        local domain_dir="$(pwd)/ffuf/$domain"
-        swiss_logger info "[i] Creating directory $domain_dir ..."
-        mkdir -p "$domain_dir"
-
-        if [[ -f "$_swiss_gobuster_subdomain_default_wordlist.statistic" ]]; then
-            swiss_logger warn "====== Wordlist Statistic ======"
-            \cat $_swiss_gobuster_subdomain_default_wordlist.statistic
-            swiss_logger warn "================================"
-        fi
-
-        gobuster dns -w $_swiss_gobuster_subdomain_default_wordlist -t 20 -o $domain_dir/subdomain-default -d ${@}
-    fi
+# Usage: recon_subdomain [-h, --help] <DOMAIN_NAME> [OPTIONS]
+# Arguments:
+#   - DOMAIN_NAME: Domain name. e.g., example.com
+#   - OPTIONS: options from gobuster.
+# Configuration:
+#   - functions.recon_subdomain.wordlist: default wordlist
+# Example: recon_subdomain example.com
+function recon_subdomain() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    local domain_dir=$(_create_web_fuzz_report_directory "$1")
+    _display_wordlist_statistic $_swiss_recon_subdomain_wordlist
+    gobuster dns -w $_swiss_recon_subdomain_wordlist -t 50 -o $domain_dir/subdomain-recon -d ${@}
 }
 
 # Description: vhost fuzzing using gobuster, compatible with original arguments
-# Usage: gobuster_vhost_default [ip] [domain] (options)
+# Usage: recon_vhost <IP> <DOMAIN_NAME> [OPTIONS]
 # Arguments:
-#   - ip: IP address
-#   - domain: Domain name (e.g., example.com)
-# Example: gobuster_vhost_default
-function gobuster_vhost_default() {
-    _helper() {
-        swiss_logger info "Usage: gobuster_vhost_default [ip] [domain] (options)"
-    }
+#   - IP: IP address
+#   - DOMAIN_NAME: Domain name. e.g., example.com
+#   - OPTIONS: options from gobuster.
+# Configuration:
+#   - functions.recon_vhost.wordlist: default wordlist
+# Example: recon_vhost 192.168.1.1 example.com
+function recon_vhost() {
+    [ $# -eq 0 ] && _help && return 0
 
-    if [ $# -eq 0 ]; then
-        _helper
-    else
-
-        local ip="$1"
-        local domain="$2"
-        local domain_dir="$(pwd)/ffuf/$domain"
-        swiss_logger info "[i] Creating directory $domain_dir ..."
-        mkdir -p "$domain_dir"
-
-        if [[ -f "$_swiss_gobuster_vhost_default_wordlist.statistic" ]]; then
-            swiss_logger warn "====== Wordlist Statistic ======"
-            \cat $_swiss_gobuster_vhost_default_wordlist.statistic
-            swiss_logger warn "================================"
-        fi
-
-        gobuster vhost -k -u $ip --domain $domain --append-domain -r \
-                 -w $_swiss_gobuster_vhost_default_wordlist \
-                 -o $domain_dir/vhost-default -t 64
-    fi
+    local ip="$1"
+    local domain="$2"
+    local domain_dir=$(_create_web_fuzz_report_directory "$domain")
+    _display_wordlist_statistic $_swiss_recon_vhost_wordlist
+            
+    gobuster vhost -k -u $ip --domain $domain --append-domain -r \
+                   -w $_swiss_recon_vhost_wordlist \
+                   -o $domain_dir/vhost-recon -t 100
 }
 
 # Description: get all urls from a web page
 # Usage: get_web_pagelink <url>
 function get_web_pagelink() {
-    swiss_logger info "[i] start extracting all urls from $1"
-    swiss_logger info "[i] original files will be stored at $PWD/links.txt"
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    swiss_logger info "[i] Start extracting all urls from $1. original files will be stored at $PWD/links.txt"
     swiss_logger info "[i] unique links (remove duplicated) will be stored at $PWD/links-uniq.txt"
     lynx -dump $1 | awk '/http/{print $2}' > links.txt
     sort -u links.txt > links-uniq.txt
@@ -185,78 +184,26 @@ function get_web_pagelink() {
 # Description: get keywords from a web page
 # Usage: get_web_keywords <url>
 function get_web_keywords() {
-    swiss_logger info "Usage: get_web_keywords <url>"
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
 }
 
-# Description: directory fuzzing using fuff, compatible with original arguments
-# Usage: ffuf_default [URL/FUZZ] (options)
-# Example: ffuf_default http://example.com/FUZZ -fc 400
-function ffuf_default() {
-
-    _helper() {
-        swiss_logger info "Usage: ffuf_default [URL/FUZZ] (options)"
-        swiss_logger warn "[w] Recursive with depth = $_swiss_ffuf_default_recursive_depth"
-        swiss_logger warn "[w] Default wordlist: $_swiss_ffuf_default_wordlist"
-    }
-
-    if [ $# -eq 0 ]; then
-        _helper
+function _create_web_fuzz_report_directory() {
+    local url="$1"
+    if [[ "$url" =~ ^https?:// ]]; then
+        local domain=$(echo "$url" | awk -F/ '{print $3}')
     else
-        local url="$1"
-        if [[ "$url" =~ ^https?:// ]]; then
-            # If the URL includes a protocol, extract the part after '://'
-            local domain=$(echo "$url" | awk -F/ '{print $3}')
-        else
-            # If the URL does not include a protocol, treat the first part as the domain/IP
-            local domain=$(echo "$url" | awk -F/ '{print $1}')
-        fi
-        local domain_dir="$(pwd)/ffuf/$domain"
-        swiss_logger info "[i] Creating directory $domain_dir ..."
-        mkdir -p "$domain_dir"
-
-        if [[ -f "$_swiss_ffuf_default_wordlist.statistic" ]]; then
-            swiss_logger warn "====== Wordlist Statistic ======"
-            \cat $_swiss_ffuf_default_wordlist.statistic
-            swiss_logger warn "================================"
-        fi
-
-        local stripped_url="${url/FUZZ/}"
-
-        if [ $_swiss_ffuf_default_use_dirsearch = true ]; then
-            if _check_cmd_exist dirsearch; then
-                swiss_logger info "[i] (Extension) dirsearch quick scan"
-                dirsearch -u $stripped_url -r -R 2
-            else
-                swiss_logger error "[e] dirsearch is not installed"
-            fi
-        fi
-
-        ffuf -w $_swiss_ffuf_default_wordlist -recursion -recursion-depth $_swiss_ffuf_default_recursive_depth -u ${@} | tee "$domain_dir/ffuf-default"
+        local domain=$(echo "$url" | awk -F/ '{print $1}')
     fi
+    local domain_dir="$(pwd)/reports/ffuf/$domain"
+    mkdir -p "$domain_dir"
+    echo $domain_dir
 }
 
-passwd_parser() {
-    input_file="$1"
-
-    # Validate input file
-    if [[ -z "$input_file" ]]; then
-        echo "Error: No input file provided!"
-        return 1
+function _display_wordlist_statistic() {
+    if [[ -f "$1.statistic" ]]; then
+        swiss_logger warn "====== Wordlist Statistic ======"
+        \cat $1.statistic
+        swiss_logger warn "================================"
     fi
-
-    if [[ ! -f "$input_file" ]]; then
-        echo "Error: Input file '$input_file' not found!"
-        return 1
-    fi
-
-    # Use `sed` to replace spaces between entries with newlines
-    sed -E 's/ ([^:]+:x:[0-9]+:[0-9]+:)/\n\1/g' "$input_file" > format.passwd
-
-    # Extract usernames (first field before ":") from the formatted data
-    cut -d: -f1 format.passwd > format.passwd.users
-
-    echo "Files created:"
-    echo "- $(realpath format.passwd) (multi-line formatted output)"
-    echo "- $(realpath format.passwd.users) (list of usernames)"
 }

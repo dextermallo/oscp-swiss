@@ -99,7 +99,7 @@ function swiss() {
 
 source $swiss_module/bruteforce.sh
 source $swiss_module/crypto.sh
-source $swiss_module/exploit.sh
+source $swiss_module/help-exploit.sh
 source $swiss_module/host.sh
 source $swiss_module/payload.sh
 source $swiss_module/prep.sh

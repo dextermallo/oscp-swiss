@@ -128,37 +128,30 @@ function check_workspace() {
 # #       - Set the current path as workspace, you can use go_workspace to jump to the workspace across sessions
 # #       - Set the target IP address, you can use get_target to copy the target IP address to the clipboard
 # #       - Copy the ip to the clipboard
-# # Usage: init_workspace
+# # Usage: init_workspace <-n, --name WORKSPACE_NAME> <-i, --ip IP>
 function init_workspace() {
-    local name=""
-    local ip=""
-
-    _helper() {
-        swiss_logger info "[i] Usage: init_workspace <-n, --name workspace_name> <-i, --ip IP>"
-    }
+    [[ $# -eq 0 ]] && _help && return 0
+    
+    local name
+    local ip
 
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             -i|--ip)
-                ip="$2"
-                shift 2
+                ip="$2" && shift 2
                 ;;
             -n|--name)
-                name="$2"
-                shift 2
+                name="$2" && shift 2
                 ;;
             *)
-                shift
+                swiss_logger error "[e] Invalid option: $1. Check with -h, --help"
                 ;;
         esac
     done
 
-    if [[ -z "$name" || -z "$ip" ]]; then
-        _helper
-        return 1
-    fi
+    [[ -z "$name" || -z "$ip" ]] && _helper && return 1
+
     local dir_name="${name}-${ip}"
-    echo $dir_name
     mkdir -p "$dir_name"
     cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
 
@@ -173,6 +166,8 @@ function init_workspace() {
     else
         touch password.txt
     fi
+
+    mkdir reports
 
     set_workspace $PWD $ip
 }

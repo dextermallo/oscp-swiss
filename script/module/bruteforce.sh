@@ -9,10 +9,7 @@
 #   ```
 function bruteforce() {
     _disable_auto_exploit_function
-
-    if [ $? -eq 1 ]; then
-        return 1
-    fi
+    [[ $? -eq 1 ]] && return 1
 
     local IP
     local service

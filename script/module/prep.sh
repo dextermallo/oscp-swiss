@@ -5,22 +5,11 @@
 #   Command `memory` is a cheatsheet function for your binaries, scripts, and all files you keep.
 #   You can take notes and read it effortlessly to find what you need rapidly.
 #   All the notes are stored under `/doc/utils-note.md`.
-#   For example, you can add a note by running the command: `memory /home/kali/oscp-swiss/utils/windows/GodPotato`
-#   If it is not a valid file/directory, it will print out the error
-#   If it is a valid file/directory:
-#       - If there's no note under `/doc/utils-note.md`, it will ask whether you want to create a note
-#       - If there's note, the note will be printed by cat
-#   Note formats (.md):
-#   ```md
-#   # $filename
-#   ## Description: $description
-#   ## Path: $path
-#   ## Usage:
-#   <-- Declare the usage here -->
-#   ````
-# Usage: memory <$path>
+#   For example, you can add a note by running the command: `memory $windows_mimikatz`. 
+#   If there's note, the note will be printed on the terminal
+# Usage: memory [-m, --mode MODE] [-s, --shortcut SHORTCUT] <PATH>
 # Variable:
-#   - path: path is a filepath or a path to a directory. If it is a file path, it will shows the file's note (if exist). If it is a directory, it will list all files under the directory (with the description).
+#   - PATH: path is a filepath or a path to a directory. If it is a file path, it will shows the file's note (if exist). If it is a directory, it will list all files under the directory (with the description).
 # Example: memory utils/windows
 function memory() {
     _helper() {
@@ -327,26 +316,56 @@ function cb() {
     \cat $1 | xclip -selection clickboard
 }
 
-function merge_to_md() {
-    output_file="report.md"
-    echo "" > "$output_file"
 
-    for file in *; do
-        if [[ ! -f "$file" || "$file" == "$output_file" ]]; then
-            continue
-        fi
+# Description:
+#   Generates a markdown report from all files in a directory.
+#   Reads all files in the specified path (or current directory by default)
+#   and creates a `report.md` with their contents formatted for a README.
+# Usage:
+#   generate_report [-p|--path PATH] [-o|--output OUTPUT_PATH]
+# Arguments:
+#   -p, --path    Specify the directory to scan (default: current directory).
+#   -o, --output  Specify the output file path (default: ./report.md).
+function generate_report() {
+    local dest_path="$PWD"
+    local output_file="$PWD/report.md"
 
-        if [[ "$file" == *.* ]]; then
-            filetype="${file##*.}"
-        else
-            filetype=""
-        fi
-
-        echo "- \`$file\`"  >> "$output_file"
-        echo -e "\t\`\`\`$filetype"  >> "$output_file"
-        sed 's/^/\t/' "$file" >> "$output_file"
-        echo -e "\t\`\`\`"  >> "$output_file"
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -p|--path)
+                dest_path="$2" && shift 2
+                ;;
+            -o|--output)
+                output_file="$2" && shift 2
+                ;;
+            *)
+                swiss_logger error "[e] Unknown argument: $1. See -h, --help." && return 1
+                ;;
+        esac
     done
 
-    swiss_logger info "[i] Contents in the current path are merged into $output_file."
+    echo "" > "$output_file"
+
+    process_files() {
+        local current_path="$1"
+        for file in "$current_path"/*; do
+            if [[ -d "$file" ]]; then
+                process_files "$file"
+            elif [[ -f "$file" && "$file" != "$output_file" ]]; then
+                local filetype="${file##*.}"
+                [[ "$file" == *.* ]] || filetype=""
+
+                local relative_path="${file#$dest_path/}"
+
+                echo "- \`$relative_path\`" >> "$output_file"
+                echo -e "\t\`\`\`$filetype" >> "$output_file"
+                sed 's/^/\t/' "$file" >> "$output_file"
+                echo -e "\t\`\`\`" >> "$output_file"
+            fi
+        done
+    }
+
+    process_files "$dest_path"
+
+    echo "[INFO] Report generated at: $output_file"
 }

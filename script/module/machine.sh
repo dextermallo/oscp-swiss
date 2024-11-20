@@ -22,3 +22,8 @@ function upload() {
     _extension_fn_banner
     ffsend upload $1 --copy-cmd
 }
+
+function video_to_gif() {
+    ffmpeg -i $1 -c:v libx264 -c:a copy -crf 20 "compressed-$1"
+    # ffmpeg -i $1 $2 && gifsicle -O3 $2 -o $2 && echo "Done."
+}

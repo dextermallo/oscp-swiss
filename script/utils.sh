@@ -218,12 +218,12 @@ function _load_settings() {
 }
 
 # Description: Check if the given command exists.
-# Usage: _check_cmd_exist <command>
-function _check_cmd_exist() {
+# Usage: _cmd_is_exist <command>
+function _cmd_is_exist() {
     if command -v "$1" &> /dev/null; then
-        return 0
+        echo 1
     else
-        return 1
+        echo 0
     fi
 }
 

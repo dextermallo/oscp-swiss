@@ -119,7 +119,7 @@ function _xfreerdp_default() {
     fi
 }
 
-if [ $_swiss_xfreerdp_use_custom_xfreerdp = true ]; then
+if [[ $_swiss_xfreerdp_use_custom_xfreerdp = true ]]; then
     alias xfreerdp=_xfreerdp_default
 fi
 
@@ -137,7 +137,7 @@ alias wpscan="_override_cmd_banner; \wpscan --enumerate ap,at,u --plugins-detect
 # Configuration:
 #   - function.cat.use_pygmentize <boolean>: feature flag to use pygmentize
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
-if [ $_swiss_cat_use_pygmentize = true ]; then
+if [[ $_swiss_cat_use_pygmentize = true ]]; then
     alias cat="_override_cmd_banner; pygmentize -P style=dracula -g"
 fi
 
@@ -147,7 +147,7 @@ fi
 # References:
 #   - https://github.com/jarun/
 #   - https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn
-if [ $_swiss_ls_use_nnn = true ]; then
+if [[ $_swiss_ls_use_nnn = true ]]; then
     alias l="\ls"
     alias ls="n -dEH"
 fi
