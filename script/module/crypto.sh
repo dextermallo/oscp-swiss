@@ -13,20 +13,9 @@ function url_decode() {
     printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
 }
 
-# TODO: Doc
-function atob() {
-    echo -n "$1" | base64 --decode
-}
-
-# TODO: Doc
-function btoa() {
-    echo -n "$1" | base64
-}
-
 function passwd_parser() {
     input_file="$1"
-
-    [[ -z "$input_file" ]] && echo "Error: No input file provided!" && return 1fi
+    [[ -z "$input_file" ]] && echo "Error: No input file provided!" && return 1
     [[ ! -f "$input_file" ]] && echo "Error: Input file '$input_file' not found!" && return 1
 
     # Use `sed` to replace spaces between entries with newlines

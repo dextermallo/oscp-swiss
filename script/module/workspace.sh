@@ -4,12 +4,8 @@
 # Description: go to the path defined as workspace (cross-session)
 # Usage: go_workspace
 function go_workspace() {
-    if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
-        check_workspace
-    fi
-
-    local cur_workspace_path
-    cur_workspace_path=$(jq -r '.swiss_variable.workspace.cur.path // empty' "$swiss_settings")
+    [[ "$_swiss_workspace_auto_cleanup" = true ]] && check_workspace
+    local cur_workspace_path=$(jq -r '.swiss_variable.workspace.cur.path // empty' "$swiss_settings")
 
     if [[ -n "$cur_workspace_path" && -d "$cur_workspace_path" ]]; then
         cd "$cur_workspace_path" || { echo "[e] Failed to navigate to directory '$cur_workspace_path'"; return 1; }
@@ -24,15 +20,13 @@ function go_workspace() {
 function set_workspace() {
     local workspace_path="$1"
     local workspace_target="$2"
-
     local tmp_conf="$(mktemp).json"
 
     if [[ -d "$workspace_path" ]]; then
         jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
         swiss_logger debug "[d] Current workspace path set to $workspace_path"
     else
-        swiss_logger error "[e] Directory '$workspace_path' does not exist"
-        return 1
+        swiss_logger error "[e] Directory '$workspace_path' does not exist" && return 1
     fi
 
     jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
@@ -57,17 +51,12 @@ function set_workspace() {
 # Description: select a workspace from the list
 # Usage: select_workspace
 function select_workspace() {
-    if [ "$_swiss_workspace_auto_cleanup" = true ]; then     
-        check_workspace
-    fi
+    [[ "$_swiss_workspace_auto_cleanup" = true ]] && check_workspace
 
     local paths
     paths=($(jq -r '.swiss_variable.workspace.list[].path' "$swiss_settings"))
     
-    if [ ${#paths[@]} -lt 1 ]; then
-        swiss_logger info "[i] No workspace found."
-        return 0
-    fi
+    [[ ${#paths[@]} -lt 1 ]] && swiss_logger info "[i] No workspace found." && return 0
 
     swiss_logger prompt "Please choose a workspace:"
     for ((i=1; i<=${#paths[@]}; i++)); do
@@ -106,7 +95,7 @@ function check_workspace() {
         if [[ -d "$cur_path" ]]; then
             updated_list+=("$item")
         else
-            swiss_logger info "[i] Removing non-existent workspace path: $cur_path"
+            swiss_logger debug "[i] Removing non-existent workspace path: $cur_path"
         fi
     done
 
@@ -137,15 +126,9 @@ function init_workspace() {
 
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
-            -i|--ip)
-                ip="$2" && shift 2
-                ;;
-            -n|--name)
-                name="$2" && shift 2
-                ;;
-            *)
-                swiss_logger error "[e] Invalid option: $1. Check with -h, --help"
-                ;;
+            -i|--ip) ip="$2" && shift 2 ;;
+            -n|--name) name="$2" && shift 2 ;;
+            *) swiss_logger error "[e] Invalid option: $1. Check with -h, --help" && return 1 ;;
         esac
     done
 
@@ -155,20 +138,19 @@ function init_workspace() {
     mkdir -p "$dir_name"
     cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
 
-    if [ -f "$_swiss_init_workspace_default_username_wordlist" ]; then
+    if [[ -f "$_swiss_init_workspace_default_username_wordlist" ]]; then
         cp $_swiss_init_workspace_default_username_wordlist username.txt
     else
         touch username.txt
     fi
 
-    if [ -f "$_swiss_init_workspace_default_password_wordlist" ]; then
+    if [[ -f "$_swiss_init_workspace_default_password_wordlist" ]]; then
         cp $_swiss_init_workspace_default_password_wordlist password.txt
     else
         touch password.txt
     fi
 
     mkdir reports
-
     set_workspace $PWD $ip
 }
 
@@ -190,29 +172,21 @@ function get_target() {
 #   See settings.json for more details.
 # Usage: spawn_session_in_workspace
 function spawn_session_in_workspace() {
-    if [ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]; then
-        go_workspace
-        get_target
-    fi
+    [[ "$_swiss_spawn_session_in_workspace_start_at_new_session" = true ]] && go_workspace && get_target
 }
 
-
 clean_workspace() {
-  if [[ ! -f "$swiss_settings" ]]; then
-    swiss_logger error "[e] File not found: $swiss_settings"
-    return 1
-  fi
+    [[ ! -f "$swiss_settings" ]] && swiss_logger error "[e] File not found: $swiss_settings" && return 1
+    
+    local tmp_file="$mktemp.json"
+    jq '.swiss_variable.workspace.list = [] | .swiss_variable.workspace.cur = {}' "$swiss_settings" > $tmp_file
 
-  local tmp_file="$mktemp.json"
-
-  jq '.swiss_variable.workspace.list = [] | .swiss_variable.workspace.cur = {}' "$swiss_settings" > $tmp_file
-
-  if [[ $? -eq 0 ]]; then
-    mv "$tmp_file" "$swiss_settings"
-    swiss_logger info "[i] Workspaces have been cleaned up."
-  else
-    swiss_logger error "[e] Failed to clean workspace."
-    rm -f "$tmp_file"
-    return 1
-  fi
+    if [[ $? -eq 0 ]]; then
+        mv "$tmp_file" "$swiss_settings"
+        swiss_logger info "[i] Workspaces have been cleaned up."
+    else
+        swiss_logger error "[e] Failed to clean workspace."
+        rm -f "$tmp_file"
+        return 1
+    fi
 }

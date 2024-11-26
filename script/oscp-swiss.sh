@@ -38,7 +38,7 @@ function swiss() {
         swiss_logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         swiss_logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         swiss_logger info "|                                            |"
-        swiss_logger info "|  by @dextermallo v1.4.2                    |"
+        swiss_logger info "|  by @dextermallo v1.5.0                    |"
         swiss_logger info "'--------------------------------------------'"
     }
 
@@ -59,19 +59,12 @@ function swiss() {
     }
 
     [ $_swiss_app_banner = true ] && _banner
-
     local module
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -h|--help)
-                _help
-                return 0
-                ;;
-            *)
-                module=$1
-                shift
-                ;;
+            -h|--help) _help && return 0 ;;
+            *) module=$1 && shift ;;
         esac
     done
 
@@ -88,7 +81,7 @@ function swiss() {
         utils|alias|extension)
             parse "$swiss_script/$module.sh"
         ;;
-        bruteforce|crypto|exploit|host|machine|payload|prep|recon|target|workspace)
+        bruteforce|crypto|help-exploit|host|machine|payload|prep|recon|target|workspace)
             parse "$swiss_script/module/$module.sh"
         ;;
         *)

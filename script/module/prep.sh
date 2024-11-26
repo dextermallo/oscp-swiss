@@ -6,27 +6,26 @@
 #   You can take notes and read it effortlessly to find what you need rapidly.
 #   All the notes are stored under `/doc/utils-note.md`.
 #   For example, you can add a note by running the command: `memory $windows_mimikatz`. 
-#   If there's note, the note will be printed on the terminal
-# Usage: memory [-m, --mode MODE] [-s, --shortcut SHORTCUT] <PATH>
+#   If there's note, the note will be printed on the terminal.
+#   * Noted that Filename MUST BE IDENTICAL. The function uses filename to search.
+#   * For adding notes, the description should be short. Otherwise it will impact the diplay when you view in tree mode.
+# Usage: memory [-h, --help] [-m, --mode MODE] <PATH> [-s, --shortcut SHORTCUT] [-st, --shortcut-type SHORTCUT-TYPE] 
 # Variable:
-#   - PATH: path is a filepath or a path to a directory. If it is a file path, it will shows the file's note (if exist). If it is a directory, it will list all files under the directory (with the description).
-# Example: memory utils/windows
+#   - PATH: Path is a filepath or a path to a directory.
+#           If it is a file path, it will shows the file's note (if exist).
+#           If it is a directory, it will list all files under the directory (with the description).
+#   - MODE:
+#       + default: path will have different display - file will display the notes, directory will display a tree structure with descriptions
+#       + view: path (for both file and directory) will display their notes
+#       + add: create new notes
+#   - SHORTCUT: only available in add mode. it will create an alias for the target path.
+#   - SHORTCUT-TYPE: only available in add mode. it will set the shortcut into alias.sh or extension.sh (default: extension)
+# Example:
+#   memory $windows_mimikatz # view notes for mimikatz
+#   memory -m add -s shortcut CVE_sudo_PE $swiss_utils/CVE/sudo-pe # add a new notes with shortcut
 function memory() {
-    _helper() {
-        swiss_logger info "memorize [mode] [options] <$PATH>"
-        swiss_logger info "[Mode]"
-        swiss_logger info "-m, --mode: <add, view, default>"
-        swiss_logger info "  in add mode, you can add notes"
-        swiss_logger info "  in view mode, path (for both file and directory) will display their notes"
-        swiss_logger info "  in default mode, path will have different display:"
-        swiss_logger info "      - file: display the notes"
-        swiss_logger info "      - directory: display a tree structure showing with the description"
-        swiss_logger info "[Options]"
-        swiss_logger info "  -s, --shortcut <shortcut_name>: can add a shortcut for files"
-        swiss_logger info "  -st, --shortcut-type <shortcut_type>: type of shortcuts. Current support: alias, extension (default: extension)"
-        swiss_logger highlight "[H] Filename MUST BE IDENTICAL. The function uses filename to search."
-        swiss_logger highlight "[H] For adding notes, the description should be short. Otherwise it will impact the diplay when you view in tree mode."
-    }
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+
     local notes_path="$HOME/oscp-swiss/doc/utils-note.md"
     local utils_base_path=$swiss_utils
     local mode="default"
@@ -39,31 +38,19 @@ function memory() {
             -m|--mode)
                 mode="$2"
                 if [[ ! "$mode" =~ ^(default|view|add)$ ]]; then
-                    swiss_logger error "[e] mode support: default, view, add"
-                    return 1
+                    swiss_logger error "[e] mode support: default, view, add" && return 1
                 fi
                 shift 2
                 ;;
-            -s|--shortcut)
-                shortcut_name="$2"
-                shift 2
-                ;;
+            -s|--shortcut) shortcut_name="$2" && shift 2 ;;
             -st|--shortcut-type)
                 shortcut_type="$2"
                 if [[ ! "$shortcut_type" =~ ^(extension|alias)$ ]]; then
-                    swiss_logger error "[e] shortcut_type support: extension, alias"
-                    return 1
+                    swiss_logger error "[e] shortcut_type support: extension, alias" && return 1
                 fi
                 shift 2
                 ;;
-            -h|--help)
-                _helper
-                return 0
-                ;;
-            *)
-                input_path="$1"
-                shift 1
-                ;;
+            *) input_path="$1" && shift 1 ;;
         esac
     done
 
@@ -82,21 +69,12 @@ function memory() {
 
     local filename=$(basename "$absolute_path")
 
-    if [[ ! -e "$absolute_path" ]]; then
-        swiss_logger error "[e] Path '$absolute_path' does not exist."
-        return 1
-    fi
-
-    if [[ "$absolute_path" != "$utils_base_path"* ]]; then
-        swiss_logger "[e] Only files under $utils_base_path are allowed."
-    fi
+    [[ ! -e "$absolute_path" ]] && swiss_logger error "[e] Path '$absolute_path' does not exist." && return 1
+    [[ "$absolute_path" != "$utils_base_path"* ]] && swiss_logger "[e] Only files under $utils_base_path are allowed." && return 1
 
     _add_note() {
-        if grep -q "^# $filename$" "$notes_path"; then
-            swiss_logger warn "[w] Notes exists already."
-            return 0
-        fi
-
+        grep -q "^# $filename$" "$notes_path" && swiss_logger warn "[w] Notes exists already." && return 0
+    
         if [[ ! -z "$shortcut_name" ]]; then
             shortcut -f $absolute_path -n $shortcut_name -t $shortcut_type
         fi
@@ -151,35 +129,17 @@ function memory() {
 
     if [[ -d "$absolute_path" ]]; then
         case $mode in
-            add)
-                _add_note
-                ;;
-            view)
-                _view_tree
-                ;;
-            default)
-                _view_note
-                ;;
-            *)
-                swiss_logger error "[e] Mode type incorrect."
-                return 1
-                ;;
+            add) _add_note ;;
+            view) _view_tree ;;
+            default) _view_note ;;
+            *) swiss_logger error "[e] Mode type incorrect." && return 1 ;;
         esac
     elif [[ -f "$absolute_path" ]]; then
         case $mode in
-            add)
-                _add_note
-                ;;
-            view)
-                _view_note
-                ;;
-            default)
-                _view_note
-                ;;
-            *)
-                swiss_logger error "[e] Mode type incorrect."
-                return 1
-                ;;
+            add) _add_note ;;
+            view) _view_note ;;
+            default) _view_note ;;
+            *) swiss_logger error "[e] Mode type incorrect." && return 1 ;;
         esac
     else
         swiss_logger error "[e] '$absolute_path' is neither a valid file nor a directory."
@@ -199,25 +159,16 @@ function shortcut() {
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -f|--file)
-                file_path="$2"
-                shift 2
-                ;;
-            -n|--name)
-                name="$2"
-                shift 2
-                ;;
+            -f|--file) file_path="$2" && shift 2 ;;
+            -n|--name) name="$2" && shift 2 ;;
             -t|--type)
                 type="$2"
                 if [[ ! "$type" =~ ^(extension|alias)$ ]]; then
-                    swiss_logger error "[e] type support: alias, extension"
-                    return
+                    swiss_logger error "[e] type support: alias, extension" && return 1
                 fi
                 shift 2
                 ;;
-            *)
-                shift 1
-                ;;
+            *) shift 1 ;;
         esac
     done
 
@@ -312,10 +263,10 @@ function check_extension() {
     done < "$alias_file"
 }
 
+# TODO: doc
 function cb() {
     \cat $1 | xclip -selection clickboard
 }
-
 
 # Description:
 #   Generates a markdown report from all files in a directory.
@@ -332,15 +283,9 @@ function generate_report() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -p|--path)
-                dest_path="$2" && shift 2
-                ;;
-            -o|--output)
-                output_file="$2" && shift 2
-                ;;
-            *)
-                swiss_logger error "[e] Unknown argument: $1. See -h, --help." && return 1
-                ;;
+            -p|--path) dest_path="$2" && shift 2 ;;
+            -o|--output) output_file="$2" && shift 2 ;;
+            *) swiss_logger error "[e] Unknown argument: $1. See -h, --help." && return 1 ;;
         esac
     done
 
@@ -356,7 +301,6 @@ function generate_report() {
                 [[ "$file" == *.* ]] || filetype=""
 
                 local relative_path="${file#$dest_path/}"
-
                 echo "- \`$relative_path\`" >> "$output_file"
                 echo -e "\t\`\`\`$filetype" >> "$output_file"
                 sed 's/^/\t/' "$file" >> "$output_file"
@@ -366,6 +310,5 @@ function generate_report() {
     }
 
     process_files "$dest_path"
-
-    echo "[INFO] Report generated at: $output_file"
+    swiss_logger info "[i] Report generated at: $output_file"
 }

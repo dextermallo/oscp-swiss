@@ -45,31 +45,16 @@ function merge() {
 
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
-            -o|--output)
-                output="$2"
-                shift 2
-                ;;
-            -s|--statistic)
-                statistic="$2"
-                shift 2
-                ;;
-            *)
-                files+=("$1")
-                shift
-                ;;
+            -o|--output) output="$2" && shift 2 ;;
+            -s|--statistic) statistic="$2" && shift 2 ;;
+            *) files+=("$1") && shift ;;
         esac
     done
 
-    if [[ "${#files[@]}" -lt 2 ]]; then
-        swiss_logger error "[e] At least two files to merge."
-        return 1
-    fi
+    [[ "${#files[@]}" -lt 2 ]] && swiss_logger error "[e] At least two files to merge." && return 1
 
     for file in "${files[@]}"; do
-        if [[ ! -f "$file" ]]; then
-            swiss_logger error "[e] File not found: $file"
-            return 1
-        fi
+        [[ ! -f "$file" ]] && swiss_logger error "[e] File not found: $file" && return 1
     done
 
     local temp_output=$(mktemp)
@@ -82,8 +67,7 @@ function merge() {
     sort -u "$temp_output" -o "$output"
     rm "$temp_output"
 
-    local unique_lines
-    unique_lines=$(wc -l < "$output")
+    local unique_lines=$(wc -l < "$output")
     local duplicates_removed=$((total_lines - unique_lines))
 
     if [[ "$statistic" == true ]]; then
@@ -130,10 +114,8 @@ function payload_extend_credential_file() {
 
     cp "$username_file" "$tmp_pass_file"
     echo "" >> "$tmp_pass_file"
-
     \cat "$password_file" >> "$tmp_pass_file"
     sort -u "$tmp_pass_file" -o "$password_file"
-
     rm -f "$tmp_user_file" "$tmp_pass_file"
 
     swiss_logger info "[i] Extended username and password files."
@@ -156,10 +138,9 @@ function payload_secretdump() {
         echo "$lmhash:$nthash" >> "$hash_file"
     done
 
-    echo "Parsed usernames saved to $user_file"
-    echo "Parsed NTLM hashes saved to $hash_file"
+    swiss_logger info "[i] Parsed usernames saved to $user_file"
+    swiss_logger info "[i] Parsed NTLM hashes saved to $hash_file"
 }
-
 
 # Usage: rev_shell
 # TODO: Doc
@@ -181,9 +162,7 @@ function rev_shell() {
     function is_valid_shell_type() {
         local shell="$1"
         for valid_shell in "${allowed_shell_types[@]}"; do
-            if [[ "$shell" == "$valid_shell" ]]; then
-                return 0
-            fi
+            [[ "$shell" == "$valid_shell" ]] && return 0
         done
         return 1
     }

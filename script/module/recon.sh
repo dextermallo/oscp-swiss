@@ -8,18 +8,16 @@
 function nmap_default() {
     local ip=""
     local mode=${2:-"tcp"}
-    
+
     _help() {
         swiss_logger info "Usage: nmap_default <IP> [<mode>]"
         swiss_logger info "Modes: fast (default), tcp, udp, udp-all, stealth"
     }
 
     if [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        ip="$1"
-        shift
+        ip="$1" && shift
     else
-        _help
-        return 1
+        _help && return 1
     fi
 
     local saved_file_path="$(pwd)/reports/nmap/$ip"
@@ -111,9 +109,7 @@ function recon_directory() {
                  -c -t 200 \
                  -u ${@} | tee "$domain_dir/ffuf-recon"
         ;;
-        *)
-            swiss_logger "[e] Unsupport mode. check -h or --help for instructions." && return 1
-        ;;
+        *) swiss_logger "[e] Unsupport mode. check -h or --help for instructions." && return 1 ;;
     esac
 }
 

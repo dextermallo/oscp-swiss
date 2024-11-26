@@ -28,7 +28,7 @@
 #   $ check 3                # list suid permission
 #   $ check 14 funny-content # search file content with 'funny-content' under the current directory
 function cp_target_script() {
-    swiss_logger info "Usage: cp_target_script"
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     local shell_path="$swiss_root/script/target/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
     \cat $shell_path > $new_file_path
@@ -37,42 +37,32 @@ function cp_target_script() {
     echo "clear; log --bold -f green '[i] target-enum-script loaded.'" >> $new_file_path
     \cat $new_file_path | xclip -selection clipboard
     rm $new_file_path
+
+    swiss_logger info "[i] $shell_path copied!"
 }
 
-# Description: tcpdump traffic from an IP address
-# Usage: listen_target <ip> [-i <interface> | --interface <interface>]
+# Description: tcpdump traffic from/to an IP address
+# Usage: listen_target <IP> [-i, --interface INTERFACE]
 # Arguments:
-#  <ip>: IP address to listen to
+#  IP: IP address to listen to
 #  -i, --interface: Network interface to listen on (default: tun0)
 # Example:
 #   listen_target 192.168.1.2 # listen on traffic from/to 192.168.1.2 on the default network interface
 function listen_target() {
-    swiss_logger info "[i] tcpdump to listen on traffic from/to an IP address"
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     swiss_logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
-
     local interface="${_swiss_default_network_interface:-any}"
     local ip=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -i|--interface)
-                interface="$2"
-                shift 2
-                ;;
-            *)
-                ip="$1"
-                shift
-                ;;
+            -i|--interface) interface="$2" && shift 2 ;;
+            *) ip="$1" && shift ;;
         esac
     done
-
-    if [[ -z "$ip" ]]; then
-        swiss_logger error "[e] IP address is required"
-        return 1
-    fi
-
+    [[ -z "$ip" ]] && swiss_logger error "[e] IP address is required" && return 1
     swiss_logger info "[e] start listening traffic from $ip under the interface $interface"
-    sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
+    _wrap "sudo tcpdump -i "$interface" dst "$ip" or src "$ip""
 }
 
 # Description: lookup an IP address's public information
