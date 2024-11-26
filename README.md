@@ -64,14 +64,14 @@ rlwrap          # (optional) used in the command `listen` for supporting arrow k
 
 ```bash
 # Download and put it in the home directory
-git clone https://github.com/dextermallo/oscp-swiss.git ~
+cd $HOME && git clone https://github.com/dextermallo/oscp-swiss.git
 
 # copy the example settings to the settings.json
 # you can customize the settings.json
-cd ~/oscp-swiss & cp example.settings.json settings.json
+cd $HOME/oscp-swiss && cp example.settings.json settings.json
 
 # Add the following line to your .zshrc or .bashrc
-echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
+echo "\nsource ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 
 # All done! Restart your terminal or run the following command
 source ~/.zshrc
@@ -79,8 +79,11 @@ source ~/.zshrc
 # (Optional) If you already have any customized scripts, utilities, or wordlists, you can put them in the following directories:
 mv ~/my-script.sh ~/oscp-swiss/private/
 
+# you can see all the supported modules by:
+swiss -h
+
 # you can also find your customized scripts by running the command:
-swiss
+swiss private
 ```
 
 ### 2.4. Updates
