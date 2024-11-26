@@ -1,24 +1,26 @@
+
 # OSCP Swiss
 
 Swiss Knife on your Kali Linux to help you move fast.
 
 ## 1. About OSCP Swiss
 
-OSCP Swiss is a collection of functions, aliases, and variables to boost your productivity on Kali Linux. It is designed to help you automate the repetitive tasks, manage your workspace, and provide you with the necessary tools to perform penetration testing.
+OSCP Swiss is a collection of functions, aliases, and variables designed to boost productivity on Kali Linux. It helps you automate repetitive tasks, manage your workspace, and provide the necessary tools to perform penetration testing.
 
-For example, command `ship` is a one-liner to host a file, and automatically copy-paste the command to fetch the files you need on the target machine. For example:
+For example, the command `ship` is a one-liner command to drop a file from your Kali to the target machine. For example:
 
 ```bash
 ship ./linpeas.sh
-# the command will automatically host the file and copy the command for fetching to your click board automatically. All you need is to paste it on the target machine :)
+# The command will automatically host the file and copy the command to fetch it to your click board automatically.
+# All you need is to paste it on the target machine :)
 ```
 
-A quick demos for shipping multiple files at a time:
+Here is a quick demo for shipping multiple files at a time:
 
-![command-ship](demo/command-ship.gif)
+https://github.com/user-attachments/assets/895d3a44-56a9-437e-99b2-85262815b2ff
 
 > ![tips]
-> it is powerful when you have a set of frequent-used tools. For example:
+> It is powerful when you have a set of frequently used tools. For example:
 > ```bash
 > # under /script/extension.sh
 > # I have a set of utilities that I often use for enumerate on Windows
@@ -28,7 +30,7 @@ A quick demos for shipping multiple files at a time:
 > ship -t windows $windows_family
 > ```
 
-There are other commands to help you with the enumeration, exploitation, and post-exploitation, See [3. Usage](#3-usage). You can also customize the settings, add your own scripts, and utilities to the Swiss Knife, See [4. Development & Customization](#4-development--customization). 
+There are other commands to help you with the enumeration, exploitation, and post-exploitation. See [3. Usage](#3-usage). You can also customize the settings and add your own scripts and utilities to the Swiss Knife. See [4. Development & Customization](#4-development--customization). 
 
 ## 2. Getting Started
 
@@ -37,16 +39,17 @@ There are other commands to help you with the enumeration, exploitation, and pos
 > Tested on `Kali 6.8.11-1kali2 (2024-05-30)`, virtualizing using `UTM 4.4.5` on MacBook Pro (M2, Sonoma 14.5)
 
 >[!Caution]
-> The script is designed to work on Kali Linux. It may not work on other Linux distributions. > Meanwhile, the scripts are developed and tested under Zsh (v5.9). There might be some issues if you are using Bash. PRs and Issues welcome!
+> The script is designed to work on Kali Linux. It may not work on other Linux distributions.
+> the scripts are developed and tested under Zsh (v5.9). There might be some issues if you are using Bash. PRs and Issues are welcome!
 
 ### 2.2. Prerequisites
 
-You will need to install the following packages. Additionally, if you are not using Kail (version ≥ 6.8.11), you may need to check the script before the run.
+You will need to install the following packages. Additionally, you may need to check the script before the run if you are not using Kail (version ≥ 6.8.11).
 
 > [!CAUTION]
 > Some of the commands may need additional libraries or packages. 
 > You will see a warning message if you need to install additional packages:
-> ![swiss](image/external-pacakge-hint.png)
+> ![swiss](demo/external-pacakge-hint.png)
 
 ```sh
 jq              # (required) parsing configuration
@@ -60,20 +63,20 @@ rlwrap          # (optional) used in the command `listen` for supporting arrow k
 ### 2.3. Installation
 
 ```bash
-# download and put it to the home directory
+# Download and put it in the home directory
 git clone https://github.com/dextermallo/oscp-swiss.git ~
 
 # copy the example settings to the settings.json
 # you can customize the settings.json
 cd ~/oscp-swiss & cp example.settings.json settings.json
 
-# add the following line to your .zshrc or .bashrc
+# Add the following line to your .zshrc or .bashrc
 echo "source ~/oscp-swiss/script/oscp-swiss.sh" >> ~/.zshrc
 
 # All done! Restart your terminal or run the following command
 source ~/.zshrc
 
-# (Optional) If you already have any customized scripts, utilities, or wordlist, you can put them in the following directories:
+# (Optional) If you already have any customized scripts, utilities, or wordlists, you can put them in the following directories:
 mv ~/my-script.sh ~/oscp-swiss/private/
 
 # you can also find your customized scripts by running the command:
@@ -96,7 +99,7 @@ source ~/.zshrc
 > ![Tip]
 > To keep the README concise, the following sections only provide a short description and examples. You can find more detailed information by running the command `<command> -h` or read it under the `/script` directory.
 
-Functions are breaking down into the modules and main functions. For more information, see [4. Development & Customization](#4-development--customization).
+Functions are broken down into modules and main functions. For more information, see [4. Development & Customization](#4-development--customization).
 
 >[!TIP]
 > You can find configurations for functions under `/settings.json`. For example:
@@ -114,28 +117,37 @@ Functions are breaking down into the modules and main functions. For more inform
 ### 3.1. Main Functions
 
 #### 3.1.1. `swiss`
+
 #### 3.1.2. `cd` (customized)
+
+Customized `cd` with `cd -` (to move to the previous directory) and `cd $file` (by default, cd to a file will fail. The customized `cd` will move to the directory of the file.)
+
 #### 3.1.3. `xfreerdp` (customized)
+
 #### 3.1.4. `wpscan` (customized)
+
 #### 3.1.5. `cat` (customized)
+
 #### 3.1.6. `ls` (customized)
+
 #### 3.1.7. `i`: get the default IP address
 
 ![command-i](demo/command-i.gif)
 
-#### 3.1.8. `svc`: start service with simplicity
+#### 3.1.8. `svc`: start service without pain
 
-<video src='demo/command-svc.mov'></video>
+https://github.com/user-attachments/assets/66cde72a-46b2-4bf1-9e6a-3c7711d43269
 
 #### 3.1.9. `ship`: killer tool for file transfer
 
-<video src='demo/command-ship.mov'></video>
+https://github.com/user-attachments/assets/ee3838a1-a35e-410b-9e35-a9b404b68247
 
 #### 3.1.10. `listen`: wrap the nc listener.
 
-<video src='demo/command-listen.mov'></video>
+https://github.com/user-attachments/assets/6bb08184-f529-4a7b-b37b-5c1e18a4f1c4
 
 #### 3.1.7. About Variables
+
 #### 3.1.8. About Extension
 
 
@@ -143,20 +155,30 @@ Functions are breaking down into the modules and main functions. For more inform
 
 ## 4. Development & Customization
 
-Here are the key structure for swiss:
+Here are the key structures for swiss:
 
 ```md
 .
-├── data             # (Private) common data/material for testing 
+├── data                 # (Private) common data/material for testing 
 │   ├── ...
 │   └── test.jpg
-├── private          # (Private) you can put your customized script, ovpn file, etc.
+├── doc 
+│   ├── cheatsheet       # (Public) quick cheatsheet for copy-paste, review, etc. See command `cheatsheet`.
+│   └── utils-note.md    # (Public) notes for utilities. See command `memory`.
+├── private              # (Private) you can put your customized script, .ovpn file, etc.
 │   ├── myscript.sh
 │   └── lab.ovpn
-├── script           #  (Public) main script for swiss
-├── utils            # (Private) put your binaries, compiled files, utilities (e.g., pspy)
+├── script               # (Public) main script for swiss
+│   ├── module           # (Public) function module
+│   ├── target           # (Public) scripts for the target side
+│   ├── alias.sh         # (Public) alias for native resources (i.e., binaries, executables) on Kali
+│   ├── extension.sh     # (Public) alias for external resources
+│   ├── installation.sh  # (Public) (WIP) installation for creating wordlist, downloading binaries, etc.
+│   ├── oscp-swiss.sh    # (Public) main script
+│   └── utils.sh  
+├── utils                # (Private) put your binaries, compiled files, utilities (e.g., pspy)
 │   └── ...
-├── wordlist         # (Private) custom wordlist
+├── wordlist             # (Private) custom wordlist
 └── settings.json
 ```
 
