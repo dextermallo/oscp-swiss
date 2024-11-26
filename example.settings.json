@@ -5,7 +5,8 @@
     "default_network_interface": "tun0",
     "disable_color": false,
     "wordlist_base": "/home/kali/oscp-swiss/wordlist",
-    "disable_sys_custom_command_banner": false
+    "disable_sys_custom_command_banner": false,
+    "disable_auto_exploit_function": true
   },
   "functions": {
     "wpscan": {
@@ -20,13 +21,18 @@
       "full_height": 1040,
       "default_mode": "dynamic"
     },
-    "ffuf_default": {
+    "recon_directory": {
       "recursive_depth": 1,
-      "wordlist": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt",
-      "use_dirsearch": true
+      "wordlist": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt"
     },
-    "ffuf_traversal_default": {
+    "recon_file_traversal": {
       "wordlist": "/home/kali/oscp-swiss/wordlist/file-traversal-default.txt"
+    },
+    "recon_subdomain": {
+      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
+    },
+    "recon_vhost": {
+      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
     },
     "cat": {
       "use_pygmentize": false
@@ -38,17 +44,12 @@
       "min_word_length": 4,
       "depth": 2
     },
-    "gobuster_subdomain_default": {
-      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
-    },
-    "gobuster_vhost_default": {
-      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
-    },
     "spawn_session_in_workspace": {
       "start_at_new_session": false
     },
-    "windows_rev": {
+    "craft": {
       "default_port": 443,
+      "default_arch": "x64",
       "generate_stage": false,
       "generate_stageless": true
     },

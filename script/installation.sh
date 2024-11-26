@@ -3,14 +3,12 @@
 # installation.sh is a collection of installation functions that are used across the oscp-swiss scripts.
 # TODO: add all binaries, files, etc being used to the installation script
 
-
-source $HOME/oscp-swiss/script/utils.sh
-
 # create directory traversal wordlist
 merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal-short.txt \
         /usr/share/wordlists/IntruderPayloads/FuzzLists/traversal.txt \
         '/usr/share/wordlists/PayloadsAllTheThings/Directory Traversal/Intruder/deep_traversal.txt' \
         '/usr/share/wordlists/PayloadsAllTheThings/Directory Traversal/Intruder/traversals-8-deep-exotic-encoding.txt' \
+        '/usr/share/seclists/Fuzzing/LFI/LFI-LFISuite-pathtotest-huge.txt' \
         -o $swiss_wordlist/file-traversal-default.txt
 
 # create web fuzzing wordlist
@@ -68,6 +66,10 @@ merge   /usr/share/wordlists/IntruderPayloads/FuzzLists/sqli-error-based.txt \
         '/usr/share/wordlists/PayloadsAllTheThings/SQL Injection/Intruder/payloads-sql-blind-MySQL-WHERE' \
         -o $swiss_wordlist/sqli-custom.txt
 
+
+merge   '/usr/share/wordlists/seclists/Discovery/Web-Content/burp-parameter-names.txt' \
+        '/usr/share/wordlists/seclists/Fuzzing/template-engines-special-vars.txt' \
+        -o $swiss_wordlist/ssti-custom.txt
 
 # create symlink for the wordlist
 ln -s /usr/share/wordlists $HOME/oscp-swiss/wordlist

@@ -6,3 +6,4 @@ data/*
 tmp/*
 !.gitkeep
 settings.json
+*.cast

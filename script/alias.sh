@@ -4,17 +4,14 @@
 # The functions under alias.sh are the default commands that are replaced with the custom commands.
 
 
-source $HOME/oscp-swiss/script/utils.sh
-_load_settings
-
 alias grep="grep --color=auto"
 alias diff="diff --color=auto"
 
 # Description:
 #   Extended cd function with `-` and file support
-#   If no argument is given, it will change to the home directory
-#   If `-` is given, it will change to the previous directory
-#   If a file is given, it will change to the directory of the file
+#   - If no argument is given, it will change to the home directory
+#   - If `-` is given, it will change to the previous directory
+#   - If a file is given, it will change to the directory of the file
 function cd() {
     if [ $# -eq 0 ]; then
         builtin cd
@@ -31,22 +28,22 @@ function cd() {
 }
 
 # Description:
-#   Replace the default argument of the command xfreerdp
-#   The default argument is to:
-#       1. ignore the certificate
-#       2. set the resolution to your preferred screen resolution
-#       3. mount to the current directory (optional)
-#       4. set a preferred screen resolution (dynamic/full/half)
-#   Arguments:
-#       -m, --mode <string> (dynamic/full/half)
-#   Configuration:
-#       - function.xfreerdp.use_custom_xfreerdp <boolean>: Use the custom xfreerdp function
-#       - function.xfreerdp.prompt_create_mount <boolean>: Prompt to create a mount
-#       - function.xfreerdp.create_mount_by_default <boolean>: Create a mount by default
-#       - function.xfreerdp.default_mode <string>: Default mode (dynamic/full/half)
-#       - function.xfreerdp.full_width <integer>: Full width resolution
-#       - function.xfreerdp.half_width <integer>: Half width resolution
-#       - function.xfreerdp.full_height <integer>: Full height resolution
+#   Replace the default argument of the command xfreerdp. The default argument is to:
+#   1. ignore the certificate
+#   2. set the resolution to your preferred screen resolution
+#   3. mount to the current directory (optional)
+#   4. set a preferred screen resolution (dynamic/full/half)
+# Usage: xfreerdp [-h, --help] [-m, --mode mode]
+# Arguments:
+#   [-m, --mode mode]: dynamic, full, half
+# Configuration:
+#   - function.xfreerdp.use_custom_xfreerdp <boolean>: Use the custom xfreerdp function
+#   - function.xfreerdp.prompt_create_mount <boolean>: Prompt to create a mount
+#   - function.xfreerdp.create_mount_by_default <boolean>: Create a mount by default
+#   - function.xfreerdp.default_mode <string>: Default mode (dynamic/full/half)
+#   - function.xfreerdp.full_width <integer>: Full width resolution
+#   - function.xfreerdp.half_width <integer>: Half width resolution
+#   - function.xfreerdp.full_height <integer>: Full height resolution
 #   Example:
 #       xfreerdp -m dynamic /u:username /p:password /v:$target
 #       xfreerdp -m full /u:username /p:password /v:$target
@@ -58,17 +55,11 @@ function _xfreerdp_default() {
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -m|--mode)
-                mode="$2"
-                shift 2
-                ;;
-            *)
-                new_args+=("$1")
-                shift
-                ;;
+            -m|--mode) mode="$2" && shift 2 ;;
+            -h|--help) swiss_logger warn "[w] For built-in xfreerdp, check \\\xfreerdp" && _help && return 0 ;;
+            *) new_args+=("$1") && shift ;;
         esac
     done
-
     if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
         swiss_logger prompt "[i] Mount? (y/n) \c"
         read -r user_input
@@ -78,26 +69,22 @@ function _xfreerdp_default() {
         elif [ "$user_input" = "n" ]; then
             create_mount=false
         else
-            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'."
-            return 1
+            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'." && return 1
         fi
     fi
-
     swiss_logger debug "[d] create_mount: $create_mount"
     swiss_logger debug "[d] mode: $mode"
-
     if [ $create_mount = true ]; then
         mkdir -p xfreerdp-data
-
         case "$mode" in
             dynamic)
                 \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /dynamic-resolution ${new_args[@]}
             ;;
             full)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
             ;;
             half)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
+                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
             ;;
             *)
                 swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
@@ -119,77 +106,76 @@ function _xfreerdp_default() {
             ;;
         esac
     fi
-
 }
-if [ $_swiss_xfreerdp_use_custom_xfreerdp = true ]; then
+
+if [[ $_swiss_xfreerdp_use_custom_xfreerdp = true ]]; then
     alias xfreerdp=_xfreerdp_default
 fi
 
 # Description:
-#   Replace the default argument of the command wpscan
-#   The default argument is to:
-#       1. enumerate users, plugins, and themes
-#       2. use aggressive plugin detection
-#       3. use the WPSCAN_API_TOKEN environment variable (optional)
+#   Replace the default argument of the command wpscan. The default argument is to:
+#   1. enumerate users, plugins, and themes
+#   2. use aggressive plugin detection
+#   3. use the WPSCAN_API_TOKEN environment variable (optional)
 #   You can request a free API token from https://wpscan.com/api
-# Configuration: function.wpscan.wpscan_token <string>
+# Configuration:
+#   - function.wpscan.wpscan_token <string>: WPScan API token
 alias wpscan="_override_cmd_banner; \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
 
 # Description: Use pygmentize to display the content of the file with color under dark-mode Kali.
-# Configuration: function.cat.use_pygmentize <boolean>
+# Configuration:
+#   - function.cat.use_pygmentize <boolean>: feature flag to use pygmentize
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
-# TODO: Documentation
-if [ $_swiss_cat_use_pygmentize = true ]; then
+if [[ $_swiss_cat_use_pygmentize = true ]]; then
     alias cat="_override_cmd_banner; pygmentize -P style=dracula -g"
 fi
 
 # Description: Use the nnn file manager as the default file manager
-# Configuration: function.ls.use_nnn <boolean>
+# Configuration:
+#   - function.ls.use_nnn <boolean>: feature flag to use nnn
 # References:
 #   - https://github.com/jarun/
 #   - https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn
-# TODO: Documentation
-if [ $_swiss_ls_use_nnn = true ]; then
+if [[ $_swiss_ls_use_nnn = true ]]; then
+    alias l="\ls"
     alias ls="n -dEH"
 fi
 
 ############
 # wordlist #
 ############
-wordlist_path=$_swiss_wordlist_base
-
 ### directory & files
-wordlist_dirsearch="$wordlist_path/seclists/Discovery/Web-Content/dirsearch.txt"
-wordlist_dirb_commn="$wordlist_path/dirb/common.txt"
-wordlist_raft_directory_big="$wordlist_path/seclists/Discovery/Web-Content/raft-large-directories.txt"
-wordlist_raft_file_big="$wordlist_path/seclists/Discovery/Web-Content/raft-large-files.txt"
+wordlist_dirsearch="$_swiss_wordlist_base/seclists/Discovery/Web-Content/dirsearch.txt"
+wordlist_dirb_commn="$_swiss_wordlist_base/dirb/common.txt"
+wordlist_raft_directory_big="$_swiss_wordlist_base/seclists/Discovery/Web-Content/raft-large-directories.txt"
+wordlist_raft_file_big="$_swiss_wordlist_base/seclists/Discovery/Web-Content/raft-large-files.txt"
 
 ### subdomain
-wordlist_subdomain_amass_small="$wordlist_path/amass/subdomains-top1mil-20000.txt"
-wordlist_subdomain_amass_big="$wordlist_path/amass/subdomains-top1mil-110000.txt"
-wordlist_subdomain_dirb="$wordlist_path/dirbuster/directory-list-2.3-medium.txt"
-wordlist_subdomain_top="$wordlist_path/Discovery/DNS/subdomains-top1million-110000.txt"
+wordlist_subdomain_amass_small="$_swiss_wordlist_base/amass/subdomains-top1mil-20000.txt"
+wordlist_subdomain_amass_big="$_swiss_wordlist_base/amass/subdomains-top1mil-110000.txt"
+wordlist_subdomain_dirb="$_swiss_wordlist_base/dirbuster/directory-list-2.3-medium.txt"
+wordlist_subdomain_top="$_swiss_wordlist_base/Discovery/DNS/subdomains-top1million-110000.txt"
 
 ### username & password
-wordlist_username_big="$wordlist_path/seclists/Usernames/xato-net-10-million-usernames.txt"
-wordlist_username_medium="$wordlist_path/dirb/others/names.txt"
-wordlist_username_small="$wordlist_path/seclists/Usernames/top-usernames-shortlist.txt"
-wordlist_rockyou="$wordlist_path/rockyou.txt"
+wordlist_username_big="$_swiss_wordlist_base/seclists/Usernames/xato-net-10-million-usernames.txt"
+wordlist_username_medium="$_swiss_wordlist_base/dirb/others/names.txt"
+wordlist_username_small="$_swiss_wordlist_base/seclists/Usernames/top-usernames-shortlist.txt"
+wordlist_rockyou="$_swiss_wordlist_base/rockyou.txt"
 
 # api
-wordlist_api_obj="$wordlist_path/seclists/Discovery/Web-Content/api/objects.txt"
-wordlist_api_res="$wordlist_path/seclists/Discovery/Web-Content/api/api-endpoints-res.txt"
+wordlist_api_obj="$_swiss_wordlist_base/seclists/Discovery/Web-Content/api/objects.txt"
+wordlist_api_res="$_swiss_wordlist_base/seclists/Discovery/Web-Content/api/api-endpoints-res.txt"
 
 ### specific
-wordlist_snmp_community_string="$wordlist_path/seclists/Discovery/SNMP/common-snmp-community-strings-onesixtyone.txt"
-wordlist_lfi="$wordlist_path/IntruderPayloads/FuzzLists/lfi.txt"
+wordlist_snmp_community_string="$_swiss_wordlist_base/seclists/Discovery/SNMP/common-snmp-community-strings-onesixtyone.txt"
+wordlist_lfi="$_swiss_wordlist_base/IntruderPayloads/FuzzLists/lfi.txt"
 
 ## hashcat
 wordlist_hashcat_rules="/usr/share/hashcat/rules"
 wordlist_hashcat_rule_best64="/usr/share/hashcat/rules/best64.rule"
 
 # traversal
-wordlist_traversal="$wordlist_path/IntruderPayloads/FuzzLists/traversal.txt"
+wordlist_traversal="$_swiss_wordlist_base/IntruderPayloads/FuzzLists/traversal.txt"
 
 ###########
 # windows #
