@@ -96,7 +96,7 @@ source ~/.zshrc
 
 ## 3. Usage
 
-> ![Tip]
+> ![TIP]
 > To keep the README concise, the following sections only provide a short description and examples. You can find more detailed information by running the command `<command> -h` or read it under the `/script` directory.
 
 Functions are broken down into modules and main functions. For more information, see [4. Development & Customization](#4-development--customization).
