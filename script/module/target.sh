@@ -28,7 +28,7 @@
 #   $ check 3                # list suid permission
 #   $ check 14 funny-content # search file content with 'funny-content' under the current directory
 function cp_target_script() {
-    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    [[ $1 == "-h" || $1 == "--help" ]] && _help && return 0
     local shell_path="$swiss_root/script/target/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
     \cat $shell_path > $new_file_path

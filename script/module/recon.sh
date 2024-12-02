@@ -26,27 +26,25 @@ function nmap_default() {
 
     check_service_and_vuln() {
         local data_path=$1
-
         local ports=$(grep -oP '^\d+\/\w+' $data_path | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
         swiss_logger warn "[w] Ports found: $ports."
         swiss_logger info "[i] Checking service on ports. Saved to $data_path-svc"
-        nmap -p$ports -sVC $ip -oN $data_path-svc
-
+        _wrap "nmap -p$ports -sVC $ip -oN $data_path-svc"
         swiss_logger info "[i] Checking with nmap vuln script. Saved to $data_path-vuln"
-        nmap -p$ports --script vuln $ip -oN $data_path-vuln
+        _wrap "nmap -p$ports --script vuln $ip -oN $data_path-vuln"
     }
 
     case "$mode" in
         fast)
             # tcp-top-2000
             swiss_logger info "[i] Start quick check. Saved to $saved_file_path/tcp-top-2000"
-            nmap -v --top-ports 2000 $ip -oN $saved_file_path/tcp-top-2000
+            _wrap "nmap -v --top-ports 2000 $ip -oN $saved_file_path/tcp-top-2000"
             check_service_and_vuln $saved_file_path/tcp-top-2000
 
             swiss_logger info "[i] Check UDP top 200 ports. Saved to $saved_file_path/udp-top-200"
-            sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200
+            _wrap "sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200"
 
-            swiss_logger warn "[w] Remember to run tcp and udp mode for full enumeration"
+            swiss_logger important-instruction "Remember to run tcp and udp mode for full enumeration"
             ;;
         tcp)
             swiss_logger info "[i] Start tcp check. Saved to $saved_file_path/tcp-full"
@@ -58,13 +56,12 @@ function nmap_default() {
             sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200
             ;;
         udp-all)
-            mkdir -p $saved_file_path/udp
-            swiss_logger info "[i] Start udp check (all). Saved to $saved_file_path/udp/udp_all"
-            sudo nmap -sU -F -v $ip -oN $saved_file_path/udp/udp_all
+            swiss_logger info "[i] Start udp check (all). Saved to $saved_file_path/udp_all"
+            sudo nmap -sU -F -v $ip -oN $saved_file_path/udp_all
             ;;
         stealth)
             swiss_logger info "[i] Start stealth nmap. Saved to $saved_file_path/stealth"
-            sudo nmap -sS -p0-65535 $ip -oN $saved_file_path/stealth/stealth
+            sudo nmap -sS -p0-65535 $ip -Pn -oN $saved_file_path/stealth
             ;;
         *)
             swiss_logger error "[e] Invalid mode '$mode'. Valid modes are: fast, tcp, udp, udp-all, stealth."
@@ -100,7 +97,7 @@ function recon_directory() {
     case $mode in
         dirsearch)
             [[ ! $(_cmd_is_exist "dirsearch") ]] && swiss_logger error "[e] dirsearch is not installed" && return 1
-            dirsearch -r -R $((_swiss_recon_directory_recursive_depth+1)) -u ${@} -o "$domain_dir/dirsearch-recon"
+            _wrap "dirsearch -r -R $((_swiss_recon_directory_recursive_depth+1)) -u ${@} -o "$domain_dir/dirsearch-recon""
         ;;
         ffuf)
             swiss_logger hint "[h] You can use -fc 400,403 to make the output clean."
