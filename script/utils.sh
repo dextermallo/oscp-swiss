@@ -190,21 +190,6 @@ function _wrap() {
     eval "$command"
 }
 
-# Description: Disable the automatic exploitation function.
-# Configuration:
-#   - global_settings.disable_auto_exploit_function <boolean>: feature flag to disable the function.
-# Usage: _disable_auto_exploit_function
-function _disable_auto_exploit_function() {
-    #####################################################################
-    #   IMPORTANT                                                       #
-    #   In the current version (1.5.2), no function is auto exploit and #
-    #   no function is calling _disable_auto_exploit_function.          #
-    #   This is just for the future use.                                #
-    #####################################################################
-    swiss_logger highlight "[ The function MAY considered as automatic exploitation. Make sure you read the scripts! ]"
-    [[ "$_swiss_disable_auto_exploit_function" = true ]] && return 1
-}
-
 # Description:
 #   Simplified version of the `ip a` command to show the IP address of the default network interface.
 #   The default network interface's IP address is copied to the clipboard.
