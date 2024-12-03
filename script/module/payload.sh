@@ -153,9 +153,9 @@ function rev_shell() {
     read -r IP
     local IP=${IP:-$(_get_default_network_interface_ip)}
 
-    swiss_logger prompt "[i] Port (Default: 9000): \c"
+    swiss_logger prompt "[i] Port (Default: 443): \c"
     read -r PORT
-    local PORT=${PORT:-9000}
+    local PORT=${PORT:-443}
 
     local -a allowed_shell_types=("sh" "/bin/sh" "bash" "/bin/bash" "cmd" "powershell" "pwsh" "ash" "bsh" "csh" "ksh" "zsh" "pdksh" "tcsh" "mksh" "dash")
 

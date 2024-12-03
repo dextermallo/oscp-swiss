@@ -184,11 +184,10 @@ function _cmd_is_exist() {
 # Usage: _wrap <commands>
 # TODO: extend to all functions.
 function _wrap() {
-    for cmd in "$@"; do
-        swiss_logger warn-instruction "[SWISS] Following commands are executed:"
-        swiss_logger important-instruction "$cmd"
-        eval "$cmd"
-    done
+    local command="$*"
+    swiss_logger warn-instruction "[SWISS] Following command is executed:"
+    swiss_logger important-instruction "$command"
+    eval "$command"
 }
 
 # Description: Disable the automatic exploitation function.
@@ -196,6 +195,12 @@ function _wrap() {
 #   - global_settings.disable_auto_exploit_function <boolean>: feature flag to disable the function.
 # Usage: _disable_auto_exploit_function
 function _disable_auto_exploit_function() {
+    #####################################################################
+    #   IMPORTANT                                                       #
+    #   In the current version (1.5.2), no function is auto exploit and #
+    #   no function is calling _disable_auto_exploit_function.          #
+    #   This is just for the future use.                                #
+    #####################################################################
     swiss_logger highlight "[ The function MAY considered as automatic exploitation. Make sure you read the scripts! ]"
     [[ "$_swiss_disable_auto_exploit_function" = true ]] && return 1
 }
@@ -263,7 +268,7 @@ function svc() {
             swiss_logger warn "[w] to stop, use the following commands: "
             swiss_logger warn "[w] \tsudo systemctl stop docker"
             swiss_logger warn "[w] \tsudo systemctl stop docker.socket"
-            sudo service docker restart
+            _wrap sudo service docker restart
             ;;
         ftp)
             swiss_logger info "[i] start ftp server on host"
@@ -274,7 +279,7 @@ function svc() {
             swiss_logger info "\t(3) use username anonymous"
             swiss_logger info "\t(4) binary # use binary mode"
             swiss_logger info "\t(5) put <file-you-want-to-download>"
-            python3 -m pyftpdlib -w -p 21
+            _wrap python3 -m pyftpdlib -w -p 21
             ;;
         http)
 
@@ -284,14 +289,14 @@ function svc() {
             swiss_logger info "[i] start http server"
             swiss_logger warn "[w] python3 -m http.server $port"
             i
-            python3 -m http.server $port
+            _wrap python3 -m http.server $port
             ;;
         smb)
             swiss_logger info "[i] start smb server"
             swiss_logger info "[i] impacket-smbserver smb . -smb2support"
             swiss_logger info "[i] using default name smb"
             i
-            impacket-smbserver smb . -smb2support
+            _wrap impacket-smbserver smb . -smb2support
             ;;
         ssh)
             swiss_logger info "[i] start ssh server"
@@ -299,12 +304,12 @@ function svc() {
             i
             sudo systemctl stop ssh
             kill -9 $(pgrep ssh)
-            sudo systemctl start ssh
+            _wrap sudo systemctl start ssh
             ;;
         bloodhound)
             swiss_logger info "[i] start BloodHound (v2.4.3) ..."
             # TODO: add more instructions & reproduce from skretch
-            sudo neo4j console
+            _wrap sudo neo4j console
             ;;
         bloodhound-ce)
             _extension_fn_banner
@@ -312,11 +317,8 @@ function svc() {
             swiss_logger info "[i] start BloodHound CE (v2.4.1) ..."
             swiss_logger info "[i] start port check on 8080"
 
-            # Check if port 8080 is open using lsof
-            if lsof -i :8080 > /dev/null; then
-                swiss_logger error "[e] Port 8080 is open. Exited"
-                exit 1
-            fi
+            # Check if port 8080 is open
+            lsof -i :8080 > /dev/null && swiss_logger error "[e] Port 8080 is open. Exited" && exit 1
 
             swiss_logger info "[i] cloning docker-compose files from /opt/BloodHound/examples/docker-compose"
             cp /opt/BloodHound/examples/docker-compose/* $(pwd)
@@ -324,7 +326,7 @@ function svc() {
             swiss_logger info "[i] BloodHound CE starts on port 8080 (default), username: admin, password check on the terminal logs"
             swiss_logger info "[i] preferred password: @Bloodhound123"
 
-            sudo docker-compose up
+            _wrap sudo docker-compose up
             ;;
         ligolo)
             _extension_fn_banner
@@ -342,19 +344,19 @@ function svc() {
             swiss_logger info "[i] Port Forwarding (access via 240.0.0.1): sudo ip route add 240.0.0.1/32 dev ligolo"
             # TODO: add to configuration
             local ligolo_agent_path="$swiss_utils/tunnel/ligolo-0.6.2/proxy"
-            $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
+            _wrap $ligolo_agent_path -selfcert -laddr 0.0.0.0:443
             ;;
         wsgi)
             _extension_fn_banner
             swiss_logger info "[i] start wsgidav under the directory: $(pwd)"
             swiss_logger info "[i] port used: 80"
             i
-            $_swiss_svc_wsgi --host=0.0.0.0 --port=$_swiss_svc_wsgi_default_port --auth=anonymous --root .
+            _wrap $_swiss_svc_wsgi --host=0.0.0.0 --port=$_swiss_svc_wsgi_default_port --auth=anonymous --root .
             ;;
         python-venv)
             _extension_fn_banner
-            python3 -m venv .venv
-            source .venv/bin/activate
+            _wrap python3 -m venv .venv
+            _wrap source .venv/bin/activate
             ;;
         *) _help && return 1 ;;
     esac
@@ -447,7 +449,7 @@ function ship() {
 # Usage: listen <port>
 function listen() {
     i
-    rlwrap nc -lvnp $1
+    _wrap rlwrap nc -lvnp $1
 }
 
 # Description: 

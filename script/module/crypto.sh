@@ -1,18 +1,6 @@
 #!/bin/bash
 
 
-# TODO: Doc
-function url_encode() {
-    local string="${1}"
-    printf '%s' "${string}" | jq -sRr @uri
-}
-
-# TODO: Doc
-function url_decode() {
-    local string="${1//+/ }"
-    printf '%s' "$string" | perl -MURI::Escape -ne 'print uri_unescape($_)'
-}
-
 function passwd_parser() {
     input_file="$1"
     [[ -z "$input_file" ]] && echo "Error: No input file provided!" && return 1
