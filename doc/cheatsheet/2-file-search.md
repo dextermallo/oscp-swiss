@@ -1,5 +1,14 @@
 # File Search Cheatsheet
 
+## Regex
+```bash
+# common
+(user|username|login|pass|passwd|password|pw|credentials|flag|local|proof|db_username|db_passwd|db_password|db_user|db_host|database|api_key|api_token|access_token|private_key|jwt|auth_token|bearer|ssh_pass|ssh_key|identity_file|id_rsa|id_dsa|authorized_keys|env|environment|secret|admin|root)
+
+# additional
+(ms-Mcs-AdmPwd)
+```
+
 ## Windows
 ```powershell
 ################################

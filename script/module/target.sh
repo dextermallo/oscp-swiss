@@ -28,16 +28,15 @@
 #   $ check 3                # list suid permission
 #   $ check 14 funny-content # search file content with 'funny-content' under the current directory
 function cp_target_script() {
-    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    [[ $1 == "-h" || $1 == "--help" ]] && _help && return 0
     local shell_path="$swiss_root/script/target/target-enum-script.sh"
     local new_file_path="$mktemp.sh"
     \cat $shell_path > $new_file_path
     echo "" >> $new_file_path
     echo "host='$(_get_default_network_interface_ip)'" >> $new_file_path
-    echo "clear; log --bold -f green '[i] target-enum-script loaded.'" >> $new_file_path
+    echo "clear; log --bold -f green '[i] target-enum-script loaded.\n[i] See: https://github.com/dextermallo/oscp-swiss/blob/main/script/target/target-enum-script.sh'; log --bold -f red '[i] the script was developed under the OSCP+ rules. No auto-exploits.'" >> $new_file_path
     \cat $new_file_path | xclip -selection clipboard
     rm $new_file_path
-
     swiss_logger info "[i] $shell_path copied!"
 }
 
@@ -62,7 +61,7 @@ function listen_target() {
     done
     [[ -z "$ip" ]] && swiss_logger error "[e] IP address is required" && return 1
     swiss_logger info "[e] start listening traffic from $ip under the interface $interface"
-    _wrap "sudo tcpdump -i "$interface" dst "$ip" or src "$ip""
+    _wrap sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
 }
 
 # Description: lookup an IP address's public information

@@ -281,3 +281,12 @@ Invoke-RunasCs -Username username -Password password -Command "shell.exe"
 import .\Invoke-Kerberoast.ps1
 Invoke-Kerberoast -OutputFormat Hashcat | fl
 ```
+# Utils: Avalonia-ILSpy-7.2RC
+## Description: NET Decomplier
+## Path: Avalonia-ILSpy-7.2RC
+## Shortcut: 
+## Usage:
+```bash
+# ref: https://github.com/icsharpcode/AvaloniaILSpy/releases
+./ILSpy # this will open the GUI.
+```

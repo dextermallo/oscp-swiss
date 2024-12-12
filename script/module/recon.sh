@@ -2,75 +2,72 @@
 
 
 # Description: Wrapped nmap command with default options
-# Usage: nmap_default <IP> [mode]
+# Usage: recon [-s, --service SERVICE] [-m, --mode MODE] <-i, --ip IP>
+# Arguements
 # Modes: fast (default), tcp, udp, udp-all, stealth
-# Example: nmap_default 192.168.1.1
-function nmap_default() {
-    local ip=""
-    local mode=${2:-"tcp"}
-
-    _help() {
-        swiss_logger info "Usage: nmap_default <IP> [<mode>]"
-        swiss_logger info "Modes: fast (default), tcp, udp, udp-all, stealth"
+# Example: recon 192.168.1.1
+function recon() {
+    _rustscan() {
+        local output_path="$(pwd)/reports"
+        local use_udp=""
+        [[ "$mode" == "udp" ]] && use_udp="--udp"
+        mkdir -p $output_path
+        _wrap "rustscan -a $target $use_udp | tee $output_path/rustscan-$IP"
     }
-
-    if [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        ip="$1" && shift
-    else
-        _help && return 1
-    fi
-
-    local saved_file_path="$(pwd)/reports/nmap/$ip"
-    swiss_logger info "[i] Creating directory $saved_file_path ..."
-    mkdir -p $saved_file_path
 
     check_service_and_vuln() {
         local data_path=$1
-
         local ports=$(grep -oP '^\d+\/\w+' $data_path | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
         swiss_logger warn "[w] Ports found: $ports."
         swiss_logger info "[i] Checking service on ports. Saved to $data_path-svc"
-        nmap -p$ports -sVC $ip -oN $data_path-svc
-
+        _wrap nmap -p$ports -sVC $IP -oN $data_path-svc
         swiss_logger info "[i] Checking with nmap vuln script. Saved to $data_path-vuln"
-        nmap -p$ports --script vuln $ip -oN $data_path-vuln
+        _wrap nmap -p$ports --script vuln $IP -oN $data_path-vuln
     }
 
-    case "$mode" in
-        fast)
-            # tcp-top-2000
-            swiss_logger info "[i] Start quick check. Saved to $saved_file_path/tcp-top-2000"
-            nmap -v --top-ports 2000 $ip -oN $saved_file_path/tcp-top-2000
-            check_service_and_vuln $saved_file_path/tcp-top-2000
+    _nmap() {
+        local saved_file_path="$(pwd)/reports/nmap/$IP"
+        swiss_logger info "[i] Creating directory $saved_file_path ..."
+        mkdir -p $saved_file_path
 
-            swiss_logger info "[i] Check UDP top 200 ports. Saved to $saved_file_path/udp-top-200"
-            sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200
+        case "$mode" in
+            fast)
+                recon -s nmap -m tcp-5000 -i $IP && recon -s nmap -m udp-200 -i $IP
+                swiss_logger important-instruction "Remember to run tcp and udp mode for full enumeration"
+            ;;
+            tcp) _wrap nmap -p0-65535 -v $IP -oN $saved_file_path/tcp-full && check_service_and_vuln $saved_file_path/tcp-full ;;
+            tcp-5000) _wrap nmap -v --top-ports 5000 $IP -oN $saved_file_path/tcp-top-5000 && check_service_and_vuln $saved_file_path/tcp-top-5000 ;;
+            udp-200) _wrap sudo nmap --top-ports 200 -sU -F -v $IP -oN $saved_file_path/udp-top-200 ;;
+            udp-all) _wrap sudo nmap -sU -F -v $IP -oN $saved_file_path/udp_all ;;
+            stealth) _wrap sudo nmap -sS -p0-65535 $IP -Pn -oN $saved_file_path/stealth ;;
+            *) swiss_logger error "[e] Invalid mode '$mode'. Valid modes are: fast, tcp, udp-200, udp-all, stealth." && return 1 ;;
+        esac
+    }
 
-            swiss_logger warn "[w] Remember to run tcp and udp mode for full enumeration"
-            ;;
-        tcp)
-            swiss_logger info "[i] Start tcp check. Saved to $saved_file_path/tcp-full"
-            nmap -p0-65535 $ip -oN $saved_file_path/tcp-full
-            check_service_and_vuln $saved_file_path/tcp-full
-            ;;
-        udp)
-            swiss_logger info "[i] Start udp check (top 200 ports). Saved to $saved_file_path/udp-top-200"
-            sudo nmap --top-ports 200 -sU -F -v $ip -oN $saved_file_path/udp-top-200
-            ;;
-        udp-all)
-            mkdir -p $saved_file_path/udp
-            swiss_logger info "[i] Start udp check (all). Saved to $saved_file_path/udp/udp_all"
-            sudo nmap -sU -F -v $ip -oN $saved_file_path/udp/udp_all
-            ;;
-        stealth)
-            swiss_logger info "[i] Start stealth nmap. Saved to $saved_file_path/stealth"
-            sudo nmap -sS -p0-65535 $ip -oN $saved_file_path/stealth/stealth
-            ;;
-        *)
-            swiss_logger error "[e] Invalid mode '$mode'. Valid modes are: fast, tcp, udp, udp-all, stealth."
-            return 1
-            ;;
+    local IP=""
+    local service="nmap"
+    local mode="tcp"
+
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -i|--ip) IP="$2" && shift 2 ;;
+            -s|--service) service="$2" && shift 2 ;;
+            -m|--mode) mode="$2" && shift 2 ;;
+            *) _help && return 0 ;;
+        esac
+    done    
+
+    if [[ ! $(_is_ip $IP) ]]; then
+        swiss_logger error "[e] invalid ip format" && return 1
+    fi
+
+    case "$service" in
+        nmap) _nmap ;;
+        rustscan) _rustscan ;;
     esac
+
 }
 
 # Description: directory fuzzing by default. compatible with original arguments
@@ -100,11 +97,11 @@ function recon_directory() {
     case $mode in
         dirsearch)
             [[ ! $(_cmd_is_exist "dirsearch") ]] && swiss_logger error "[e] dirsearch is not installed" && return 1
-            dirsearch -r -R $((_swiss_recon_directory_recursive_depth+1)) -u ${@} -o "$domain_dir/dirsearch-recon"
+            _wrap dirsearch -r -R $((_swiss_recon_directory_recursive_depth+1)) -u ${@} -o "$domain_dir/dirsearch-recon"
         ;;
         ffuf)
             swiss_logger hint "[h] You can use -fc 400,403 to make the output clean."
-            ffuf -w $_swiss_recon_directory_wordlist -recursion \
+            _wrap ffuf -w $_swiss_recon_directory_wordlist -recursion \
                  -recursion-depth $_swiss_recon_directory_recursive_depth \
                  -c -t 200 \
                  -u ${@} | tee "$domain_dir/ffuf-recon"
@@ -126,7 +123,7 @@ function recon_file_traversal() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     local domain_dir=$(_create_web_fuzz_report_directory "$1")
     _display_wordlist_statistic $_swiss_recon_file_traversal_wordlist
-    ffuf -w $_swiss_recon_file_traversal_wordlist -c -t 200 -u ${@} | tee "$domain_dir/traversal-recon"
+    _wrap ffuf -w $_swiss_recon_file_traversal_wordlist -c -t 200 -u ${@} | tee "$domain_dir/traversal-recon"
 }
 
 # Description: subdomain fuzzing using gobuster, compatible with original arguments
@@ -141,7 +138,7 @@ function recon_subdomain() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     local domain_dir=$(_create_web_fuzz_report_directory "$1")
     _display_wordlist_statistic $_swiss_recon_subdomain_wordlist
-    gobuster dns -w $_swiss_recon_subdomain_wordlist -t 50 -o $domain_dir/subdomain-recon -d ${@}
+    _wrap gobuster dns -w $_swiss_recon_subdomain_wordlist -t 50 -o $domain_dir/subdomain-recon -d ${@}
 }
 
 # Description: vhost fuzzing using gobuster, compatible with original arguments
@@ -161,9 +158,7 @@ function recon_vhost() {
     local domain_dir=$(_create_web_fuzz_report_directory "$domain")
     _display_wordlist_statistic $_swiss_recon_vhost_wordlist
             
-    gobuster vhost -k -u $ip --domain $domain --append-domain -r \
-                   -w $_swiss_recon_vhost_wordlist \
-                   -o $domain_dir/vhost-recon -t 100
+    _wrap gobuster vhost -k -u $ip --domain $domain --append-domain -r -w $_swiss_recon_vhost_wordlist -o $domain_dir/vhost-recon -t 100
 }
 
 # Description: get all urls from a web page
@@ -172,6 +167,7 @@ function get_web_pagelink() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     swiss_logger info "[i] Start extracting all urls from $1. original files will be stored at $PWD/links.txt"
     swiss_logger info "[i] unique links (remove duplicated) will be stored at $PWD/links-uniq.txt"
+    
     lynx -dump $1 | awk '/http/{print $2}' > links.txt
     sort -u links.txt > links-uniq.txt
     cat ./links-uniq.txt
@@ -181,7 +177,8 @@ function get_web_pagelink() {
 # Usage: get_web_keywords <url>
 function get_web_keywords() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
-    cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length -w cewl-wordlist.txt $1
+    _wrap cewl -d $_swiss_get_web_keywords_depth -m $_swiss_get_web_keywords_min_word_length --with-numbers -w cewl-wordlist.txt $1
+    cat ./cewl-wordlist.txt
 }
 
 function _create_web_fuzz_report_directory() {

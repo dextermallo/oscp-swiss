@@ -56,13 +56,17 @@ function bruteforce() {
             [[ -n "$used_password" ]] && password_fmt="-p" || [[ -f "$used_password" ]] && password_fmt="-P"
 
             swiss_logger info "[i] bruteforce $service. Run -e nsr with $used_username"
-            _wrap "hydra $username_fmt $used_username -e nsr -s $used_port $service://$IP"
+            _wrap hydra $username_fmt $used_username -e nsr -s $used_port $service://$IP
             
             swiss_logger info "[i] Run $used_username with $used_password"
-            _wrap "hydra $username_fmt $used_username $password_fmt $used_password -s $used_port $service://$IP"
+            _wrap hydra $username_fmt $used_username $password_fmt $used_password -s $used_port $service://$IP
             ;;
         smb)
-            _wrap "crackmapexec smb $IP -u $used_username -p $used_password"
+            swiss_logger info "[i] --local-auth"
+            _wrap nxc smb $IP -u $used_username -p $used_password --local-auth
+
+            swiss_logger info "[i] DC auth"
+            _wrap nxc smb $IP -u $used_username -p $used_password
             ;;
     esac
 }
@@ -106,7 +110,7 @@ function dump() {
             swiss_logger info "[i] Dumping files from FTP server"
             local username="${options_username:-anonymous}"
             local password="${options_password:-anonymous}"
-            _wrap "wget -r --no-passive --no-parent ftp://$username:$password@$IP"
+            _wrap wget -r --no-passive --no-parent ftp://$username:$password@$IP
             ;;
         smb)
             swiss_logger info "[i] dump from SMB"
@@ -114,7 +118,7 @@ function dump() {
             local username="${options_username:-}"
             local password="${options_password:-}"
             [[ -z "$options_share" ]] && swiss_logger error "[e] Shares must be specified. Use -S, --share." && return 1
-            smbclient //$IP/$options_share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
+            _wrap smbclient //$IP/$options_share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
             ;;
         *) swiss_logger error "[e] Invalid service '$service'. Valid service: ftp, smb" && return 1 ;;
     esac

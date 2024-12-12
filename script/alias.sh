@@ -137,8 +137,9 @@ fi
 #   - https://github.com/jarun/
 #   - https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn
 if [[ $_swiss_ls_use_nnn = true ]]; then
-    alias l="\ls"
-    alias ls="n -dEH"
+    # TODO: remove conf
+    # alias ls="\ls"
+    alias l="n -dEH"
 fi
 
 ############
@@ -159,6 +160,7 @@ wordlist_subdomain_top="$_swiss_wordlist_base/Discovery/DNS/subdomains-top1milli
 ### username & password
 wordlist_username_big="$_swiss_wordlist_base/seclists/Usernames/xato-net-10-million-usernames.txt"
 wordlist_username_medium="$_swiss_wordlist_base/dirb/others/names.txt"
+wordlist_username_medium_seslist="$_swiss_wordlist_base/seclists/Usernames/Names/names.txt"
 wordlist_username_small="$_swiss_wordlist_base/seclists/Usernames/top-usernames-shortlist.txt"
 wordlist_rockyou="$_swiss_wordlist_base/rockyou.txt"
 
