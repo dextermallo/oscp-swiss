@@ -56,6 +56,7 @@ windows_bloodhound_4_3_1_exe="$windows_bloodhound_4_3_1/SharpHound.exe"
 
 wordlist_credential_small="$swiss_wordlist/small-credential-custom.txt"
 wordlist_ssti="$swiss_wordlist/ssti-custom.txt"
+wordlist_lfi_parameter="$swiss_wordlist/lfi-parameter.txt"
 
 windows_family=( $windows_GodPotato_NET4 $windows_mimikatz_x64 $windows_PrintSpoofer64 $windows_winpeas_x64 $windows_nc64 $windows_powerview $windows_powerup $windows_bloodhound_4_3_1_exe $ligolo_windows)
 linux_family=( $linux_pspy64 $linux_linpeas )

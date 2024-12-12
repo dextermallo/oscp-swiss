@@ -25,4 +25,7 @@ net localgroup "Remote Desktop Users"
 
 # check service
 Get-NetTCPConnection -LocalPort 5985
+
+# one-liner
+net user dexter @Password123 /add & net localgroup administrators dexter /add & net localgroup "Remote Desktop Users" dexter /add & reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f & reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fAllowToGetHelp /t REG_DWORD /d 1 /f & netsh firewall add portopening TCP 3389 "Remote Desktop" & netsh firewall set service remoteadmin enable
 ```

