@@ -1,6 +1,7 @@
 #!/bin/bash
 
 
+# TODO: rename to parse <parse-type>
 function passwd_parser() {
     input_file="$1"
     [[ -z "$input_file" ]] && echo "Error: No input file provided!" && return 1
@@ -12,6 +13,6 @@ function passwd_parser() {
     # Extract usernames (first field before ":") from the formatted data
     cut -d: -f1 format.passwd > format.passwd.users
 
-    swiss_logger info "[i] $(realpath format.passwd) (multi-line formatted output)"
-    swiss_logger info "[i] $(realpath format.passwd.users) (list of usernames)"
+    _logger info "[i] $(realpath format.passwd) (multi-line formatted output)"
+    _logger info "[i] $(realpath format.passwd.users) (list of usernames)"
 }

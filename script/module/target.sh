@@ -37,7 +37,7 @@ function cp_target_script() {
     echo "clear; log --bold -f green '[i] target-enum-script loaded.\n[i] See: https://github.com/dextermallo/oscp-swiss/blob/main/script/target/target-enum-script.sh'; log --bold -f red '[i] the script was developed under the OSCP+ rules. No auto-exploits.'" >> $new_file_path
     \cat $new_file_path | xclip -selection clipboard
     rm $new_file_path
-    swiss_logger info "[i] $shell_path copied!"
+    _logger info "[i] $shell_path copied!"
 }
 
 # Description: tcpdump traffic from/to an IP address
@@ -49,7 +49,7 @@ function cp_target_script() {
 #   listen_target 192.168.1.2 # listen on traffic from/to 192.168.1.2 on the default network interface
 function listen_target() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
-    swiss_logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
+    _logger info "Usage: listen_target <ip> [-i <interface> | --interface <interface>]"
     local interface="${_swiss_default_network_interface:-any}"
     local ip=""
 
@@ -59,8 +59,8 @@ function listen_target() {
             *) ip="$1" && shift ;;
         esac
     done
-    [[ -z "$ip" ]] && swiss_logger error "[e] IP address is required" && return 1
-    swiss_logger info "[e] start listening traffic from $ip under the interface $interface"
+    [[ -z "$ip" ]] && _logger error "[e] IP address is required" && return 1
+    _logger info "[e] start listening traffic from $ip under the interface $interface"
     _wrap sudo tcpdump -i "$interface" dst "$ip" or src "$ip"
 }
 

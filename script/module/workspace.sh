@@ -24,13 +24,13 @@ function set_workspace() {
 
     if [[ -d "$workspace_path" ]]; then
         jq --arg path "$workspace_path" '.swiss_variable.workspace.cur.path = $path' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
-        swiss_logger debug "[d] Current workspace path set to $workspace_path"
+        _logger debug "[d] Current workspace path set to $workspace_path"
     else
-        swiss_logger error "[e] Directory '$workspace_path' does not exist" && return 1
+        _logger error "[e] Directory '$workspace_path' does not exist" && return 1
     fi
 
     jq --arg target "$workspace_target" '.swiss_variable.workspace.cur.target = $target' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
-    swiss_logger debug "[d] Target set to $workspace_target"
+    _logger debug "[d] Target set to $workspace_target"
 
     local exists_in_list
     exists_in_list=$(jq --arg path "$workspace_path" --arg target "$workspace_target" \
@@ -39,9 +39,9 @@ function set_workspace() {
     if [[ -z "$exists_in_list" ]]; then
         jq --arg path "$workspace_path" --arg target "$workspace_target" \
             '.swiss_variable.workspace.list += [{"path": $path, "target": $target}]' "$swiss_settings" > $tmp_conf && mv $tmp_conf "$swiss_settings"
-        swiss_logger debug "[d] Workspace added to list: $workspace_path with target $workspace_target"
+        _logger debug "[d] Workspace added to list: $workspace_path with target $workspace_target"
     else
-        swiss_logger debug "[d] Workspace already exists in the list"
+        _logger debug "[d] Workspace already exists in the list"
     fi
 
     # set variable
@@ -56,14 +56,14 @@ function select_workspace() {
     local paths
     paths=($(jq -r '.swiss_variable.workspace.list[].path' "$swiss_settings"))
     
-    [[ ${#paths[@]} -lt 1 ]] && swiss_logger info "[i] No workspace found." && return 0
+    [[ ${#paths[@]} -lt 1 ]] && _logger info "[i] No workspace found." && return 0
 
-    swiss_logger prompt "Please choose a workspace:"
+    _logger prompt "Please choose a workspace:"
     for ((i=1; i<=${#paths[@]}; i++)); do
-        swiss_logger prompt "$((i)). ${paths[i]}"
+        _logger prompt "$((i)). ${paths[i]}"
     done
 
-    swiss_logger prompt "Enter your choice: \c"
+    _logger prompt "Enter your choice: \c"
     read choice
 
     if [[ "$choice" -gt 0 && "$choice" -le "${#paths[@]}" && -d "${paths[choice]}" ]]; then
@@ -71,7 +71,7 @@ function select_workspace() {
         local selected_path="${paths[choice]}"
         local selected_target=$(jq -r ".swiss_variable.workspace.list[$choice - 1].target" "$swiss_settings")
 
-        swiss_logger debug "[d] change to path: $selected_path, target: $selected_target"
+        _logger debug "[d] change to path: $selected_path, target: $selected_target"
 
         jq --arg path "$selected_path" --arg target "$selected_target" \
            '.swiss_variable.workspace.cur = { "path": $path, "target": $target }' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
@@ -79,9 +79,9 @@ function select_workspace() {
         # reset variable target
         target=$selected_target
 
-        cd $selected_path || { swiss_logger error "[e] Failed to enter directory '${paths[choice]}'"; return 1; }
+        cd $selected_path || { _logger error "[e] Failed to enter directory '${paths[choice]}'"; return 1; }
     else
-        swiss_logger error "[e] Invalid choice or directory does not exist"
+        _logger error "[e] Invalid choice or directory does not exist"
     fi
 }
 
@@ -95,7 +95,7 @@ function check_workspace() {
         if [[ -d "$cur_path" ]]; then
             updated_list+=("$item")
         else
-            swiss_logger debug "[i] Removing non-existent workspace path: $cur_path"
+            _logger debug "[i] Removing non-existent workspace path: $cur_path"
         fi
     done
 
@@ -105,7 +105,7 @@ function check_workspace() {
     cur_workspace_path=$(jq -r '.swiss_variable.workspace.cur.path // empty' "$swiss_settings")
 
     if [[ -n "$cur_workspace_path" && ! -d "$cur_workspace_path" ]]; then
-        swiss_logger info "[i] Current workspace path does not exist: $cur_workspace_path"
+        _logger info "[i] Current workspace path does not exist: $cur_workspace_path"
         jq '.swiss_variable.workspace.cur = {}' "$swiss_settings" > /tmp/tmp.$$.json && mv /tmp/tmp.$$.json "$swiss_settings"
     fi
 }
@@ -128,7 +128,7 @@ function init_workspace() {
         case "$1" in
             -i|--ip) ip="$2" && shift 2 ;;
             -n|--name) name="$2" && shift 2 ;;
-            *) swiss_logger error "[e] Invalid option: $1. Check with -h, --help" && return 1 ;;
+            *) _logger error "[e] Invalid option: $1. Check with -h, --help" && return 1 ;;
         esac
     done
 
@@ -136,7 +136,7 @@ function init_workspace() {
 
     local dir_name="${name}-${ip}"
     mkdir -p "$dir_name"
-    cd "$dir_name" || { swiss_logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
+    cd "$dir_name" || { _logger error "[e] Failed to enter directory '$dir_name'"; return 1; }
 
     if [[ -f "$_swiss_init_workspace_default_username_wordlist" ]]; then
         cp $_swiss_init_workspace_default_username_wordlist username.txt
@@ -176,16 +176,16 @@ function spawn_session_in_workspace() {
 }
 
 clean_workspace() {
-    [[ ! -f "$swiss_settings" ]] && swiss_logger error "[e] File not found: $swiss_settings" && return 1
+    [[ ! -f "$swiss_settings" ]] && _logger error "[e] File not found: $swiss_settings" && return 1
     
     local tmp_file="$mktemp.json"
     jq '.swiss_variable.workspace.list = [] | .swiss_variable.workspace.cur = {}' "$swiss_settings" > $tmp_file
 
     if [[ $? -eq 0 ]]; then
         mv "$tmp_file" "$swiss_settings"
-        swiss_logger info "[i] Workspaces have been cleaned up."
+        _logger info "[i] Workspaces have been cleaned up."
     else
-        swiss_logger error "[e] Failed to clean workspace."
+        _logger error "[e] Failed to clean workspace."
         rm -f "$tmp_file"
         return 1
     fi

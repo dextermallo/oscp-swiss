@@ -22,7 +22,7 @@ function cd() {
     elif [ -e "$1" ]; then
         builtin cd "$(dirname "$1")"
     else
-        swiss_logger error "[e] cd: no such file or directory: $1"
+        _logger error "[e] cd: no such file or directory: $1"
         return 1
     fi
 }
@@ -48,7 +48,7 @@ function cd() {
 #       xfreerdp -m dynamic /u:username /p:password /v:$target
 #       xfreerdp -m full /u:username /p:password /v:$target
 function _xfreerdp_default() {
-    _override_cmd_banner
+    _banner override-cmd
     local create_mount=$_swiss_xfreerdp_create_mount_by_default
     local mode=$_swiss_xfreerdp_default_mode
     local new_args=()
@@ -56,12 +56,12 @@ function _xfreerdp_default() {
     while [[ $# -gt 0 ]]; do
         case $1 in
             -m|--mode) mode="$2" && shift 2 ;;
-            -h|--help) swiss_logger warn "[w] For built-in xfreerdp, check \\\xfreerdp" && _help && return 0 ;;
+            -h|--help) _logger warn "[w] For built-in xfreerdp, check \\\xfreerdp" && _help && return 0 ;;
             *) new_args+=("$1") && shift ;;
         esac
     done
     if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
-        swiss_logger prompt "[i] Mount? (y/n) \c"
+        _logger prompt "[i] Mount? (y/n) \c"
         read -r user_input
 
         if [ "$user_input" = "y" ]; then
@@ -69,11 +69,11 @@ function _xfreerdp_default() {
         elif [ "$user_input" = "n" ]; then
             create_mount=false
         else
-            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'." && return 1
+            _logger error "[e] Invalid input. Please enter 'y' or 'n'." && return 1
         fi
     fi
-    swiss_logger debug "[d] create_mount: $create_mount"
-    swiss_logger debug "[d] mode: $mode"
+    _logger debug "[d] create_mount: $create_mount"
+    _logger debug "[d] mode: $mode"
     if [ $create_mount = true ]; then
         mkdir -p xfreerdp-data
         case "$mode" in
@@ -87,7 +87,7 @@ function _xfreerdp_default() {
                 \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
             ;;
             *)
-                swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
+                _logger error "[e] Unsupported mode (dynamic/full/half)."
             ;;
         esac
     else
@@ -102,7 +102,7 @@ function _xfreerdp_default() {
                 \xfreerdp /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
             ;;
             *)
-                swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
+                _logger error "[e] Unsupported mode (dynamic/full/half)."
             ;;
         esac
     fi
@@ -120,14 +120,14 @@ fi
 #   You can request a free API token from https://wpscan.com/api
 # Configuration:
 #   - function.wpscan.wpscan_token <string>: WPScan API token
-alias wpscan="_override_cmd_banner; \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
+alias wpscan="_banner override-cmd; \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
 
 # Description: Use pygmentize to display the content of the file with color under dark-mode Kali.
 # Configuration:
 #   - function.cat.use_pygmentize <boolean>: feature flag to use pygmentize
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
 if [[ $_swiss_cat_use_pygmentize = true ]]; then
-    alias cat="_override_cmd_banner; pygmentize -P style=dracula -g"
+    alias cat="_banner override-cmd; pygmentize -P style=dracula -g"
 fi
 
 # Description: Use the nnn file manager as the default file manager

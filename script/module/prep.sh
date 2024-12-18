@@ -38,7 +38,7 @@ function memory() {
             -m|--mode)
                 mode="$2"
                 if [[ ! "$mode" =~ ^(default|view|add)$ ]]; then
-                    swiss_logger error "[e] mode support: default, view, add" && return 1
+                    _logger error "[e] mode support: default, view, add" && return 1
                 fi
                 shift 2
                 ;;
@@ -46,7 +46,7 @@ function memory() {
             -st|--shortcut-type)
                 shortcut_type="$2"
                 if [[ ! "$shortcut_type" =~ ^(extension|alias)$ ]]; then
-                    swiss_logger error "[e] shortcut_type support: extension, alias" && return 1
+                    _logger error "[e] shortcut_type support: extension, alias" && return 1
                 fi
                 shift 2
                 ;;
@@ -54,7 +54,7 @@ function memory() {
         esac
     done
 
-    swiss_logger debug "[d] Mode: $mode"
+    _logger debug "[d] Mode: $mode"
 
     local absolute_path=""
     local relative_path=""
@@ -69,11 +69,11 @@ function memory() {
 
     local filename=$(basename "$absolute_path")
 
-    [[ ! -e "$absolute_path" ]] && swiss_logger error "[e] Path '$absolute_path' does not exist." && return 1
-    [[ "$absolute_path" != "$utils_base_path"* ]] && swiss_logger "[e] Only files under $utils_base_path are allowed." && return 1
+    [[ ! -e "$absolute_path" ]] && _logger error "[e] Path '$absolute_path' does not exist." && return 1
+    [[ "$absolute_path" != "$utils_base_path"* ]] && _logger "[e] Only files under $utils_base_path are allowed." && return 1
 
     _add_note() {
-        grep -q "^# $filename$" "$notes_path" && swiss_logger warn "[w] Notes exists already." && return 0
+        grep -q "^# $filename$" "$notes_path" && _logger warn "[w] Notes exists already." && return 0
     
         if [[ ! -z "$shortcut_name" ]]; then
             shortcut -f $absolute_path -n $shortcut_name -t $shortcut_type
@@ -93,15 +93,15 @@ function memory() {
         vim "$temp_note"
         \cat "$temp_note" >> "$notes_path"
         rm "$temp_note"
-        swiss_logger info "[u] Note saved to $notes_path."
+        _logger info "[u] Note saved to $notes_path."
     }
 
     _view_note() {
         if grep -q "^# Utils: $filename$" "$notes_path"; then
-            swiss_logger debug "[d] Note found for $filename:"
+            _logger debug "[d] Note found for $filename:"
             output=$(sed -n "/^# Utils: $filename$/,/^# Utils: /{ /^# Utils: $filename$/b; /^# Utils: /q; p }" "$notes_path")
             if [ $_swiss_cat_use_pygmentize = true ]; then
-                swiss_logger debug "[d] Use pygementize"
+                _logger debug "[d] Use pygementize"
                 local temp_md="$mktemp.md"
                 echo $output >> $temp_md
                 cat $temp_md
@@ -110,12 +110,12 @@ function memory() {
                 echo $output
             fi
         else
-            swiss_logger warn "[w] No notes found."
+            _logger warn "[w] No notes found."
         fi
     }
 
     _view_tree() {
-        swiss_logger debug "[d] Directory detected. Listing files with descriptions:"
+        _logger debug "[d] Directory detected. Listing files with descriptions:"
         tree -C "$absolute_path" -L 1 | while read -r line; do
             filename=$(echo "$line" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | awk '{print $NF}')
             if grep -q "^# Utils: $filename$" "$notes_path"; then
@@ -132,17 +132,17 @@ function memory() {
             add) _add_note ;;
             view) _view_tree ;;
             default) _view_note ;;
-            *) swiss_logger error "[e] Mode type incorrect." && return 1 ;;
+            *) _logger error "[e] Mode type incorrect." && return 1 ;;
         esac
     elif [[ -f "$absolute_path" ]]; then
         case $mode in
             add) _add_note ;;
             view) _view_note ;;
             default) _view_note ;;
-            *) swiss_logger error "[e] Mode type incorrect." && return 1 ;;
+            *) _logger error "[e] Mode type incorrect." && return 1 ;;
         esac
     else
-        swiss_logger error "[e] '$absolute_path' is neither a valid file nor a directory."
+        _logger error "[e] '$absolute_path' is neither a valid file nor a directory."
     fi
 }
 
@@ -153,8 +153,8 @@ function shortcut() {
     local type="extension"
 
     _helper() {
-        swiss_logger info "Usage: shortcut <-f, --file FILE> <-n, --name VARIABLE_NAME> [-t, --type VARIABLE_TYPE]"
-        swiss_logger info "Type supported: extension, alias (Default: extension)"
+        _logger info "Usage: shortcut <-f, --file FILE> <-n, --name VARIABLE_NAME> [-t, --type VARIABLE_TYPE]"
+        _logger info "Type supported: extension, alias (Default: extension)"
     }
 
     while [[ $# -gt 0 ]]; do
@@ -164,7 +164,7 @@ function shortcut() {
             -t|--type)
                 type="$2"
                 if [[ ! "$type" =~ ^(extension|alias)$ ]]; then
-                    swiss_logger error "[e] type support: alias, extension" && return 1
+                    _logger error "[e] type support: alias, extension" && return 1
                 fi
                 shift 2
                 ;;
@@ -177,14 +177,14 @@ function shortcut() {
     fi
 
     if [ ! -f "$file_path" ] && [ ! -d "$file_path" ]; then
-        swiss_logger error "[e] The file path $file_path does not exist."
+        _logger error "[e] The file path $file_path does not exist."
         return 1
     fi
 
     file_path="${file_path/#$HOME/\$HOME}"
 
     if [ -z "$name" ]; then
-        swiss_logger error "[e] Required a name for the shortcut"
+        _logger error "[e] Required a name for the shortcut"
     fi
 
     local dest
@@ -195,7 +195,7 @@ function shortcut() {
     fi
 
     echo "$name=\"$file_path\"" >> "$dest"
-    swiss_logger info "[i] Variable $name for $file_path has been added to $type."
+    _logger info "[i] Variable $name for $file_path has been added to $type."
 }
 
 # Description:
@@ -222,24 +222,24 @@ function cheatsheet() {
 
     # Check if there are any files to display
     if [[ ${#files[@]} -eq 0 ]]; then
-        swiss_logger warn "[w] No cheatsheet files found in $cheatsheet_dir."
+        _logger warn "[w] No cheatsheet files found in $cheatsheet_dir."
         return 1
     fi
 
-    swiss_logger warn info "[i] Available Cheatsheets:"
+    _logger warn info "[i] Available Cheatsheets:"
     for ((i=1; i<=${#files[@]}; i++)); do
-        swiss_logger info "$((i)). ${files[$i]}"
+        _logger info "$((i)). ${files[$i]}"
     done
 
-    swiss_logger prompt "[i] Select a cheatsheet by number: \c"
+    _logger prompt "[i] Select a cheatsheet by number: \c"
     read choice
 
     if [[ $choice -gt 0 && $choice -le ${#files[@]} ]]; then
         local index=$((choice))
-        swiss_logger info "[i] Displaying contents: ${original_files[$index]}:"
+        _logger info "[i] Displaying contents: ${original_files[$index]}:"
         cat "${original_files[$index]}"
     else
-        swiss_logger warn "[w] Invalid selection."
+        _logger warn "[w] Invalid selection."
     fi
 }
 
@@ -258,7 +258,7 @@ function check_extension() {
         eval expanded_file_path="$file_path"
 
         if [[ ! -e "$expanded_file_path" ]]; then
-            swiss_logger warn "[w] $var_name is invalid or does not exist: $expanded_file_path"
+            _logger warn "[w] $var_name is invalid or does not exist: $expanded_file_path"
         fi
     done < "$alias_file"
 }
@@ -285,7 +285,7 @@ function generate_report() {
         case "$1" in
             -p|--path) dest_path="$2" && shift 2 ;;
             -o|--output) output_file="$2" && shift 2 ;;
-            *) swiss_logger error "[e] Unknown argument: $1. See -h, --help." && return 1 ;;
+            *) _logger error "[e] Unknown argument: $1. See -h, --help." && return 1 ;;
         esac
     done
 
@@ -310,5 +310,5 @@ function generate_report() {
     }
 
     process_files "$dest_path"
-    swiss_logger info "[i] Report generated at: $output_file"
+    _logger info "[i] Report generated at: $output_file"
 }

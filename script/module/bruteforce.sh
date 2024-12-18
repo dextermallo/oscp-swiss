@@ -36,8 +36,8 @@ function bruteforce() {
         esac
     done
 
-    [[ ! -f "$used_username" && ! -n "$used_username" ]] && swiss_logger error "[e] type of username incorrect. Required: string, files" && return 1
-    [[ ! -f "$used_password" && ! -n "$used_password" ]] && swiss_logger error "[e] type of password incorrect. Required: string, files" && return 1
+    [[ ! -f "$used_username" && ! -n "$used_username" ]] && _logger error "[e] type of username incorrect. Required: string, files" && return 1
+    [[ ! -f "$used_password" && ! -n "$used_password" ]] && _logger error "[e] type of password incorrect. Required: string, files" && return 1
 
     case $service in
         ftp|ssh)
@@ -48,24 +48,24 @@ function bruteforce() {
             fi
 
             local username_fmt
-            [[ -z "$used_username" ]] && swiss_logger error "[e] username is not set." && return 1
+            [[ -z "$used_username" ]] && _logger error "[e] username is not set." && return 1
             [[ -n "$used_username" ]] && username_fmt="-l" || [[ -f "$used_username" ]] && username_fmt="-L"
             
             local password_fmt
-            [[ -z "$used_password" ]] && swiss_logger error "[e] username is not set." && return 1
+            [[ -z "$used_password" ]] && _logger error "[e] username is not set." && return 1
             [[ -n "$used_password" ]] && password_fmt="-p" || [[ -f "$used_password" ]] && password_fmt="-P"
 
-            swiss_logger info "[i] bruteforce $service. Run -e nsr with $used_username"
+            _logger info "[i] bruteforce $service. Run -e nsr with $used_username"
             _wrap hydra $username_fmt $used_username -e nsr -s $used_port $service://$IP
             
-            swiss_logger info "[i] Run $used_username with $used_password"
+            _logger info "[i] Run $used_username with $used_password"
             _wrap hydra $username_fmt $used_username $password_fmt $used_password -s $used_port $service://$IP
             ;;
         smb)
-            swiss_logger info "[i] --local-auth"
+            _logger info "[i] --local-auth"
             _wrap nxc smb $IP -u $used_username -p $used_password --local-auth
 
-            swiss_logger info "[i] DC auth"
+            _logger info "[i] DC auth"
             _wrap nxc smb $IP -u $used_username -p $used_password
             ;;
     esac
@@ -107,19 +107,19 @@ function dump() {
 
     case "$service" in
         ftp)
-            swiss_logger info "[i] Dumping files from FTP server"
+            _logger info "[i] Dumping files from FTP server"
             local username="${options_username:-anonymous}"
             local password="${options_password:-anonymous}"
             _wrap wget -r --no-passive --no-parent ftp://$username:$password@$IP
             ;;
         smb)
-            swiss_logger info "[i] dump from SMB"
+            _logger info "[i] dump from SMB"
             # TODO: impl username and password access
             local username="${options_username:-}"
             local password="${options_password:-}"
-            [[ -z "$options_share" ]] && swiss_logger error "[e] Shares must be specified. Use -S, --share." && return 1
+            [[ -z "$options_share" ]] && _logger error "[e] Shares must be specified. Use -S, --share." && return 1
             _wrap smbclient //$IP/$options_share -N -c 'prompt OFF;recurse ON;cd; lcd '$PWD';mget *'
             ;;
-        *) swiss_logger error "[e] Invalid service '$service'. Valid service: ftp, smb" && return 1 ;;
+        *) _logger error "[e] Invalid service '$service'. Valid service: ftp, smb" && return 1 ;;
     esac
 }
