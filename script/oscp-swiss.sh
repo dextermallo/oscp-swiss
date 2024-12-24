@@ -35,28 +35,24 @@ for script in "$swiss_utils"/*.sh; do source $script; done
 #     + target        functions relate to the target machine.
 #     + workspace     functions to manage cross-terminal session, faster to navigate.
 #     + private       all scripts (.sh) under the directory /private
-# Configuration:
-#   - global_settings.app_banner: true/false. Show the banner of the app.
 # Example:
 #   swiss bruteforce
 function swiss() {
     _parse() {
         if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1"; then
-            _logger info "[i] Function under $1:"
-            _logger hint "[i] Check function instructions with <command> -h or which <command>"
+            _logger -l info "Function under $1:"
+            _logger -l info "Check function instructions with <command> -h or which <command>"
             grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
         fi
         if grep -qE '^\s*alias\s+' "$1"; then
-            _logger info "[i] Alias under $1:"
+            _logger -l info "Alias under $1:"
             grep -E '^\s*alias\s+' "$1" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
         fi
         if grep -qE '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1"; then
-            _logger info "[i] Variable under $1:"
+            _logger -l info "Variable under $1:"
             grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
         fi
     }
-
-    [[ $_swiss_app_banner = true ]] && _banner swiss
 
     local module
 
@@ -73,16 +69,16 @@ function swiss() {
         if [[ -d "$swiss_private" ]]; then
             for script in "$swiss_private"/*.sh; do [[ -f "$script" ]] && _parse $script; done
         else
-            _logger error "Directory $swiss_private not found."
+            _logger -l error "Directory $swiss_private not found."
         fi
         ;;
         utils) for script in "$swiss_utils"/*.sh; do [[ -f "$script" ]] && _parse $script; done ;;
         alias|extension) _parse "$swiss_script/$module.sh" ;;
         bruteforce|crypto|help-exploit|host|machine|payload|prep|recon|target|workspace) _parse "$swiss_script/module/$module.sh" ;;
-        *) _logger error "Invalid modules. see -h | --help." ;;
+        *) _logger -l error "Invalid modules. see -h | --help." ;;
     esac
 }
 
 _load_settings
 _load_private_scripts
-spawn_session_in_workspace
+_sticky_session

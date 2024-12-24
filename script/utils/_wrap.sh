@@ -2,7 +2,7 @@
 # Usage: _wrap <commands>
 function _wrap() {
     local command="$*"
-    _logger warn-instruction "[SWISS] Following command is executed:"
-    _logger important-instruction "$command"
+    _logger -l warn -i -n --no-mark  -b "[SWISS] Following command is executed: "
+    _logger -l important -i --no-mark  -b "$command"
     eval "$command"
 }

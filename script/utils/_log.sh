@@ -71,7 +71,7 @@ function _check_logger_level() {
         debug) return 0 ;;
         info) [[ "$1" != "debug" ]] ;;
         warn) [[ "$1" == "warn" || "$1" == "error" ]] ;;
-        error) [[ "$1" == "error" ]] ;;
+        error) [[ "$1" == "error" || "$1" == "important" ]] ;;
         *) return 1 ;;
     esac
 }
@@ -79,18 +79,35 @@ function _check_logger_level() {
 # Description: wrap the _log function with the given level.
 # Usage: _logger <level> <text>
 function _logger() {
-    case "$1" in
-        debug) _check_logger_level "debug" && _log -f gray "$@" ;;
-        info) _check_logger_level "info" && _log -f green "$@" ;;
-        warn) _check_logger_level "warn" && _log -f yellow "$@" ;;
-        error) _check_logger_level "error" && _log --bold -f red "$@" ;;
-        # prompt must be display in any given level
-        prompt) _check_logger_level "error" && _log -f green "$@" ;;
-        hint) _log -f cyan "$@" ;;
-        important-instruction) _log --bold -f red "$@" ;;
-        warn-instruction) _log --bold -f yellow "$@" ;;
-        info-instruction) _log --bold -f green "$@" ;;
-        highlight) _log --bold -f white -b red "$@" ;;
+    local arg_level=""
+    local arg_mark=true
+    local mark_msg=""
+    local arg_no_newline=""
+    local arg_bold=""
+    local arg_instruction
+    local arg_message
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -l|--level) arg_level="$2" && shift 2 ;;
+            --no-mark) arg_mark=false && shift ;;
+            -n|--no-newline) arg_no_newline="-n" && shift ;;
+            -b|--bold) arg_bold="--bold" && shift ;;
+            -i|--instruction) arg_instruction='error' && shift ;;
+            *) arg_message=$1 && shift ;;
+        esac
+    done
+
+    [[ $arg_mark = true ]] && mark_msg="[$arg_level] "
+
+    local level_color=""
+    case $arg_level in
+        debug) level_color="gray" ;;
+        info) level_color="green" ;;
+        hint) level_color="cyan" ;;
+        warn) level_color="yellow" ;;
+        error|important) level_color="red" ;;
         *) echo -n "$@" ;;
     esac
+
+    _check_logger_level ${arg_instruction:-$arg_level} && _log -f $level_color $arg_no_newline $arg_bold "$mark_msg$arg_message" 
 }

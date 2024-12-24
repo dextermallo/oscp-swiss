@@ -33,7 +33,7 @@ function recon() {
         case "$mode" in
             fast)
                 recon -s nmap -m tcp-5000 -i $IP && recon -s nmap -m udp-200 -i $IP
-                _logger important-instruction "Remember to run tcp and udp mode for full enumeration"
+                _logger -l important -b "Remember to run tcp and udp mode for full enumeration"
             ;;
             tcp) _wrap nmap -p0-65535 -v $IP -oN $saved_file_path/tcp-full && check_service_and_vuln $saved_file_path/tcp-full ;;
             tcp-5000) _wrap nmap -v --top-ports 5000 $IP -oN $saved_file_path/tcp-top-5000 && check_service_and_vuln $saved_file_path/tcp-top-5000 ;;
@@ -152,13 +152,11 @@ function recon_subdomain() {
 # Example: recon_vhost 192.168.1.1 example.com
 function recon_vhost() {
     [ $# -eq 0 ] && _help && return 0
-
-    local ip="$1"
+    local arg_ip="$1"
     local domain="$2"
     local domain_dir=$(_create_web_fuzz_report_directory "$domain")
     _display_wordlist_statistic $_swiss_recon_vhost_wordlist
-            
-    _wrap gobuster vhost -k -u $ip --domain $domain --append-domain -r -w $_swiss_recon_vhost_wordlist -o $domain_dir/vhost-recon -t 100
+    _wrap gobuster vhost -k -u $arg_ip --domain $domain --append-domain -r -w $_swiss_recon_vhost_wordlist -o $domain_dir/vhost-recon -t 100
 }
 
 # Description: get all urls from a web page
@@ -195,8 +193,8 @@ function _create_web_fuzz_report_directory() {
 
 function _display_wordlist_statistic() {
     if [[ -f "$1.statistic" ]]; then
-        _logger warn "====== Wordlist Statistic ======"
+        _logger -l warn --no-mark "====== Wordlist Statistic ======"
         \cat $1.statistic
-        _logger warn "================================"
+        _logger -l warn  --no-mark "================================"
     fi
 }

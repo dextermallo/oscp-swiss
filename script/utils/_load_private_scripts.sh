@@ -11,6 +11,6 @@ function _load_private_scripts() {
             fi
         done
     else
-        _logger error "[e] Directory $swiss_private not found."
+        _logger -l error "Directory $swiss_private not found."
     fi
 }

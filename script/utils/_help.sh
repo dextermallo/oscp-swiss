@@ -16,8 +16,7 @@ _help() {
         function_name="${FUNCNAME[1]}"
         script_file="${BASH_SOURCE[1]}"
     else
-        swiss_logger error "[e] Only Zsh and Bash shells are supported."
-        return 1
+        swiss_logger -l error "Only Zsh and Bash shells are supported." && return 1
     fi
 
     while IFS= read -r line; do
@@ -38,6 +37,5 @@ _help() {
         fi
     done < "$script_file"
 
-    # If no annotations were found for the function
-    _logger warn "No annotations found for function: $function_name"
+    _logger -l warn "No annotations found for function: $function_name"
 }

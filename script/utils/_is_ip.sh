@@ -5,3 +5,7 @@ function _is_ip() {
         echo 0
     fi
 }
+
+function is_url() {
+    
+}
