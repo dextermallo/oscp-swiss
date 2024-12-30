@@ -3,6 +3,10 @@
 
 Swiss Knife on your Kali Linux to help you automate the work.
 
+>[!CAUTION]
+> For fokls who use OSCP Swiss for the exam, do check the scripts by yourself!
+> My version used in the exam: v1.5.3
+
 ## 1. About OSCP Swiss
 
 OSCP Swiss is a collection of functions, aliases, and variables designed to boost productivity on Kali Linux. It helps you automate repetitive tasks, manage your workspace, and provide the necessary tools to perform penetration testing.
@@ -56,10 +60,6 @@ There are other commands to help you with the enumeration, exploitation, and pos
 >[!CAUTION]
 > The script is designed to work on Kali Linux. It may not work on other Linux distributions.
 > the scripts are developed and tested under Zsh (v5.9). There might be some issues if you are using Bash. PRs and Issues are welcome!
-
->[!CAUTION]
-> For fokls who use OSCP Swiss for the exam, do check the scripts by yourself!
-> My version used in the exam: v1.5.3
 
 ### 2.2. Prerequisites
 
