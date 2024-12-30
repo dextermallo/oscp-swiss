@@ -1,73 +1,35 @@
 {
   "global_settings": {
-    "logger_level": "info",
-    "app_banner": true,
     "default_network_interface": "tun0",
+    "logger_level": "info",
     "disable_color": false,
-    "wordlist_base": "/home/kali/oscp-swiss/wordlist",
-    "disable_sys_custom_command_banner": false
+    "used_module": [
+      "session",
+      "common"
+    ],
+    "wordlist_base": "~/oscp-swiss/wordlist"
   },
-  "functions": {
-    "wpscan": {
-      "token": ""
-    },
-    "xfreerdp": {
-      "use_custom_xfreerdp": false,
-      "prompt_create_mount": true,
-      "create_mount_by_default": false,
-      "half_width": 932,
-      "full_width": 1862,
-      "full_height": 1040,
-      "default_mode": "dynamic"
-    },
-    "recon_directory": {
-      "recursive_depth": 1,
-      "wordlist": "/home/kali/oscp-swiss/wordlist/ffuf-default.txt"
-    },
-    "recon_file_traversal": {
-      "wordlist": "/home/kali/oscp-swiss/wordlist/file-traversal-default.txt"
-    },
-    "recon_subdomain": {
-      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
-    },
-    "recon_vhost": {
-      "wordlist": "/home/kali/oscp-swiss/wordlist/subdomain+vhost-default.txt"
-    },
-    "cat": {
-      "use_pygmentize": false
-    },
-    "ls": {
-      "use_nnn": false
-    },
-    "get_web_keywords": {
-      "min_word_length": 4,
-      "depth": 2
-    },
-    "spawn_session_in_workspace": {
-      "start_at_new_session": false
-    },
-    "craft": {
-      "default_port": 443,
-      "default_arch": "x64",
-      "generate_stage": false,
-      "generate_stageless": true
-    },
-    "workspace": {
-      "auto_cleanup": true
-    },
-    "svc": {
-      "wsgi": "/home/kali/.local/bin/wsgidav",
-      "wsgi_default_port": 80
-    },
-    "init_workspace": {
+  "modules": {
+    "session": {
       "default_username_wordlist": "/usr/share/wordlists/seclists/Usernames/top-usernames-shortlist.txt",
-      "default_password_wordlist": "/usr/share/wordlists/seclists/Passwords/Common-Credentials/10-million-password-list-top-100.txt"
+      "default_password_wordlist": "/usr/share/wordlists/seclists/Passwords/xato-net-10-million-passwords-100.txt",
+      "sticky_session": true
+    },
+    "alias": {
+      "wpscan_token": "",
+      "use_custom_xfreerdp": false,
+      "use_custom_wpscan": true,
+      "use_custom_cat": false
+    },
+    "recon": {
+      "directory_recursive_depth": 1,
+      "directory_busting_wordlist": "~/oscp-swiss/wordlist/ffuf-default.txt",
+      "file_traversal_wordlist": "~/oscp-swiss/wordlist/file-traversal-default.txt",
+      "subdomain_wordlist": "~/oscp-swiss/wordlist/subdomain+vhost-default.txt",
+      "vhost_wordlist": "~/oscp-swiss/wordlist/subdomain+vhost-default.txt"
     }
   },
-  "swiss_variable": {
-    "workspace": {
-      "cur": {},
-      "list": []
-    }
+  "variable": {
+    "used_session": ""
   }
 }

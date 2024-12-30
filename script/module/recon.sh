@@ -12,7 +12,7 @@ function recon() {
         local use_udp=""
         [[ "$mode" == "udp" ]] && use_udp="--udp"
         mkdir -p $output_path
-        _wrap "rustscan -a $target $use_udp | tee $output_path/rustscan-$IP"
+        _wrap "rustscan -a $IP $use_udp | tee $output_path/rustscan-$IP"
     }
 
     check_service_and_vuln() {
@@ -84,7 +84,7 @@ function recon() {
 #   recon_directory -m dirsearch http://example.com
 function recon_directory() {
     _logger debug "[d] Recursive depth: $_swiss_recon_directory_recursive_depth"
-    _logger debug "[d] Wordlist: $_swiss_recon_directory_wordlist"
+    _logger debug "[d] Wordlist: $_swiss_recon_directory_busting_wordlist"
 
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
 
@@ -92,7 +92,7 @@ function recon_directory() {
     [[ $1 == '-m' ]] && mode=$2 && shift 2
     
     local domain_dir=$(_create_web_fuzz_report_directory "$1")
-    _display_wordlist_statistic $_swiss_recon_directory_wordlist
+    _display_wordlist_statistic $_swiss_recon_directory_busting_wordlist
 
     case $mode in
         dirsearch)
@@ -101,7 +101,7 @@ function recon_directory() {
         ;;
         ffuf)
             _logger hint "[h] You can use -fc 400,403 to make the output clean."
-            _wrap ffuf -w $_swiss_recon_directory_wordlist -recursion \
+            _wrap ffuf -w $_swiss_recon_directory_busting_wordlist -recursion \
                  -recursion-depth $_swiss_recon_directory_recursive_depth \
                  -c -t 200 \
                  -u ${@} | tee "$domain_dir/ffuf-recon"

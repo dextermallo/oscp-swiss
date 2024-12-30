@@ -7,3 +7,4 @@ tmp/*
 !.gitkeep
 settings.json
 *.cast
+sessions

@@ -15,8 +15,13 @@ export swiss_private="$swiss_root/private"
 export swiss_wordlist="$swiss_root/wordlist"
 export swiss_settings="$swiss_root/settings.json"
 
+for script in "$swiss_utils"/*.sh; do source $script; done
+_load_settings
+_load_private_scripts
+
 source $swiss_alias
 source $swiss_extension
+
 for script in "$swiss_module"/*.sh; do
     local is_enabled=0
     local module_name=${${script##*/}%.*}
@@ -27,8 +32,6 @@ for script in "$swiss_module"/*.sh; do
 
     [[ "$is_enabled" -eq 1 ]] && source $script
 done
-
-for script in "$swiss_utils"/*.sh; do source $script; done
 
 # Description: Find the commands, aliases, or variable you need.
 # Usage: swiss [-h|--help] <module>
@@ -88,6 +91,3 @@ function swiss() {
         *) _logger -l error "Invalid modules. see -h | --help." ;;
     esac
 }
-
-_load_settings
-_load_private_scripts

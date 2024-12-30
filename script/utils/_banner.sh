@@ -1,5 +1,4 @@
 function _banner() {
-    _cmd_is_exist() { command -v "$1" &> /dev/null && echo 1 || echo 0; }
     type=$1
     arg_cmd=$2
     case $type in
