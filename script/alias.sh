@@ -3,39 +3,12 @@
 # alias.sh is a collection of alias commands that are used across the oscp-swiss scripts.
 # The functions under alias.sh are the default commands that are replaced with the custom commands.
 
-
-alias grep="grep --color=auto"
-alias diff="diff --color=auto"
-
-# Description:
-#   Extended cd function with `-` and file support
-#   - If no argument is given, it will change to the home directory
-#   - If `-` is given, it will change to the previous directory
-#   - If a file is given, it will change to the directory of the file
-function cd() {
-    if [ $# -eq 0 ]; then
-        builtin cd
-    elif [ "$1" == "-" ]; then
-        builtin cd "$OLDPWD" && pwd
-    elif [ -d "$1" ]; then
-        builtin cd "$1"
-    elif [ -e "$1" ]; then
-        builtin cd "$(dirname "$1")"
-    else
-        swiss_logger error "[e] cd: no such file or directory: $1"
-        return 1
-    fi
-}
-
 # Description:
 #   Replace the default argument of the command xfreerdp. The default argument is to:
 #   1. ignore the certificate
 #   2. set the resolution to your preferred screen resolution
 #   3. mount to the current directory (optional)
-#   4. set a preferred screen resolution (dynamic/full/half)
-# Usage: xfreerdp [-h, --help] [-m, --mode mode]
-# Arguments:
-#   [-m, --mode mode]: dynamic, full, half
+# Usage: xfreerdp [-h, --help]
 # Configuration:
 #   - function.xfreerdp.use_custom_xfreerdp <boolean>: Use the custom xfreerdp function
 #   - function.xfreerdp.prompt_create_mount <boolean>: Prompt to create a mount
@@ -47,69 +20,20 @@ function cd() {
 #   Example:
 #       xfreerdp -m dynamic /u:username /p:password /v:$target
 #       xfreerdp -m full /u:username /p:password /v:$target
-function _xfreerdp_default() {
-    _override_cmd_banner
-    local create_mount=$_swiss_xfreerdp_create_mount_by_default
-    local mode=$_swiss_xfreerdp_default_mode
-    local new_args=()
-
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -m|--mode) mode="$2" && shift 2 ;;
-            -h|--help) swiss_logger warn "[w] For built-in xfreerdp, check \\\xfreerdp" && _help && return 0 ;;
-            *) new_args+=("$1") && shift ;;
-        esac
-    done
-    if [ "$_swiss_xfreerdp_prompt_create_mount" = true ]; then
-        swiss_logger prompt "[i] Mount? (y/n) \c"
-        read -r user_input
-
-        if [ "$user_input" = "y" ]; then
-            create_mount=true
-        elif [ "$user_input" = "n" ]; then
-            create_mount=false
-        else
-            swiss_logger error "[e] Invalid input. Please enter 'y' or 'n'." && return 1
-        fi
-    fi
-    swiss_logger debug "[d] create_mount: $create_mount"
-    swiss_logger debug "[d] mode: $mode"
-    if [ $create_mount = true ]; then
+function custom_xfreerdp() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    local arg_mount
+    gum confirm "Create a mount (./xfreerdp-data)?" && arg_mount=1 || arg_mount=0
+    if [[ $arg_mount == true ]]; then
         mkdir -p xfreerdp-data
-        case "$mode" in
-            dynamic)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /dynamic-resolution ${new_args[@]}
-            ;;
-            full)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
-            ;;
-            half)
-                \xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
-            ;;
-            *)
-                swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
-            ;;
-        esac
+        _wrap "\xfreerdp /drive:xfreerdp-data,$PWD/xfreerdp-data /cert-ignore /dynamic-resolution $@"
     else
-        case "$mode" in
-            dynamic)
-                \xfreerdp /cert-ignore /dynamic-resolution ${new_args[@]}
-            ;;
-            full)
-                \xfreerdp /cert-ignore /w:$_swiss_xfreerdp_full_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
-            ;;
-            half)
-                \xfreerdp /cert-ignore /w:$_swiss_xfreerdp_half_width /h:$_swiss_xfreerdp_full_height ${new_args[@]}
-            ;;
-            *)
-                swiss_logger error "[e] Unsupported mode (dynamic/full/half)."
-            ;;
-        esac
+        _wrap "\xfreerdp /cert-ignore /dynamic-resolution $@"
     fi
 }
 
-if [[ $_swiss_xfreerdp_use_custom_xfreerdp = true ]]; then
-    alias xfreerdp=_xfreerdp_default
+if [[ $_swiss_alias_use_custom_xfreerdp == true ]]; then
+    alias xfreerdp=custom_xfreerdp
 fi
 
 # Description:
@@ -120,26 +44,26 @@ fi
 #   You can request a free API token from https://wpscan.com/api
 # Configuration:
 #   - function.wpscan.wpscan_token <string>: WPScan API token
-alias wpscan="_override_cmd_banner; \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_wpscan_token"
+function custom_wpscan() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    _wrap \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_alias_wpscan_token $@
+}
+
+if [[ $_swiss_alias_use_custom_wpscan == true ]]; then
+    alias wpscan=custom_wpscan
+fi
 
 # Description: Use pygmentize to display the content of the file with color under dark-mode Kali.
 # Configuration:
 #   - function.cat.use_pygmentize <boolean>: feature flag to use pygmentize
 # Reference: https://stackoverflow.com/questions/62546404/how-to-use-dracula-theme-as-a-style-in-pygments
-if [[ $_swiss_cat_use_pygmentize = true ]]; then
-    alias cat="_override_cmd_banner; pygmentize -P style=dracula -g"
-fi
+function custom_cat() {
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    pygmentize -P style=dracula -g $@
+}
 
-# Description: Use the nnn file manager as the default file manager
-# Configuration:
-#   - function.ls.use_nnn <boolean>: feature flag to use nnn
-# References:
-#   - https://github.com/jarun/
-#   - https://software.opensuse.org//download.html?project=home%3Astig124%3Annn&package=nnn
-if [[ $_swiss_ls_use_nnn = true ]]; then
-    # TODO: remove conf
-    # alias ls="\ls"
-    alias l="n -dEH"
+if [[ $_swiss_alias_use_custom_wpscan == true ]]; then
+    alias cat=custom_cat
 fi
 
 ############
@@ -160,7 +84,7 @@ wordlist_subdomain_top="$_swiss_wordlist_base/Discovery/DNS/subdomains-top1milli
 ### username & password
 wordlist_username_big="$_swiss_wordlist_base/seclists/Usernames/xato-net-10-million-usernames.txt"
 wordlist_username_medium="$_swiss_wordlist_base/dirb/others/names.txt"
-wordlist_username_medium_seslist="$_swiss_wordlist_base/seclists/Usernames/Names/names.txt"
+wordlist_username_medium_seclist="$_swiss_wordlist_base/seclists/Usernames/Names/names.txt"
 wordlist_username_small="$_swiss_wordlist_base/seclists/Usernames/top-usernames-shortlist.txt"
 wordlist_rockyou="$_swiss_wordlist_base/rockyou.txt"
 

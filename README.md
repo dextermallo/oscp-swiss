@@ -1,7 +1,7 @@
 
 # OSCP Swiss
 
-Swiss Knife on your Kali Linux to help you move fast.
+Swiss Knife on your Kali Linux to help you automate the work.
 
 ## 1. About OSCP Swiss
 
@@ -19,7 +19,7 @@ Here is a quick demo for shipping multiple files at a time:
 
 https://github.com/user-attachments/assets/895d3a44-56a9-437e-99b2-85262815b2ff
 
-> ![tips]
+> ![TIPS]
 > It is powerful when you have a set of frequently used tools. For example:
 > ```bash
 > # under /script/extension.sh
@@ -30,6 +30,21 @@ https://github.com/user-attachments/assets/895d3a44-56a9-437e-99b2-85262815b2ff
 > ship -t windows $windows_family
 > ```
 
+Another my favorite is the `session`. Have you ever tired of typing the target IP address, domain name, and switich to your workspace across different terminal session?
+`session` is a powerful commands, it helps you to set up a "stick session", which, whenever you spawn a new terminal, you will set all the things up.
+
+With `session`, you are no longer needs to type the IP address anymore. For example:
+```bash
+ping $ip
+curl http://$ip:8080
+```
+
+See:
+![command-session](./demo/command-session.gif)
+
+> ![TIPS]
+> "sticky session" is configurable. see [3.1.1. About Globbal Settings](#3-1-1-about-globbal-settings)
+
 There are other commands to help you with the enumeration, exploitation, and post-exploitation. See [3. Usage](#3-usage). You can also customize the settings and add your own scripts and utilities to the Swiss Knife. See [4. Development & Customization](#4-development--customization). 
 
 ## 2. Getting Started
@@ -38,9 +53,13 @@ There are other commands to help you with the enumeration, exploitation, and pos
 >[!NOTE]
 > Tested on `Kali 6.8.11-1kali2 (2024-05-30)`, virtualizing using `UTM 4.4.5` on MacBook Pro (M2, Sonoma 14.5)
 
->[!Caution]
+>[!CAUTION]
 > The script is designed to work on Kali Linux. It may not work on other Linux distributions.
 > the scripts are developed and tested under Zsh (v5.9). There might be some issues if you are using Bash. PRs and Issues are welcome!
+
+>[!CAUTION]
+> For fokls who use OSCP Swiss for the exam, do check the scripts by yourself!
+> My version used in the exam: v1.5.3
 
 ### 2.2. Prerequisites
 
@@ -52,8 +71,10 @@ You will need to install the following packages. Additionally, you may need to c
 > ![swiss](demo/external-pacakge-hint.png)
 
 ```sh
+gum             # (required) prompt / input control
 jq              # (required) parsing configuration
-xclip           # (required) click board
+gum             # (required) interactive commands
+xclip           # (required) clickboard copy-paste
 docker          # (optional) used in the command `svc docker`
 docker-compose  # (optional) used in the command `svc bloodhound`
 pygmentize      # (optional) replace `cat` command with syntax highlighting
@@ -87,7 +108,6 @@ swiss private
 ```
 
 ### 2.4. Updates
-
 ```bash
 # pull the latest changes
 cd ~/oscp-swiss & git pull
@@ -98,90 +118,112 @@ source ~/.zshrc
 ```
 
 ## 3. Usage
-
 > ![TIP]
 > To keep the README concise, the following sections only provide a short description and examples. You can find more detailed information by running the command `<command> -h` or read it under the `/script` directory.
 
-Functions are broken down into modules and main functions. For more information, see [4. Development & Customization](#4-development--customization).
+### 3.1. Configurations
+Functions are broken down into modules. You can find 
 
->[!TIP]
-> You can find configurations for functions under `/settings.json`. For example:
-> ```json
-> {
->     "global_settings": { ... },
->     "functions": {
->         "wpscan": {
->             "token": "your_token_here"
->         }
->     }
-> }
-> ```
+You can find configurations for functions under `/settings.json`. For example:
 
-### 3.1. Main Functions
+These configurations will parse with a prefix `_swiss` and use across the scripts.
 
-#### 3.1.1. `swiss`
+```json
+{
+    "global_settings": { ... },
+    "modules": {
+        "alias": {
+            "wpscan_token": "your_token_here"
+        },
+        "session": {
+            "sticky_session": true
+        }
+    }
+}
+```
 
-#### 3.1.2. `cd` (customized)
+#### 3.1.1. About Globbal Settings
+Under `/settings.json`, there is a `global_settings` attribute.
 
-Customized `cd` with `cd -` (to move to the previous directory) and `cd $file` (by default, cd to a file will fail. The customized `cd` will move to the directory of the file.)
+### 3.2. Alias
+> ![TIP]
+> alias.sh is a collection of alias commands that are used across the oscp-swiss scripts.
+> The functions under alias.sh are the default commands that are replaced with the custom commands.
 
-#### 3.1.3. `xfreerdp` (customized)
+Example:
+```bash
+wordlist_username_big="$_swiss_wordlist_base/seclists/Usernames/xato-net-10-million-usernames.txt"
 
-#### 3.1.4. `wpscan` (customized)
+# and you can use it like:
+hydra -U $wordlist_username_big -p password ssh://10.10.10.10
+```
 
-#### 3.1.5. `cat` (customized)
+### 3.3. Extension
+> ![CAUTION]
+> The extension.sh is for the non-native functions that are used in the script.
+> You may need to download the tools and scripts or modify the path to use them.
+> for extension function, you should use the `_banner extension <extension_name>` function to display the banner
+> to inform the user that the function is an extension function.
 
-#### 3.1.6. `ls` (customized)
+Example:
+```bash
+windows_GodPotato="$HOME/oscp-swiss/utils/windows/GodPotato"
 
-#### 3.1.7. `i`: get the default IP address
+# you can use it with the command `ship`
+ship $windows_GodPotato
+```
 
-![command-i](demo/command-i.gif)
+### 3.4. Module: Common
 
-#### 3.1.8. `svc`: start service without pain
+#### 3.4.1. `svc`: start service without pain
 
-https://github.com/user-attachments/assets/66cde72a-46b2-4bf1-9e6a-3c7711d43269
+![command-svc](./demo/command-svc.gif)
 
-#### 3.1.9. `ship`: killer tool for file transfer
+#### 3.4.2. `ship`: killer tool for file transfer
 
 https://github.com/user-attachments/assets/ee3838a1-a35e-410b-9e35-a9b404b68247
 
-#### 3.1.10. `listen`: wrap the nc listener.
+#### 3.4.3. `listen`: wrap the nc listener.
 
-https://github.com/user-attachments/assets/6bb08184-f529-4a7b-b37b-5c1e18a4f1c4
+![command-listen](./demo/command-listen.gif)
 
-#### 3.1.7. About Variables
+#### 3.4.4. `cheatsheet`: Find Cheatsheet in your terminal.
+> ![TIP]
+> `cheatsheet` is helpful for the things you will frequently-used, such as commands to upgrade to fully-TTy
 
-#### 3.1.8. About Extension
+![command-cheatsheet](./demo/command-cheatsheet.gif)
 
+### 3.5. Module: Session
 
-### 3.5. Module/bruteforce
+#### 3.5.1. `session`: Cross-session Terminal to Help You Focus, Nagivate, and Reduce Memorization
+
+![command-session](./demo/command-session.gif)
 
 ## 4. Development & Customization
 
-Here are the key structures for swiss:
+Here are the primary structures for swiss:
 
 ```md
 .
-├── data                 # (Private) common data/material for testing 
+├── data                 # common data/material for testing 
 │   ├── ...
 │   └── test.jpg
 ├── doc 
-│   ├── cheatsheet       # (Public) quick cheatsheet for copy-paste, review, etc. See command `cheatsheet`.
-│   └── utils-note.md    # (Public) notes for utilities. See command `memory`.
-├── private              # (Private) you can put your customized script, .ovpn file, etc.
+│   └── cheatsheet       # quick cheatsheet for copy-paste, review, etc. See command `cheatsheet`.
+├── private              # you can put your customized script, .ovpn file, etc.
 │   ├── myscript.sh
 │   └── lab.ovpn
-├── script               # (Public) main script for swiss
-│   ├── module           # (Public) function module
-│   ├── target           # (Public) scripts for the target side
-│   ├── alias.sh         # (Public) alias for native resources (i.e., binaries, executables) on Kali
-│   ├── extension.sh     # (Public) alias for external resources
-│   ├── installation.sh  # (Public) (WIP) installation for creating wordlist, downloading binaries, etc.
-│   ├── oscp-swiss.sh    # (Public) main script
-│   └── utils.sh  
-├── utils                # (Private) put your binaries, compiled files, utilities (e.g., pspy)
+├── script               # main script for swiss
+│   ├── module           # modules
+│   ├── target           # scripts for the target side
+│   ├── utils            # utilities script for internal use.
+│   ├── alias.sh         # alias for native resources (i.e., binaries, executables) on Kali
+│   ├── extension.sh     # alias for external resources
+│   └── oscp-swiss.sh    # main script
+├── utils                # put your binaries, compiled files, utilities (e.g., pspy, linpeas)
 │   └── ...
-├── wordlist             # (Private) custom wordlist
+├── wordlist             # custom wordlist
+├── nstallation.sh       # (WIP) installation for creating wordlist, downloading binaries, etc.
 └── settings.json
 ```
 

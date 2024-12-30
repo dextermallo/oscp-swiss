@@ -1,12 +1,34 @@
 #!/bin/bash
 # About oscp-swiss.sh
 # The oscp-swiss.sh is the main script that contains the main functions to support the OSCP exam.
-# It loads all the modues under the script/module directory and other ncessary scripts.
+# It loads all the modules under the script/module directory and other necessary scripts.
 
+export SWISS_VERSION=2.0.0
 
-source $HOME/oscp-swiss/script/utils.sh
-source $HOME/oscp-swiss/script/alias.sh
-source $HOME/oscp-swiss/script/extension.sh
+export swiss_root="$HOME/oscp-swiss"
+export swiss_script="$swiss_root/script"
+export swiss_alias="$swiss_root/script/alias.sh"
+export swiss_extension="$swiss_root/script/extension.sh"
+export swiss_utils="$swiss_root/script/utils"
+export swiss_module="$swiss_root/script/module"
+export swiss_private="$swiss_root/private"
+export swiss_wordlist="$swiss_root/wordlist"
+export swiss_settings="$swiss_root/settings.json"
+
+source $swiss_alias
+source $swiss_extension
+for script in "$swiss_module"/*.sh; do
+    local is_enabled=0
+    local module_name=${${script##*/}%.*}
+
+    for enable_module in $(echo "$_swiss_used_module" | jq -r '.[]'); do
+        [[ "$enable_module" == "$module_name" ]] && is_enabled=1
+    done
+
+    [[ "$is_enabled" -eq 1 ]] && source $script
+done
+
+for script in "$swiss_utils"/*.sh; do source $script; done
 
 # Description: Find the commands, aliases, or variable you need.
 # Usage: swiss [-h|--help] <module>
@@ -16,88 +38,56 @@ source $HOME/oscp-swiss/script/extension.sh
 #     + crypto        functions relate to cryptography
 #     + exploit       functions to support you search and craft payloads for exploitation.
 #     + host          functions to use on your host (virtual machine).
-#     + machine       functions to use on your real machine (e.g., MacOS).
+#     + machine       functions to use on your real physical machine.
 #     + payload       functions relate to payload.
 #     + prep          functions before you start the work.
 #     + recon         functions relate to recon.
 #     + target        functions relate to the target machine.
-#     + workspace     functions to manage cross-terminal session, faster to nagivate.
+#     + workspace     functions to manage cross-terminal session, faster to navigate.
 #     + private       all scripts (.sh) under the directory /private
-# Configuration:
-#   - global_settings.app_banner: true/false. Show the banner of the app.
 # Example:
 #   swiss bruteforce
 function swiss() {
-    _banner() {
-        swiss_logger info ".--------------------------------------------."
-        swiss_logger info "|                                            |"
-        swiss_logger info "|                                            |"
-        swiss_logger info "|  __________       _______________________  |"
-        swiss_logger info "|  __  ___/_ |     / /___  _/_  ___/_  ___/  |"
-        swiss_logger info "|  _____ \\__ | /| / / __  / _____ \\_____ \\   |"
-        swiss_logger info "|  ____/ /__ |/ |/ / __/ /  ____/ /____/ /   |"
-        swiss_logger info "|  /____/ ____/|__/  /___/  /____/ /____/    |"
-        swiss_logger info "|                                            |"
-        swiss_logger info "|  by @dextermallo v1.5.3                    |"
-        swiss_logger info "'--------------------------------------------'"
-    }
-
-    parse() {
+    _parse() {
         if grep -qE '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1"; then
-            swiss_logger info "[i] Function under $1:"
-            swiss_logger hint "[i] Check function instructions with <command> -h or which <command>"
+            _logger -l info "Function under $1:"
+            _logger -l info "Check function instructions with <command> -h or which <command>"
             grep -E '^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{' "$1" | sed -E 's/^\s*function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\)\s*\{/\1/' | sort | column
         fi
         if grep -qE '^\s*alias\s+' "$1"; then
-            swiss_logger info "[i] Alias under $1:"
+            _logger -l info "Alias under $1:"
             grep -E '^\s*alias\s+' "$1" | sed -E 's/^\s*alias\s+([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
         fi
         if grep -qE '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1"; then
-            swiss_logger info "[i] Variable under $1:"
+            _logger -l info "Variable under $1:"
             grep -E '^\s*[a-zA-Z_][a-zA-Z0-9_]*=' "$1" | sed -E 's/^\s*([a-zA-Z_][a-zA-Z0-9_]*)=.*/\1/' | sort | column
         fi
     }
 
-    [ $_swiss_app_banner = true ] && _banner
     local module
 
     while [[ $# -gt 0 ]]; do
         case $1 in
             -h|--help) _help && return 0 ;;
+            -v|--version) _banner swiss && return 0 ;;
             *) module=$1 && shift ;;
         esac
     done
 
     case $module in
         private)
-        if [ -d "$swiss_private" ]; then
-            for script in "$swiss_private"/*.sh; do
-                [ -f "$script" ] && parse $script
-            done
+        if [[ -d "$swiss_private" ]]; then
+            for script in "$swiss_private"/*.sh; do [[ -f "$script" ]] && _parse $script; done
         else
-            swiss_logger error "[e] Directory $swiss_private not found."
+            _logger -l error "Directory $swiss_private not found."
         fi
         ;;
-        utils|alias|extension)
-            parse "$swiss_script/$module.sh"
-        ;;
-        bruteforce|crypto|help-exploit|host|machine|payload|prep|recon|target|workspace)
-            parse "$swiss_script/module/$module.sh"
-        ;;
-        *)
-            swiss_logger error "[e] invalid modules. see -h, --help."
-        ;;
+        utils) for script in "$swiss_utils"/*.sh; do [[ -f "$script" ]] && _parse $script; done ;;
+        alias|extension) _parse "$swiss_script/$module.sh" ;;
+        bruteforce|crypto|help-exploit|host|machine|payload|prep|recon|target|workspace) _parse "$swiss_script/module/$module.sh" ;;
+        *) _logger -l error "Invalid modules. see -h | --help." ;;
     esac
 }
 
-source $swiss_module/bruteforce.sh
-source $swiss_module/crypto.sh
-source $swiss_module/help-exploit.sh
-source $swiss_module/host.sh
-source $swiss_module/payload.sh
-source $swiss_module/prep.sh
-source $swiss_module/recon.sh
-source $swiss_module/target.sh
-source $swiss_module/workspace.sh
-
-spawn_session_in_workspace
+_load_settings
+_load_private_scripts
