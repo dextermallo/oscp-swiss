@@ -123,3 +123,5 @@ function _sticky_session() {
         [[ ! -z "$used_session" ]] && _load_session
     fi
 }
+
+_sticky_session

@@ -4,26 +4,6 @@
 # The functions under alias.sh are the default commands that are replaced with the custom commands.
 
 # Description:
-#   Extended cd function with `-` and file support
-#   - If no argument is given, it will change to the home directory
-#   - If `-` is given, it will change to the previous directory
-#   - If a file is given, it will change to the directory of the file
-function cd() {
-    if [ $# -eq 0 ]; then
-        builtin cd
-    elif [ "$1" == "-" ]; then
-        builtin cd "$OLDPWD" && pwd
-    elif [ -d "$1" ]; then
-        builtin cd "$1"
-    elif [ -e "$1" ]; then
-        builtin cd "$(dirname "$1")"
-    else
-        echo "cd: no such file or directory: $1"
-        return 1
-    fi
-}
-
-# Description:
 #   Replace the default argument of the command xfreerdp. The default argument is to:
 #   1. ignore the certificate
 #   2. set the resolution to your preferred screen resolution

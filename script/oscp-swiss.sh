@@ -17,7 +17,17 @@ export swiss_settings="$swiss_root/settings.json"
 
 source $swiss_alias
 source $swiss_extension
-for script in "$swiss_module"/*.sh; do source $script; done
+for script in "$swiss_module"/*.sh; do
+    local is_enabled=0
+    local module_name=${${script##*/}%.*}
+
+    for enable_module in $(echo "$_swiss_used_module" | jq -r '.[]'); do
+        [[ "$enable_module" == "$module_name" ]] && is_enabled=1
+    done
+
+    [[ "$is_enabled" -eq 1 ]] && source $script
+done
+
 for script in "$swiss_utils"/*.sh; do source $script; done
 
 # Description: Find the commands, aliases, or variable you need.
@@ -81,4 +91,3 @@ function swiss() {
 
 _load_settings
 _load_private_scripts
-_sticky_session

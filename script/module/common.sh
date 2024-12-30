@@ -205,7 +205,7 @@ function svc() {
             _wrap $_swiss_svc_wsgi --host=0.0.0.0 --port=$_swiss_svc_wsgi_default_port --auth=anonymous --root .
             ;;
         python-venv)
-            _banner extension
+            _banner extension virtualenv
             _wrap python3 -m venv .venv
             _wrap source .venv/bin/activate
             ;;
@@ -244,7 +244,6 @@ function i() {
         echo -n $default_ip | xclip -selection clipboard
     fi
 }
-
 
 # Description: dump files from FTP or SMB service
 # Usage: dump <-s, --service SERVICE> <-i, --ip IP> [OPTIONS]
@@ -307,9 +306,9 @@ export swiss_cheatsheet="$swiss_root/doc/cheatsheet"
 #   This can be useful for quick reference to common commands or syntax.
 #   Path of your cheatsheet files is defined in the `swiss_cheatsheet` variable.
 #   Only support for .md files.
-# Usage: cheatsheet
-# TODO: configurable cheatsheet directory
+# Usage: cheatsheet [-h, --help]
 function cheatsheet() {
+    [[ $1 == "-h" || $1 == "--help" ]] && _help && return 0
     cheatsheet_selection=$(ls $swiss_cheatsheet | sed 's/\.[^.]*$//' | gum choose)
     cat "$swiss_cheatsheet/$cheatsheet_selection.md"
 }
