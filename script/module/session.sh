@@ -118,7 +118,7 @@ function _delete_session() {
 }
 
 function _sticky_session() {
-    if [[ "$_swiss_session_sticky_session" = true ]]; then
+    if [[ "$_swiss_session_sticky_session" == true ]]; then
         local used_session=$(jq -r '.variable.used_session // empty' "$swiss_settings")
         [[ ! -z "$used_session" ]] && _load_session
     fi
