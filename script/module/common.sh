@@ -48,22 +48,22 @@ function ship() {
         cp --update=none "$filepath" "./$filename" && _logger -l info "File '$filename' copied to current directory."
 
         local cmd
-        if [[ "$type" == "linux" ]]; then
+        if [[ "$arg_type" == "linux" ]]; then
             if [[ "$mode" == "http" ]]; then
                 cmd="wget $(_get_default_network_interface_ip):$used_port/$filename"
             else
                 _logger error "Currently Linux only support HTTP mode." && return 1
             fi
-        elif [[ "$type" == "windows" ]]; then
+        elif [[ "$arg_type" == "windows" ]]; then
             if [[ "$mode" == "smb" ]]; then
                 cmd="copy \\\\\\$(_get_default_network_interface_ip)\\\\smb\\\\$filename C:/ProgramData/$filename"
             elif [[ "$mode" == "http" ]]; then
                 cmd="powershell -c \"Invoke-WebRequest -Uri 'http://$(_get_default_network_interface_ip):$used_port/$filename' -OutFile C:/ProgramData/$filename\""
             else
-                _logger error "[e] unsupported type (smb|http)."
+                _logger error "[e] unsupported mode (smb|http)."
             fi
         else
-            log error "[e] Unknown type '$type'." && return 1
+            _logger error "[e] Unknown type '$arg_type'." && return 1
         fi
 
         all_cmds+="$cmd"$'\n'
